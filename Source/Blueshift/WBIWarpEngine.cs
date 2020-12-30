@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using KSP.IO;
-using KSP.Localization;
 
 /*
 Source code copyright 2020, by Michael Billard (Angel-125)
@@ -23,7 +18,7 @@ namespace Blueshift
     /// Wild Blue Warp Engine that's designed for faster than light travel.
     /// </summary>
     [KSPModule("Warp Engine")]
-    public class WBIWarpEngine: ModuleEnginesFX
+    public class WBIWarpEngine : ModuleEnginesFX
     {
         #region constants
         protected float kLightSpeed = 299792458;
@@ -92,6 +87,22 @@ namespace Blueshift
         [KSPField]
         public FloatCurve warpCurve;
 
+        /// <summary>
+        /// Name of the Waterfall effects controller
+        /// </summary>
+        [KSPField]
+        public string waterfallEffectController = string.Empty;
+
+        /// <summary>
+        /// Waterfall Warp Effects Curve. This is used to controll the Waterfall warp field effects based on the vessel's current warp speed.
+        /// The default curve is:
+        /// key = 0 0
+        /// key = 1 0.5
+        /// key = 1.5 1
+        /// </summary>
+        [KSPField]
+        public FloatCurve waterfallWarpEffectsCurve;
+
         [KSPField]
         public string textureModuleID = string.Empty;
         #endregion
@@ -123,17 +134,19 @@ namespace Blueshift
 
         // Only one active engine should apply the translation effects
         [KSPField]
-        public bool applyWarpTranslation = true;
+        protected bool applyWarpTranslation = true;
         [KSPField]
-        public float averageDisplacementImpulse = 0;
+        protected float averageDisplacementImpulse = 0;
         [KSPField]
-        public float totalWarpCapacity = 0;
+        protected float totalWarpCapacity = 0;
         [KSPField]
-        public float effectiveWarpCapacity = 0;
+        protected float effectiveWarpCapacity = 0;
         [KSPField(guiName = "Max Warp Speed", guiFormat = "n3", guiUnits = "C")]
-        public float maxWarpSpeed = 0;
+        protected float maxWarpSpeed = 0;
         [KSPField(guiName = "Distance per update", guiFormat = "n2", guiUnits = "m")]
-        float warpDistance = 0;
+        protected float warpDistance = 0;
+        [KSPField]
+        protected float effectsThrottle = 0;
 
         // Hit test stuff to make sure we don't run into planets.
         protected RaycastHit terrainHit;
@@ -144,11 +157,15 @@ namespace Blueshift
         protected List<WBIAnimatedTexture> warpEngineTextures = null;
         protected CelestialBody previousBody = null;
         protected Bounds bodyBounds;
+        protected float throttleLevel = 0f;
 
+        // Optional bow shock effect transform.
         protected Transform bowShockTransform = null;
 
         // Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
         protected bool warpFlameout = false;
+
+        protected WFModuleWaterfallFX waterfallFXModule = null;
         #endregion
 
         #region Actions
@@ -197,16 +214,16 @@ namespace Blueshift
             calculateBestWarpSpeed();
 
             // Account for throttle setting and thrust limiter.
-            float throttleSetting = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
-            if (throttleSetting <= 0f)
+            throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
+            if (throttleLevel <= 0f)
                 return;
 
             // Calculate offset position
-            warpDistance = kLightSpeed * maxWarpSpeed * throttleSetting * TimeWarp.fixedDeltaTime;
+            warpDistance = kLightSpeed * maxWarpSpeed * throttleLevel * TimeWarp.fixedDeltaTime;
             Transform refTransform = this.part.vessel.transform;
             Vector3 warpVector = refTransform.up * warpDistance;
             Vector3d offsetPosition = refTransform.position + warpVector;
-            warpSpeed = maxWarpSpeed * throttleSetting;
+            warpSpeed = maxWarpSpeed * throttleLevel;
 
             // Make sure that we won't run into a celestial body.
             if (previousBody != this.part.orbit.referenceBody)
@@ -232,7 +249,12 @@ namespace Blueshift
                 return;
             if (!isOperational && !EngineIgnited)
             {
+                fadeOutEffects();
                 return;
+            }
+            else if (flameout || warpFlameout)
+            {
+                fadeOutEffects();
             }
 
             UpdateWarpStatus();
@@ -248,8 +270,16 @@ namespace Blueshift
             base.OnStart(state);
             loadCurve(warpCurve, "warpCurve");
             loadCurve(planetarySOISpeedCurve, "planetarySOISpeedCurve");
+
+            ConfigNode defaultCurve = new ConfigNode("waterfallWarpEffectsCurve");
+            defaultCurve.AddValue("key", "0 0");
+            defaultCurve.AddValue("key", "1 0.5");
+            defaultCurve.AddValue("key", "1.5 1");
+            loadCurve(waterfallWarpEffectsCurve, "waterfallWarpEffectsCurve", defaultCurve);
+
             warpEngines = new List<WBIWarpEngine>();
             warpCoils = new List<WBIWarpCoil>();
+            initWaterfallModule();
             getAnimatedWarpEngineTextures();
 
             // Optional bow shock transform.
@@ -272,6 +302,7 @@ namespace Blueshift
             Fields["effectiveWarpCapacity"].guiActive = debugEnabled;
             Fields["maxWarpSpeed"].guiActive = debugEnabled;
             Fields["warpDistance"].guiActive = debugEnabled;
+            Fields["effectsThrottle"].guiActive = debugEnabled;
         }
 
         public override void Flameout(string message, bool statusOnly = false, bool showFX = true)
@@ -340,10 +371,26 @@ namespace Blueshift
                 warpCoils[index].animationThrottle = !warpFlameout ? throttle : 0f;
             }
 
-            // Warp effects
+            // Update warp effects
             if (bowShockTransform != null)
-            {
                 bowShockTransform.position = this.part.vessel.transform.position;
+
+            if (waterfallFXModule != null)
+            {
+                float targetValue = 0f;
+                if (throttleSetting > 0)
+                    targetValue = waterfallWarpEffectsCurve.Evaluate(warpSpeed);
+
+                effectsThrottle = Mathf.Lerp(effectsThrottle, targetValue, engineSpoolTime);
+
+                if (effectsThrottle <= 0.001 && targetValue <= 0f)
+                    effectsThrottle = 0;
+                else if (targetValue > 0f && targetValue >= effectsThrottle && (effectsThrottle / targetValue >= 0.99f))
+                    effectsThrottle = targetValue;
+                else if (targetValue > 0f && effectsThrottle > targetValue && targetValue / effectsThrottle >= 0.99f)
+                    effectsThrottle = targetValue;
+
+                waterfallFXModule.SetControllerValue(waterfallEffectController, effectsThrottle);
             }
         }
         #endregion
@@ -480,6 +527,35 @@ namespace Blueshift
             return PartGeometryUtil.MergeBounds(boundsList.ToArray(), firstPart.transform.root).size;
         }
 
+        protected void fadeOutEffects()
+        {
+            if (waterfallFXModule != null && effectsThrottle > 0f)
+            {
+                effectsThrottle = Mathf.Lerp(effectsThrottle, 0, engineSpoolTime);
+
+                if (effectsThrottle <= 0.001f)
+                    effectsThrottle = 0f;
+
+                waterfallFXModule.SetControllerValue(waterfallEffectController, 0);
+            }
+        }
+
+        protected void initWaterfallModule()
+        {
+            int count = this.part.Modules.Count;
+            PartModule module;
+
+            for (int index = 0; index < count; index++)
+            {
+                module = this.part.Modules[index];
+                if (module.moduleName == "ModuleWaterfallFX")
+                {
+                    waterfallFXModule = new WFModuleWaterfallFX(module);
+                    return;
+                }
+            }
+        }
+
         protected void getAnimatedWarpEngineTextures()
         {
             warpEngineTextures = new List<WBIAnimatedTexture>();
@@ -600,7 +676,7 @@ namespace Blueshift
             return applyWarpTranslation;
         }
 
-        protected void loadCurve(FloatCurve curve, string curveNodeName)
+        protected void loadCurve(FloatCurve curve, string curveNodeName, ConfigNode defaultCurve = null)
         {
             if (curve.Curve.length > 0)
                 return;
@@ -625,11 +701,16 @@ namespace Blueshift
             }
             if (engineNode == null)
                 return;
-            if (!engineNode.HasNode(curveNodeName))
-                return;
 
-            node = engineNode.GetNode(curveNodeName);
-            curve.Load(node);
+            if (engineNode.HasNode(curveNodeName))
+            {
+                node = engineNode.GetNode(curveNodeName);
+                curve.Load(node);
+            }
+            else if (defaultCurve != null)
+            {
+                curve.Load(defaultCurve);
+            }
         }
         #endregion
     }
