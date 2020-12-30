@@ -1,0 +1,1 @@
+Powershell.exe -ExecutionPolicy Unrestricted -file "$(ProjectDir)xmldoc2md.ps1" -xml "$(ProjectDir)$(OutDir)xmldoc2md.xml" -xsl "$(ProjectDir)xmldoc2md.xsl" -output "$(ProjectDir)$(OutDir)API.md"
