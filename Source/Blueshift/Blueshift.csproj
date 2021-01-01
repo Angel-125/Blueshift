@@ -72,17 +72,34 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Waterfall\WFWrapper.cs" />
-    <Compile Include="WBIModuleGeneratorFX.cs" />
-    <Compile Include="WBIPartModule.cs" />
-    <Compile Include="WBIAnimatedTexture.cs" />
+    <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
+    <Compile Include="Utility\WBIPartModule.cs" />
+    <Compile Include="Utility\WBIAnimatedTexture.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WBIResourceTweaker.cs" />
-    <Compile Include="WBIWarpCoil.cs" />
-    <Compile Include="WBIWarpEngine.cs" />
+    <Compile Include="Utility\WBIResourceTweaker.cs" />
+    <Compile Include="WarpEngine\WBIWarpCoil.cs" />
+    <Compile Include="WarpEngine\WBIWarpEngine.cs" />
     <Compile Include="Waterfall\WFModuleWaterfallFX.cs" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="WikiSupport\" />
+    <Content Include="MarkdownSeparator.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="xmldoc2md.xsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RunMDSeparator.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="RunPowershell.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="xmldoc2md.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

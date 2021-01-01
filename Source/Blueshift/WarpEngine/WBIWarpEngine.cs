@@ -14,9 +14,48 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 namespace Blueshift
 {
+    #region Summary
     /// <summary>
-    /// Wild Blue Warp Engine that's designed for faster than light travel.
+    /// The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. 
+    /// 
+    /// `
+    /// MODULE
+    /// {
+    ///     name = WBIWarpEngine
+    ///     ...Standard engine parameters here...
+    ///     moduleDescription = Enables fater than light travel.
+    ///     bowShockTransformName = bowShock
+    ///     minPlanetaryRadius = 3.0
+    ///     displacementImpulse = 100
+    ///     
+    ///     planetarySOISpeedCurve
+    ///     {
+    ///         key = 1 0.1
+    ///         ...
+    ///         key = 0.1 0.005
+    ///     }
+    ///     
+    ///     warpCurve
+    ///     {
+    ///         key = 1 0
+    ///         key = 10 1
+    ///         ...
+    ///         key = 1440 10
+    ///     }
+    ///     
+    ///     waterfallEffectController = warpEffectController
+    ///     waterfallWarpEffectsCurve
+    ///     {
+    ///         key = 0 0
+    ///         ...
+    ///         key = 1.5 1
+    ///     }
+    ///     
+    ///     textureModuleID = WarpCore
+    /// }
+    /// `
     /// </summary>
+    #endregion
     [KSPModule("Warp Engine")]
     public class WBIWarpEngine : ModuleEnginesFX
     {
@@ -42,19 +81,19 @@ namespace Blueshift
         public string moduleDescription = string.Empty;
 
         /// <summary>
-        /// Minimum planetary radius needed to go to warp.
+        /// Minimum planetary radius needed to go to warp. This is used to calculate the user-friendly minimum warp altitude display.
         /// </summary>
         [KSPField]
-        public double minPlanetaryRadius = 1.0;
+        public double minPlanetaryRadius = 3.0;
 
         /// <summary>
-        /// Minimum altitude at which the engine can go to warp.
+        /// Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
         /// </summary>
         [KSPField(guiActive = true, guiName = "Minimum Warp altitude", guiUnits = "m", guiFormat = "n1")]
         public double minWarpAltitudeDisplay = 500000.0f;
 
         /// <summary>
-        /// The velocity of the ship, adjusted for throttle setting and thrust limiter.
+        /// The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
         /// </summary>
         [KSPField(guiActive = true, guiName = "Warp Speed", guiFormat = "n3", guiUnits = "C")]
         public float warpSpeed = 0;
@@ -62,6 +101,8 @@ namespace Blueshift
         /// <summary>
         /// Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body.
         /// Out in interplanetary space we don't have a speed limit.
+        /// The first number represents how close to the SOI edge the vessel is (1 = right at the edge, 0.1 = 10% of the distance to the SOI edge)
+        /// The second number is the top speed multiplier.
         /// </summary>
         [KSPField]
         public FloatCurve planetarySOISpeedCurve;
@@ -78,7 +119,7 @@ namespace Blueshift
         /// In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with
         /// a WBIWarpCoil part module can generate warpCapacity.
         /// The warp curve controls how much warpCapacity is neeeded to go light speed or faster.
-        /// The first number represents multiples of C, and the second number represents the required warpCapacity.
+        /// The first number represents the available warpCapacity, while the second number gives multiples of C.
         /// You can apply any kind of warp curve you want, but the baseline uses the Fibonacci sequence * 10.
         /// It may seem steep, but in KSP's small scale, 1C is plenty fast.
         /// This curve is modified by the engine's displacementImpulse and current vessel mass.
@@ -88,13 +129,15 @@ namespace Blueshift
         public FloatCurve warpCurve;
 
         /// <summary>
-        /// Name of the Waterfall effects controller
+        /// Name of the Waterfall effects controller that controls the warp effects (if any).
         /// </summary>
         [KSPField]
         public string waterfallEffectController = string.Empty;
 
         /// <summary>
-        /// Waterfall Warp Effects Curve. This is used to controll the Waterfall warp field effects based on the vessel's current warp speed.
+        /// Waterfall Warp Effects Curve. This is used to control the Waterfall warp field effects based on the vessel's current warp speed.
+        /// The first number represents multiples of C, and the second number represents the level at which to drive the warp effects.
+        /// The effects value ranges from 0 to 1, while there's no upper limit to multiples of C, so keep that in mind.
         /// The default curve is:
         /// key = 0 0
         /// key = 1 0.5
@@ -103,25 +146,34 @@ namespace Blueshift
         [KSPField]
         public FloatCurve waterfallWarpEffectsCurve;
 
+        /// <summary>
+        /// The name of the WBIAnimatedTexture to drive as part of the warp effects.
+        /// </summary>
         [KSPField]
         public string textureModuleID = string.Empty;
+
+        /// <summary>
+        /// Optional effect to play when the vessel exceeds the speed of light.
+        /// </summary>
+        [KSPField]
+        public string photonicBoomEffectName = string.Empty;
         #endregion
 
         #region Housekeeping
         /// <summary>
-        /// Flag to indicate that we're in space (orbiting, suborbital, or escaping)
+        /// (Debug visible) Flag to indicate that we're in space (orbiting, suborbital, or escaping)
         /// </summary>
         [KSPField]
         public bool isInSpace = false;
 
         /// <summary>
-        /// Flag to indicate that the ship meets minimum warp altitude.
+        /// (Debug visible) Flag to indicate that the ship meets minimum warp altitude.
         /// </summary>
         [KSPField]
         public bool meetsWarpAltitude = false;
 
         /// <summary>
-        /// Flag to indicate that the ship has sufficient warp capacity.
+        /// (Debug visible) Flag to indicate that the ship has sufficient warp capacity.
         /// </summary>
         [KSPField]
         public bool hasWarpCapacity = false;
@@ -132,40 +184,101 @@ namespace Blueshift
         [KSPField]
         public string bowShockTransformName = string.Empty;
 
-        // Only one active engine should apply the translation effects
+        /// <summary>
+        /// (Debug visible) Flag to indicate that the engine should apply translation effects. Multiple engines can work together as long as each one's minimum requirements are met.
+        /// </summary>
         [KSPField]
         protected bool applyWarpTranslation = true;
+
+        /// <summary>
+        /// (Debug visible) Average displacement impulse calculated from all active warp engines.
+        /// </summary>
         [KSPField]
         protected float averageDisplacementImpulse = 0;
+
+        /// <summary>
+        /// (Debug visible) Total warp capacity calculated from all active warp engines.
+        /// </summary>
         [KSPField]
         protected float totalWarpCapacity = 0;
+
+        /// <summary>
+        /// (Debug visible) Effective warp capacity after accounting for vessel mass
+        /// </summary>
         [KSPField]
         protected float effectiveWarpCapacity = 0;
+
+        /// <summary>
+        /// (Debug visible) Maximum possible warp speed.
+        /// </summary>
         [KSPField(guiName = "Max Warp Speed", guiFormat = "n3", guiUnits = "C")]
         protected float maxWarpSpeed = 0;
+
+        /// <summary>
+        /// (Debug visible) Distance per physics update that the vessel will move.
+        /// </summary>
         [KSPField(guiName = "Distance per update", guiFormat = "n2", guiUnits = "m")]
         protected float warpDistance = 0;
+
+        /// <summary>
+        /// (Debug visible) Current throttle level for the warp effects.
+        /// </summary>
         [KSPField]
         protected float effectsThrottle = 0;
 
-        // Hit test stuff to make sure we don't run into planets.
+        /// <summary>
+        /// Hit test stuff to make sure we don't run into planets.
+        /// </summary>
         protected RaycastHit terrainHit;
+        /// <summary>
+        /// Layer mask used for the hit test
+        /// </summary>
         protected LayerMask layerMask = -1;
 
+        /// <summary>
+        /// List of active warp engines
+        /// </summary>
         protected List<WBIWarpEngine> warpEngines = null;
+        /// <summary>
+        /// List of enabled warp coils
+        /// </summary>
         protected List<WBIWarpCoil> warpCoils = null;
+        /// <summary>
+        /// List of animated textures driven by the warp engine
+        /// </summary>
         protected List<WBIAnimatedTexture> warpEngineTextures = null;
+        /// <summary>
+        /// Previously visited celestial body
+        /// </summary>
         protected CelestialBody previousBody = null;
+        /// <summary>
+        /// Bounds object of the celestial body
+        /// </summary>
         protected Bounds bodyBounds;
+        /// <summary>
+        /// Current throttle level
+        /// </summary>
         protected float throttleLevel = 0f;
 
-        // Optional bow shock effect transform.
+        /// <summary>
+        /// Optional bow shock effect transform.
+        /// </summary>
         protected Transform bowShockTransform = null;
 
-        // Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
+        /// <summary>
+        /// Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
+        /// </summary>
         protected bool warpFlameout = false;
 
+        /// <summary>
+        /// Optional (but highly recommended) Waterfall effects module
+        /// </summary>
         protected WFModuleWaterfallFX waterfallFXModule = null;
+
+        /// <summary>
+        /// Flag to indicate whether or not the vessel has exceeded light speed.
+        /// </summary>
+        protected bool hasExceededLightSpeed = false;
         #endregion
 
         #region Actions
@@ -205,6 +318,7 @@ namespace Blueshift
                 maxWarpSpeed = 0;
                 warpSpeed = 0;
                 effectiveWarpCapacity = 0;
+                hasExceededLightSpeed = false;
                 FlightInputHandler.state.mainThrottle = 0;
                 return;
             }
@@ -215,6 +329,11 @@ namespace Blueshift
 
             // Account for throttle setting and thrust limiter.
             throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
+            warpSpeed = maxWarpSpeed * throttleLevel;
+
+            // Reset warp speed exceeded flag.
+            if (warpSpeed < 1f)
+                hasExceededLightSpeed = false;
             if (throttleLevel <= 0f)
                 return;
 
@@ -223,7 +342,6 @@ namespace Blueshift
             Transform refTransform = this.part.vessel.transform;
             Vector3 warpVector = refTransform.up * warpDistance;
             Vector3d offsetPosition = refTransform.position + warpVector;
-            warpSpeed = maxWarpSpeed * throttleLevel;
 
             // Make sure that we won't run into a celestial body.
             if (previousBody != this.part.orbit.referenceBody)
@@ -309,6 +427,7 @@ namespace Blueshift
         {
             base.Flameout(message, statusOnly, showFX);
             warpFlameout = true;
+            hasExceededLightSpeed = false;
         }
 
         public override void UnFlameout(bool showFX = true)
@@ -334,6 +453,7 @@ namespace Blueshift
         public override void Shutdown()
         {
             base.Shutdown();
+            hasExceededLightSpeed = false;
 
             Fields["warpSpeed"].guiActive = false;
 
@@ -347,6 +467,8 @@ namespace Blueshift
         public override void FXUpdate()
         {
             base.FXUpdate();
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
 
             if (EngineIgnited && isEnabled && !flameout && !warpFlameout)
                 this.part.Effect(runningEffectName, 1f);
@@ -391,6 +513,12 @@ namespace Blueshift
                     effectsThrottle = targetValue;
 
                 waterfallFXModule.SetControllerValue(waterfallEffectController, effectsThrottle);
+            }
+
+            if (!hasExceededLightSpeed && warpSpeed >= 1f)
+            {
+                hasExceededLightSpeed = true;
+                this.part.Effect(photonicBoomEffectName, 1);
             }
         }
         #endregion
@@ -503,6 +631,7 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        /*
         public Vector3 getVesselDimensions()
         {
             Bounds bounds; 
@@ -526,7 +655,11 @@ namespace Blueshift
             }
             return PartGeometryUtil.MergeBounds(boundsList.ToArray(), firstPart.transform.root).size;
         }
+        */
 
+        /// <summary>
+        /// Fades out the warp effects
+        /// </summary>
         protected void fadeOutEffects()
         {
             if (waterfallFXModule != null && effectsThrottle > 0f)
@@ -540,6 +673,9 @@ namespace Blueshift
             }
         }
 
+        /// <summary>
+        /// Initializes the waterfall module
+        /// </summary>
         protected void initWaterfallModule()
         {
             int count = this.part.Modules.Count;
@@ -556,6 +692,9 @@ namespace Blueshift
             }
         }
 
+        /// <summary>
+        /// Finds any animated textures that should be controlled by the warp engine
+        /// </summary>
         protected void getAnimatedWarpEngineTextures()
         {
             warpEngineTextures = new List<WBIAnimatedTexture>();
@@ -574,6 +713,9 @@ namespace Blueshift
             }
         }
 
+        /// <summary>
+        /// Calculates the best possible warp speed from the vessel's active warp engines.
+        /// </summary>
         protected void calculateBestWarpSpeed()
         {
             int count = warpEngines.Count;
@@ -597,6 +739,9 @@ namespace Blueshift
             }
         }
 
+        /// <summary>
+        /// Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
+        /// </summary>
         protected void getTotalWarpCapacity()
         {
             List<WBIWarpCoil> coils = this.part.vessel.FindPartModulesImplementing<WBIWarpCoil>();
@@ -616,6 +761,11 @@ namespace Blueshift
             }
         }
 
+        /// <summary>
+        /// Consumes the warp coil's required resources.
+        /// </summary>
+        /// <param name="warpCoil">The WBIWarpCoil to check for required resources.</param>
+        /// <returns>true if the coil successfully consumed its required resources, false if not.</returns>
         protected bool consumeCoilResources(WBIWarpCoil warpCoil)
         {
             string errorStatus = string.Empty;
@@ -636,6 +786,11 @@ namespace Blueshift
             return true;
         }
 
+        /// <summary>
+        /// Looks for all the active warp engines in the vessel. From the list, only the top-most engine in the list of active engines should apply warp translation. All others
+        /// simply provide support.
+        /// </summary>
+        /// <returns></returns>
         protected bool shouldApplyWarp()
         {
             // Only one warp engine should handle warp speed. The rest just provide boost effects.
@@ -676,6 +831,12 @@ namespace Blueshift
             return applyWarpTranslation;
         }
 
+        /// <summary>
+        /// Loads the desired FloatCurve from the desired config node.
+        /// </summary>
+        /// <param name="curve">The FloatCurve to load</param>
+        /// <param name="curveNodeName">The name of the curve to load</param>
+        /// <param name="defaultCurve">An optional default curve to use in case the curve's node doesn't exist in the part module's config.</param>
         protected void loadCurve(FloatCurve curve, string curveNodeName, ConfigNode defaultCurve = null)
         {
             if (curve.Curve.length > 0)

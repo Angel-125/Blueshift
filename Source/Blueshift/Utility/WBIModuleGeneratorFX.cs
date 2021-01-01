@@ -256,6 +256,7 @@ namespace Blueshift
             }
 
             isMissingResources = false;
+            status = "Nominal";
             return base.PrepareRecipe(deltatime);
         }
         #endregion

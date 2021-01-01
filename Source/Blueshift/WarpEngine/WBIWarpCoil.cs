@@ -20,7 +20,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 namespace Blueshift
 {
     /// <summary>
-    /// Warp coils produce the warp capacity needed for vessels to go faster than light.
+    /// Warp coils produce the warp capacity needed for vessels to go faster than light. Warp capacity is a fixed resource, but the resources needed to produce it are entirely optional.
+    /// 
+    /// `
+    /// MODULE
+    /// {
+    ///     name = WBIWarpCoil
+    ///     textureModuleID = WarpCoil
+    ///     warpCapacity = 10
+    ///     RESOURCE
+    ///     {
+    ///         name = GravityWaves
+    ///         rate = 200
+    ///         FlowMode = STAGE_PRIORITY_FLOW
+    ///     }
+    /// }
+    /// `
     /// </summary>
     public class WBIWarpCoil: WBIPartModule, IModuleInfo
     {
@@ -57,7 +72,7 @@ namespace Blueshift
         public bool isActivated = false;
 
         /// <summary>
-        /// A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+        /// A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
         /// </summary>
         [KSPField(isPersistant = true, guiName = "Animation Throttle")]
         [UI_FloatRange(stepIncrement = 0.01f, maxValue = 1f, minValue = 0f)]
@@ -94,6 +109,8 @@ namespace Blueshift
             StringBuilder info = new StringBuilder();
 
             info.AppendLine("<color=white>Generates warp capacity for faster than light travel.</color>");
+            info.AppendLine(" ");
+            info.AppendLine(string.Format("<color=white><b>Warp Capacity:</b> {0:n1}</color>", warpCapacity));
             info.AppendLine(resHandler.PrintModuleResources());
 
             return info.ToString();

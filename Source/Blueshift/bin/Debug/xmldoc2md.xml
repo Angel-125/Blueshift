@@ -1,0 +1,542 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Blueshift</name>
+    </assembly>
+    <members>
+        <member name="T:Blueshift.WBIModuleGeneratorFX">
+            <summary>
+            An enhanced version of the stock ModuleGenerator that supports playing effects.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.moduleTitle">
+            <summary>
+            The module's title/display name.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.moduleDescription">
+            <summary>
+            The module's description.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.moduleID">
+            <summary>
+            The ID of the part module. Since parts can have multiple generators, this field helps identify them.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.guiVisible">
+            <summary>
+            Toggles visibility of the GUI.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.textureModuleID">
+            <summary>
+            Generators can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.animationThrottle">
+            <summary>
+            A throttle control to vary the animation speed of a controlled WBIAnimatedTexture
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.startEffect">
+            <summary>
+            Generators can play a start effect when the generator is activated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.stopEffect">
+            <summary>
+            Generators can play a stop effect when the generator is deactivated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.runningEffect">
+            <summary>
+            Generators can play a running effect while the generator is running.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIPartModule">
+            <summary>
+            Just a simple base class to handle common functionality
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIPartModule.getPartConfigNode">
+            <summary>
+            Retrieves the module's config node from the part config.
+            </summary>
+            <returns>A ConfigNode for the part module.</returns>
+        </member>
+        <member name="T:Blueshift.WBIAnimatedTexture">
+            <summary>
+            This class lets you animate textures by displaying a series of images in sequence. You can animate a material's diffuse and emissive texture. You include several textures that
+            act as the individual animation frames, and the part module will show them in sequence. This is NOT as efficient as a texture strip but it's the best I can do for now, and
+            it's easier to set up the UV maps on the meshes being animated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.moduleID">
+            <summary>
+            The ID of the part module. Since parts can have multiple animated textures, this field helps identify them.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.textureTransformName">
+            <summary>
+            Name of the transform whose textures will be animated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.animatedEmissiveTexture">
+            <summary>
+            The name of the animated texture, like "WarpPlasma." The actual textures should be numbered in sequence (WarpPlasma1, WarpPlasma2, etc). 
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.animatedDiffuseTexture">
+            <summary>
+            The name of the diffuse texture. It too can be animated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.minFramesPerSecond">
+            <summary>
+            The minimum animation speed.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.maxFramesPerSecond">
+            <summary>
+            The maximum animation speed. Testing shows that with frame updates happening every 0.02 seconds, that corresponds to 50 frames per second.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.emissiveFadeTime">
+            <summary>
+            In seconds, how fast should the emissive fade when the animation isn't activated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.isActivated">
+            <summary>
+            The activation switch. When not running, the animations won't be animated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.animationThrottle">
+            <summary>
+            A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnimatedTexture.fadesAtMinThrottle">
+            <summary>
+            A toggle that indicates whether or not to fade out the animations when the animationThrottle is set to zero.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIAnimatedTexture.blendTextures(System.Single,UnityEngine.Texture2D,UnityEngine.Texture2D,UnityEngine.Texture2D)">
+            <summary>
+            Blends two textures together and stores the result in an output texture. Curtesy of stupid_chris
+            </summary>
+            <param name="blend">Percentage to blend through (from 0 to 1)</param>
+            <param name="from">Beginning texture</param>
+            <param name="to">Finishing texture</param>
+            <param name="output">Texture to appear blended</param>
+        </member>
+        <member name="M:Blueshift.WBIAnimatedTexture.getTextures(System.String)">
+            <summary>
+            Retrieves all the textures for the specified name. If the name is "WarpPlasma" for instance, then the array of textures will have "WarpPlasma1" "WarpPlasma2" and so on.
+            The method will keep looking for textures until it can no longer find a texture in the numbered sequence.
+            </summary>
+            <param name="textureName">The base name of the texture to search for. It should have the relative path such as WildBlueIndustries/Blueshift/Parts/Engine/WarpPlasma.</param>
+            <returns>An array of string containing the numbered textures that comprise the animation.</returns>
+        </member>
+        <member name="T:Blueshift.WBIWarpCoil">
+            <summary>
+            Warp coils produce the warp capacity needed for vessels to go faster than light. Warp capacity is a fixed resource, but the resources needed to produce it are entirely optional.
+            
+            `
+            MODULE
+            {
+                name = WBIWarpCoil
+                textureModuleID = WarpCoil
+                warpCapacity = 10
+                RESOURCE
+                {
+                    name = GravityWaves
+                    rate = 200
+                    FlowMode = STAGE_PRIORITY_FLOW
+                }
+            }
+            `
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.textureModuleID">
+            <summary>
+            Warp coils can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.runningEffect">
+            <summary>
+            Warp coils can play a running effect while the generator is running.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.warpCapacity">
+            <summary>
+            The amount of warp capacity that the coil can produce.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.isActivated">
+            <summary>
+            The activation switch. When not running, the animations won't be animated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.animationThrottle">
+            <summary>
+            A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIWarpEngine">
+            <summary>
+            The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. 
+            
+            `
+            MODULE
+            {
+                name = WBIWarpEngine
+                ...Standard engine parameters here...
+                moduleDescription = Enables fater than light travel.
+                bowShockTransformName = bowShock
+                minPlanetaryRadius = 3.0
+                displacementImpulse = 100
+                
+                planetarySOISpeedCurve
+                {
+                    key = 1 0.1
+                    ...
+                    key = 0.1 0.005
+                }
+                
+                warpCurve
+                {
+                    key = 1 0
+                    key = 10 1
+                    ...
+                    key = 1440 10
+                }
+                
+                waterfallEffectController = warpEffectController
+                waterfallWarpEffectsCurve
+                {
+                    key = 0 0
+                    ...
+                    key = 1.5 1
+                }
+                
+                textureModuleID = WarpCore
+            }
+            `
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.moduleDescription">
+            <summary>
+            Short description of the module as displayed in the editor.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.minPlanetaryRadius">
+            <summary>
+            Minimum planetary radius needed to go to warp. This is used to calculate the user-friendly minimum warp altitude display.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.minWarpAltitudeDisplay">
+            <summary>
+            Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpSpeed">
+            <summary>
+            The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.planetarySOISpeedCurve">
+            <summary>
+            Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body.
+            Out in interplanetary space we don't have a speed limit.
+            The first number represents how close to the SOI edge the vessel is (1 = right at the edge, 0.1 = 10% of the distance to the SOI edge)
+            The second number is the top speed multiplier.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.displacementImpulse">
+            <summary>
+            Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties.
+            Going over this limit incurs performance penalties, but staying under this value provides benefits.
+            The displacement value is rated in metric tons.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpCurve">
+            <summary>
+            In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with
+            a WBIWarpCoil part module can generate warpCapacity.
+            The warp curve controls how much warpCapacity is neeeded to go light speed or faster.
+            The first number represents the available warpCapacity, while the second number gives multiples of C.
+            You can apply any kind of warp curve you want, but the baseline uses the Fibonacci sequence * 10.
+            It may seem steep, but in KSP's small scale, 1C is plenty fast.
+            This curve is modified by the engine's displacementImpulse and current vessel mass.
+            effectiveWarpCapacity = warpCapacity * (displacementImpulse / vessel mass)
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.waterfallWarpEffectsCurve">
+            <summary>
+            Waterfall Warp Effects Curve. This is used to control the Waterfall warp field effects based on the vessel's current warp speed.
+            The first number represents multiples of C, and the second number represents the level at which to drive the warp effects.
+            The effects value ranges from 0 to 1, while there's no upper limit to multiples of C, so keep that in mind.
+            The default curve is:
+            key = 0 0
+            key = 1 0.5
+            key = 1.5 1
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.textureModuleID">
+            <summary>
+            The name of the WBIAnimatedTexture to drive as part of the warp effects.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.photonicBoomEffectName">
+            <summary>
+            Optional effect to play when the vessel exceeds the speed of light.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.isInSpace">
+            <summary>
+            (Debug visible) Flag to indicate that we're in space (orbiting, suborbital, or escaping)
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.meetsWarpAltitude">
+            <summary>
+            (Debug visible) Flag to indicate that the ship meets minimum warp altitude.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.hasWarpCapacity">
+            <summary>
+            (Debug visible) Flag to indicate that the ship has sufficient warp capacity.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.bowShockTransformName">
+            <summary>
+            Name of optional bow shock transform.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.applyWarpTranslation">
+            <summary>
+            (Debug visible) Flag to indicate that the engine should apply translation effects. Multiple engines can work together as long as each one's minimum requirements are met.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.averageDisplacementImpulse">
+            <summary>
+            (Debug visible) Average displacement impulse calculated from all active warp engines.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.totalWarpCapacity">
+            <summary>
+            (Debug visible) Total warp capacity calculated from all active warp engines.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.effectiveWarpCapacity">
+            <summary>
+            (Debug visible) Effective warp capacity after accounting for vessel mass
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.maxWarpSpeed">
+            <summary>
+            (Debug visible) Maximum possible warp speed.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpDistance">
+            <summary>
+            (Debug visible) Distance per physics update that the vessel will move.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.effectsThrottle">
+            <summary>
+            (Debug visible) Current throttle level for the warp effects.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.terrainHit">
+            <summary>
+            Hit test stuff to make sure we don't run into planets.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.layerMask">
+            <summary>
+            Layer mask used for the hit test
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpEngines">
+            <summary>
+            List of active warp engines
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpCoils">
+            <summary>
+            List of enabled warp coils
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpEngineTextures">
+            <summary>
+            List of animated textures driven by the warp engine
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.previousBody">
+            <summary>
+            Previously visited celestial body
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.bodyBounds">
+            <summary>
+            Bounds object of the celestial body
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.throttleLevel">
+            <summary>
+            Current throttle level
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.bowShockTransform">
+            <summary>
+            Optional bow shock effect transform.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpFlameout">
+            <summary>
+            Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.waterfallFXModule">
+            <summary>
+            Optional (but highly recommended) Waterfall effects module
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.hasExceededLightSpeed">
+            <summary>
+            Flag to indicate whether or not the vessel has exceeded light speed.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.IsActivated">
+            <summary>
+            Determines whether or not the engine is ignited and operational.
+            </summary>
+            <returns>true if the engine is activated, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.IsFlamedOut">
+            <summary>
+            Checks flamout conditions including ensuring that the ship is in space, meets minimum warp altitude, and has sufficient warp capacity.
+            </summary>
+            <returns>true if the engine is flamed out, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.HasWarpCapacity">
+            <summary>
+            Determines whether or not the ship has sufficient warp capacity to go FTL.
+            </summary>
+            <returns>true if the ship has sufficient warp capacity, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.IsInSpace">
+            <summary>
+            Determines whether or the ship is in space. To be in space the ship must be sub-orbital, orbiting, or escaping.
+            </summary>
+            <returns>true if the ship is in space, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.MeetsWarpAltitude">
+            <summary>
+            Determines whether or not the ship meets the minimum required altitude to go to warp.
+            </summary>
+            <returns>true if the ship meets minimum altitude, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.UpdateWarpStatus">
+            <summary>
+            Updates the warp status display
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.fadeOutEffects">
+            <summary>
+            Fades out the warp effects
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.initWaterfallModule">
+            <summary>
+            Initializes the waterfall module
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.getAnimatedWarpEngineTextures">
+            <summary>
+            Finds any animated textures that should be controlled by the warp engine
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.calculateBestWarpSpeed">
+            <summary>
+            Calculates the best possible warp speed from the vessel's active warp engines.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.getTotalWarpCapacity">
+            <summary>
+            Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.consumeCoilResources(Blueshift.WBIWarpCoil)">
+            <summary>
+            Consumes the warp coil's required resources.
+            </summary>
+            <param name="warpCoil">The WBIWarpCoil to check for required resources.</param>
+            <returns>true if the coil successfully consumed its required resources, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.shouldApplyWarp">
+            <summary>
+            Looks for all the active warp engines in the vessel. From the list, only the top-most engine in the list of active engines should apply warp translation. All others
+            simply provide support.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.loadCurve(FloatCurve,System.String,ConfigNode)">
+            <summary>
+            Loads the desired FloatCurve from the desired config node.
+            </summary>
+            <param name="curve">The FloatCurve to load</param>
+            <param name="curveNodeName">The name of the curve to load</param>
+            <param name="defaultCurve">An optional default curve to use in case the curve's node doesn't exist in the part module's config.</param>
+        </member>
+        <member name="M:Blueshift.WFModuleWaterfallFX.#ctor(PartModule)">
+            <summary>
+            Instantiates a new WFModuleWaterfallFX
+            </summary>
+            <param name="module">The PartModule representing the FX module.</param>
+        </member>
+        <member name="M:Blueshift.WFModuleWaterfallFX.SetControllerOverride(System.String,System.Boolean)">
+            <summary>
+            Sets the override state for the specified controller.
+            </summary>
+            <param name="controllerName">A string containing the name of the controller to override.</param>
+            <param name="overriden">A bool indicating whether or not to override the controller.</param>
+        </member>
+        <member name="M:Blueshift.WFModuleWaterfallFX.SetControllerOverrideValue(System.String,System.Single)">
+            <summary>
+            Sets the override value for the specified controller
+            </summary>
+            <param name="controllerName">A string containing the name of the controller to override.</param>
+            <param name="value">A float containing the override value.</param>
+        </member>
+        <member name="M:Blueshift.WFModuleWaterfallFX.SetControllerValue(System.String,System.Single)">
+            <summary>
+            Sets the value for the specified controller
+            </summary>
+            <param name="controllerName">A string containing the name of the controller to override.</param>
+            <param name="value">A float containing the override value.</param>
+        </member>
+    </members>
+</doc>
