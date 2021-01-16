@@ -8,6 +8,25 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
+Changelog
+0.2.1
+
+New Parts
+
+S-3 FTL Propellant Tank
+Mk3-S3 Adapter Tank
+S-2 Warp Coil
+S-2 FTL Propellant Tank
+
+Changes
+- Warp coils are now rated for tonnage efficiency, much like warp engines. This allows smaller warp coils to power smaller vessels faster than light, but when used with larger vessels, it will take more of the coils to produce similar efficiencies. It also lets you mix and match warp cores and engines with warp coils; a ship may have underpowered warp coils for its mass, but it could have an overpowered warp core to compensate, or vice-versa.
+
+Fixes
+- Updated materials to better match Restock parts.
+- Updated warp field effects to match latest Waterfall release.
+- Warp Coils are enabled by default.
+- Fixed warp engine not starting when engine isn't staged.
+
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2020 by Michael Billard, All Rights Reserved.
 

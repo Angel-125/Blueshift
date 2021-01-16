@@ -69,7 +69,7 @@ namespace Blueshift
         /// </summary>
         [KSPField(isPersistant = true, guiName = "Warp Coil", guiActive = true)]
         [UI_Toggle(enabledText = "Enabled", disabledText = "Disabled")]
-        public bool isActivated = false;
+        public bool isActivated = true;
 
         /// <summary>
         /// A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
@@ -77,6 +77,15 @@ namespace Blueshift
         [KSPField(isPersistant = true, guiName = "Animation Throttle")]
         [UI_FloatRange(stepIncrement = 0.01f, maxValue = 1f, minValue = 0f)]
         public float animationThrottle = 0f;
+
+        /// <summary>
+        /// Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties.
+        /// Going over this limit incurs performance penalties, but staying under this value provides benefits.
+        /// The displacement value is rated in metric tons.
+        /// </summary>
+        [KSPField]
+        public float displacementImpulse = 10;
+
         #endregion
 
         #region Housekeeping

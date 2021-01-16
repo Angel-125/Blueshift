@@ -199,6 +199,13 @@
             A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpCoil.displacementImpulse">
+            <summary>
+            Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties.
+            Going over this limit incurs performance penalties, but staying under this value provides benefits.
+            The displacement value is rated in metric tons.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIWarpEngine">
             <summary>
             The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. 

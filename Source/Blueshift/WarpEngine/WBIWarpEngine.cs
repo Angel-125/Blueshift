@@ -440,6 +440,8 @@ namespace Blueshift
         public override void Activate()
         {
             base.Activate();
+            if (!staged)
+                this.part.force_activate(true);
 
             Fields["warpSpeed"].guiActive = true;
             
@@ -747,6 +749,8 @@ namespace Blueshift
             List<WBIWarpCoil> coils = this.part.vessel.FindPartModulesImplementing<WBIWarpCoil>();
             int count = coils.Count;
             WBIWarpCoil warpCoil;
+            float coilCapacity;
+            float vesselMass = this.part.vessel.GetTotalMass();
 
             totalWarpCapacity = 0;
             warpCoils.Clear();
@@ -755,7 +759,8 @@ namespace Blueshift
                 warpCoil = coils[index];
                 if (warpCoil.isActivated && consumeCoilResources(warpCoil))
                 {
-                    totalWarpCapacity += warpCoil.warpCapacity;
+                    coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
+                    totalWarpCapacity += coilCapacity;
                     warpCoils.Add(warpCoil);
                 }
             }
