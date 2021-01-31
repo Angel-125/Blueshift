@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection;
 
 /*
-Source code copyright 2020, by Michael Billard (Angel-125)
+Source code copyright 2021, by Michael Billard (Angel-125)
 License: GPLV3
 
 Wild Blue Industries is trademarked by Michael Billard and may be used for non-commercial purposes. All other rights reserved.
@@ -31,6 +31,31 @@ namespace Blueshift
             miSetControllerOverride = typeModuleWaterfallFX.GetMethod("SetControllerOverride", new[] { typeof(string), typeof(bool) });
             miSetControllerOverrideValue = typeModuleWaterfallFX.GetMethod("SetControllerOverrideValue", new[] { typeof(string), typeof(float) });
             miSetControllerValue = typeModuleWaterfallFX.GetMethod("SetControllerValue", new[] { typeof(string), typeof(float) });
+        }
+
+        /// <summary>
+        /// Attempts to obtain the Waterfall FX module from the supplied part.
+        /// </summary>
+        /// <param name="part">A Part that might contain a waterfall fx module</param>
+        /// <returns>A WFModuleWaterfallFX if the part has a waterfall module, or null if not.</returns>
+        public static WFModuleWaterfallFX GetWaterfallModule(Part part)
+        {
+            {
+                int count = part.Modules.Count;
+                PartModule module;
+
+                for (int index = 0; index < count; index++)
+                {
+                    module = part.Modules[index];
+                    if (module.moduleName == "ModuleWaterfallFX")
+                    {
+                        WFModuleWaterfallFX waterfallFXModule = new WFModuleWaterfallFX(module);
+                        return waterfallFXModule;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

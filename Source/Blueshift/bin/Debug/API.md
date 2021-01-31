@@ -27,6 +27,8 @@ Generators can play a start effect when the generator is activated.
 Generators can play a stop effect when the generator is deactivated.
 ### runningEffect
 Generators can play a running effect while the generator is running.
+### waterfallEffectController
+Name of the Waterfall effects controller that controls the warp effects (if any).
 
 # WBIPartModule
             
@@ -103,12 +105,18 @@ A flag to enable/disable debug mode.
 Warp coils can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
 ### runningEffect
 Warp coils can play a running effect while the generator is running.
+### waterfallEffectController
+Name of the Waterfall effects controller that controls the warp effects (if any).
 ### warpCapacity
 The amount of warp capacity that the coil can produce.
 ### isActivated
 The activation switch. When not running, the animations won't be animated.
 ### animationThrottle
 A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+### displacementImpulse
+Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
+### waterfallFXModule
+Optional (but highly recommended) Waterfall effects module
 
 # WBIWarpEngine
             
@@ -136,6 +144,8 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 Waterfall Warp Effects Curve. This is used to control the Waterfall warp field effects based on the vessel's current warp speed. The first number represents multiples of C, and the second number represents the level at which to drive the warp effects. The effects value ranges from 0 to 1, while there's no upper limit to multiples of C, so keep that in mind. The default curve is: key = 0 0 key = 1 0.5 key = 1.5 1
 ### textureModuleID
 The name of the WBIAnimatedTexture to drive as part of the warp effects.
+### photonicBoomEffectName
+Optional effect to play when the vessel exceeds the speed of light.
 ### isInSpace
 (Debug visible) Flag to indicate that we're in space (orbiting, suborbital, or escaping)
 ### meetsWarpAltitude
@@ -180,6 +190,8 @@ Optional bow shock effect transform.
 Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
+### hasExceededLightSpeed
+Flag to indicate whether or not the vessel has exceeded light speed.
 ## Methods
 
 
@@ -214,9 +226,6 @@ Updates the warp status display
 ### fadeOutEffects
 Fades out the warp effects
 
-### initWaterfallModule
-Initializes the waterfall module
-
 ### getAnimatedWarpEngineTextures
 Finds any animated textures that should be controlled by the warp engine
 
@@ -247,3 +256,77 @@ Loads the desired FloatCurve from the desired config node.
 > **curveNodeName:** The name of the curve to load
 
 > **defaultCurve:** An optional default curve to use in case the curve's node doesn't exist in the part module's config.
+
+
+# BlueshiftScenario
+            
+This class helps starships determine when they're in interstellar space.
+        
+## Fields
+
+### shared
+Shared instance of the helper.
+### homeSystemSOI
+Sphere of influence radius of the home system.
+### interstellarWarpSpeedMultiplier
+When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
+### homeSOIMultiplier
+In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room, we multiply the computed value by this multiplier.
+## Methods
+
+
+### OnAwake
+Handles the awake event.
+
+### IsAStar(CelestialBody)
+Determines whether or not the celestial body is a star.
+> #### Parameters
+> **body:** The body to test.
+
+> #### Return value
+> true if the body is a star, false if not.
+
+### IsInInterstellarSpace(Vessel)
+Determines whether or not the vessel is in interstellar space.
+> #### Parameters
+> **vessel:** 
+
+> #### Return value
+> 
+
+### IsInSpace(Vessel)
+Determines whether or not the vessel is in space.
+> #### Parameters
+> **vessel:** The Vessel to check.
+
+> #### Return value
+> true if the vessel is in space, false if not.
+
+# WBIModuleHarvesterFX
+            
+This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
+        
+## Fields
+
+### debugMode
+A flag to enable/disable debug mode.
+### moduleTitle
+The module's title/display name.
+### moduleDescription
+The module's description.
+### moduleID
+The ID of the part module. Since parts can have multiple harvesters, this field helps identify them.
+### guiVisible
+Toggles visibility of the GUI.
+### textureModuleID
+Harvesters can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
+### animationThrottle
+A throttle control to vary the animation speed of a controlled WBIAnimatedTexture
+### startEffect
+Harvesters can play a start effect when the generator is activated.
+### stopEffect
+Harvesters can play a stop effect when the generator is deactivated.
+### runningEffect
+Harvesters can play a running effect while the generator is running.
+### waterfallEffectController
+Name of the Waterfall effects controller that controls the warp effects (if any).

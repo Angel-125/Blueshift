@@ -8,24 +8,31 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-Changelog
-0.2.1
-
 New Parts
 
-S-3 FTL Propellant Tank
-Mk3-S3 Adapter Tank
-S-2 Warp Coil
+S-2 "Planet's Edge" Warp Core
+S-2 Gravitic Generator
 S-2 FTL Propellant Tank
+S3-2 Warp Ring*
+S-1 Warp Coil*
+S-1 FTL Endcap Tank
+Mk2 "Starflight" Warp Core
+Mk2 Gravimetric Displacement Generator
+Mk2 FTL Propellant Tank
+Mk2 Warp Ring*
+Mk2 Warp Coil*
+* Has part variants
 
 Changes
-- Warp coils are now rated for tonnage efficiency, much like warp engines. This allows smaller warp coils to power smaller vessels faster than light, but when used with larger vessels, it will take more of the coils to produce similar efficiencies. It also lets you mix and match warp cores and engines with warp coils; a ship may have underpowered warp coils for its mass, but it could have an overpowered warp core to compensate, or vice-versa.
 
-Fixes
-- Updated materials to better match Restock parts.
-- Updated warp field effects to match latest Waterfall release.
-- Warp Coils are enabled by default.
-- Fixed warp engine not starting when engine isn't staged.
+- Adjusted costs on the parts.
+- Most of the parts can now be surface attached.
+- Due to their versatility, warp coils now cost more to obtain the same performance as an equivalent Warp Ring.
+- When in interstellar space, vessels can go much faster. You can change how much of a speed boost ships get by setting the interstellarWarpSpeedMultiplier in the settings.cfg file. The default is 1000, which is about 2.74 light-years per day.
+- Warp engines now require a minimum planetary radius of 1 (down from 3) in order to go to warp.
+- You can now combine warp engines to increase the displacement impulse (lets you move more massive ships).
+- WBIWarpCoil and WBIModuleGeneratorFX can now support Waterfall along with animated textures and more traditional EFFECTS nodes.
+- Added new WBIModuleHarvesterFX. In addition to resource harvesting, it can drive WBIAnimatedTexture modules, a Waterfall effects module, and EFFECT nodes.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2020 by Michael Billard, All Rights Reserved.

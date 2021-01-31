@@ -23,6 +23,8 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 Waterfall Warp Effects Curve. This is used to control the Waterfall warp field effects based on the vessel's current warp speed. The first number represents multiples of C, and the second number represents the level at which to drive the warp effects. The effects value ranges from 0 to 1, while there's no upper limit to multiples of C, so keep that in mind. The default curve is: key = 0 0 key = 1 0.5 key = 1.5 1
 ### textureModuleID
 The name of the WBIAnimatedTexture to drive as part of the warp effects.
+### photonicBoomEffectName
+Optional effect to play when the vessel exceeds the speed of light.
 ### isInSpace
 (Debug visible) Flag to indicate that we're in space (orbiting, suborbital, or escaping)
 ### meetsWarpAltitude
@@ -67,6 +69,8 @@ Optional bow shock effect transform.
 Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
+### hasExceededLightSpeed
+Flag to indicate whether or not the vessel has exceeded light speed.
 ## Methods
 
 
@@ -101,9 +105,6 @@ Updates the warp status display
 ### fadeOutEffects
 Fades out the warp effects
 
-### initWaterfallModule
-Initializes the waterfall module
-
 ### getAnimatedWarpEngineTextures
 Finds any animated textures that should be controlled by the warp engine
 
@@ -127,4 +128,12 @@ Looks for all the active warp engines in the vessel. From the list, only the top
 > 
 
 ### loadCurve(FloatCurve,System.String,ConfigNode)
-Loads the desired F
+Loads the desired FloatCurve from the desired config node.
+> #### Parameters
+> **curve:** The FloatCurve to load
+
+> **curveNodeName:** The name of the curve to load
+
+> **defaultCurve:** An optional default curve to use in case the curve's node doesn't exist in the part module's config.
+
+

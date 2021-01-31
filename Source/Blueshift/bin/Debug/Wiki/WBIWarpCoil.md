@@ -9,10 +9,16 @@ A flag to enable/disable debug mode.
 Warp coils can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
 ### runningEffect
 Warp coils can play a running effect while the generator is running.
+### waterfallEffectController
+Name of the Waterfall effects controller that controls the warp effects (if any).
 ### warpCapacity
 The amount of warp capacity that the coil can produce.
 ### isActivated
 The activation switch. When not running, the animations won't be animated.
 ### animationThrottle
 A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+### displacementImpulse
+Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
+### waterfallFXModule
+Optional (but highly recommended) Waterfall effects module
 

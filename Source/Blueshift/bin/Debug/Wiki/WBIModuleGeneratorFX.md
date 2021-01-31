@@ -23,4 +23,6 @@ Generators can play a start effect when the generator is activated.
 Generators can play a stop effect when the generator is deactivated.
 ### runningEffect
 Generators can play a running effect while the generator is running.
+### waterfallEffectController
+Name of the Waterfall effects controller that controls the warp effects (if any).
 

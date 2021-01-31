@@ -7,7 +7,7 @@ using KSP.IO;
 using KSP.Localization;
 
 /*
-Source code copyright 2020, by Michael Billard (Angel-125)
+Source code copyright 2021, by Michael Billard (Angel-125)
 License: GPLV3
 
 Wild Blue Industries is trademarked by Michael Billard and may be used for non-commercial purposes. All other rights reserved.
@@ -39,30 +39,26 @@ namespace Blueshift
             if (string.IsNullOrEmpty(resourceName))
                 return;
 
-            Events["enableResourceTweak"].guiName = resourceName + " " + tweakEnabledName;
-            Events["disableResourceTweak"].guiName = resourceName + " " + tweakDisabledName;
-
             PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
             if (definitions.Contains(resourceName))
+            {
                 resourceDefinition = definitions[resourceName];
 
-            if (this.part.Resources.Contains(resourceName))
-            {
-                this.part.Resources[resourceName].isTweakable = resourceDefinition.isTweakable;
+                Events["enableResourceTweak"].guiName = resourceDefinition.displayName + " " + tweakEnabledName;
+                Events["disableResourceTweak"].guiName = resourceDefinition.displayName + " " + tweakDisabledName;
+
                 if (HighLogic.LoadedSceneIsEditor)
                 {
-                    if (resourceDefinition.isTweakable)
-                    {
-                        Events["enableResourceTweak"].active = false;
-                        Events["disableResourceTweak"].active = true;
-                    }
-                    else
-                    {
-                        Events["enableResourceTweak"].active = true;
-                        Events["disableResourceTweak"].active = false;
-                    }
+                    this.part.Resources[resourceName].isTweakable = resourceDefinition.isTweakable;
+                    updateUI();
+                    GameEvents.onPartResourceListChange.Add(onPartResourceListChange);
                 }
             }
+        }
+
+        public void OnDestroy()
+        {
+            GameEvents.onPartResourceListChange.Remove(onPartResourceListChange);
         }
 
         [KSPEvent(guiActiveEditor = true)]
@@ -95,6 +91,34 @@ namespace Blueshift
             //Dirty the GUI
             MonoUtilities.RefreshContextWindows(this.part);
             GameEvents.onPartResourceListChange.Fire(this.part);
+        }
+
+        protected void updateUI()
+        {
+            if (this.part.Resources.Contains(resourceName))
+            {
+                if (this.part.Resources[resourceName].isTweakable)
+                {
+                    Events["enableResourceTweak"].active = false;
+                    Events["disableResourceTweak"].active = true;
+                }
+                else
+                {
+                    Events["enableResourceTweak"].active = true;
+                    Events["disableResourceTweak"].active = false;
+                }
+            }
+            else
+            {
+                Events["enableResourceTweak"].active = false;
+                Events["disableResourceTweak"].active = false;
+            }
+        }
+
+        protected void onPartResourceListChange(Part modifiedPart)
+        {
+            if (modifiedPart == this.part)
+                updateUI();
         }
     }
 }

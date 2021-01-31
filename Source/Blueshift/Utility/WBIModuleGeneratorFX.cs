@@ -7,7 +7,7 @@ using KSP.IO;
 using KSP.Localization;
 
 /*
-Source code copyright 2020, by Michael Billard (Angel-125)
+Source code copyright 2021, by Michael Billard (Angel-125)
 License: GPLV3
 
 Wild Blue Industries is trademarked by Michael Billard and may be used for non-commercial purposes. All other rights reserved.
@@ -86,12 +86,19 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string runningEffect = string.Empty;
+
+        /// <summary>
+        /// Name of the Waterfall effects controller that controls the warp effects (if any).
+        /// </summary>
+        [KSPField]
+        public string waterfallEffectController = string.Empty;
         #endregion
 
         #region Housekeeping
         WBIAnimatedTexture[] animatedTextures = null;
         public List<ResourceRatio> drainedResources = new List<ResourceRatio>();
         bool isMissingResources = false;
+        WFModuleWaterfallFX waterfallFXModule = null;
         #endregion
 
         #region IModuleInfo
@@ -173,6 +180,9 @@ namespace Blueshift
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();
+
+            // Get Waterfall module (if any)
+            waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
         }
 
         public override void StartResourceConverter()
@@ -192,6 +202,11 @@ namespace Blueshift
             this.part.Effect(stopEffect, 1.0f);
 
             updateTextureModules();
+
+            if (waterfallFXModule != null)
+            {
+                waterfallFXModule.SetControllerValue(waterfallEffectController, 0);
+            }
         }
 
         public override void OnInactive()
@@ -226,6 +241,12 @@ namespace Blueshift
 
             // Update animated textures
             updateTextureModules();
+
+            // Update Waterfall
+            if (waterfallFXModule != null)
+            {
+                waterfallFXModule.SetControllerValue(waterfallEffectController, animationThrottle);
+            }
         }
 
         protected override ConversionRecipe PrepareRecipe(double deltatime)

@@ -7,7 +7,7 @@ using KSP.IO;
 using KSP.Localization;
 
 /*
-Source code copyright 2020, by Michael Billard (Angel-125)
+Source code copyright 2021, by Michael Billard (Angel-125)
 License: GPLV3
 
 Wild Blue Industries is trademarked by Michael Billard and may be used for non-commercial purposes. All other rights reserved.
@@ -59,6 +59,12 @@ namespace Blueshift
         public string runningEffect = string.Empty;
 
         /// <summary>
+        /// Name of the Waterfall effects controller that controls the warp effects (if any).
+        /// </summary>
+        [KSPField]
+        public string waterfallEffectController = string.Empty;
+
+        /// <summary>
         /// The amount of warp capacity that the coil can produce.
         /// </summary>
         [KSPField]
@@ -90,6 +96,11 @@ namespace Blueshift
 
         #region Housekeeping
         public WBIAnimatedTexture[] animatedTextures = null;
+
+        /// <summary>
+        /// Optional (but highly recommended) Waterfall effects module
+        /// </summary>
+        protected WFModuleWaterfallFX waterfallFXModule = null;
         #endregion
 
         #region IModuleInfo
@@ -138,6 +149,12 @@ namespace Blueshift
 
             // Update animated textures
             updateTextureModules();
+
+            // Update Waterfall
+            if (waterfallFXModule != null)
+            {
+                waterfallFXModule.SetControllerValue(waterfallEffectController, animationThrottle);
+            }
         }
 
         public override void OnStart(StartState state)
@@ -150,6 +167,9 @@ namespace Blueshift
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();
+
+            // Get Waterfall module (if any)
+            waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
         }
         #endregion
 

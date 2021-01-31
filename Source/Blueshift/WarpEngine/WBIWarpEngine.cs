@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 /*
-Source code copyright 2020, by Michael Billard (Angel-125)
+Source code copyright 2021, by Michael Billard (Angel-125)
 License: GPLV3
 
 Wild Blue Industries is trademarked by Michael Billard and may be used for non-commercial purposes. All other rights reserved.
@@ -380,7 +381,11 @@ namespace Blueshift
 
         public override string GetInfo()
         {
-            return base.GetInfo();
+            StringBuilder info = new StringBuilder();
+            info.Append(base.GetInfo());
+            info.AppendLine(string.Format("<b>Displacement Impulse:</b> {0:n1} t", displacementImpulse));
+            return info.ToString();
+
         }
 
         public override void OnStart(StartState state)
@@ -397,7 +402,7 @@ namespace Blueshift
 
             warpEngines = new List<WBIWarpEngine>();
             warpCoils = new List<WBIWarpCoil>();
-            initWaterfallModule();
+            waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
             getAnimatedWarpEngineTextures();
 
             // Optional bow shock transform.
@@ -676,25 +681,6 @@ namespace Blueshift
         }
 
         /// <summary>
-        /// Initializes the waterfall module
-        /// </summary>
-        protected void initWaterfallModule()
-        {
-            int count = this.part.Modules.Count;
-            PartModule module;
-
-            for (int index = 0; index < count; index++)
-            {
-                module = this.part.Modules[index];
-                if (module.moduleName == "ModuleWaterfallFX")
-                {
-                    waterfallFXModule = new WFModuleWaterfallFX(module);
-                    return;
-                }
-            }
-        }
-
-        /// <summary>
         /// Finds any animated textures that should be controlled by the warp engine
         /// </summary>
         protected void getAnimatedWarpEngineTextures()
@@ -733,11 +719,16 @@ namespace Blueshift
             maxWarpSpeed = bestWarpSpeed;
 
             // Limit speed if we're in a planetary SOI
-            // based on this.part.vessel.mainBody.sphereOfInfluence?
             if (this.part.vessel.mainBody.scaledBody.GetComponentsInChildren<SunShaderController>(true).Length == 0)
             {
                 float speedRatio = (float)(this.part.vessel.altitude / this.part.vessel.mainBody.sphereOfInfluence);
                 maxWarpSpeed *= planetarySOISpeedCurve.Evaluate(speedRatio);
+            }
+
+            // If we're in interstellar space then we can increase our max warp speed.
+            else if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
+            {
+                maxWarpSpeed *= BlueshiftScenario.interstellarWarpSpeedMultiplier;
             }
         }
 
@@ -832,7 +823,7 @@ namespace Blueshift
                 }
             }
 
-            averageDisplacementImpulse = totalDisplacementImpulse / count;
+            averageDisplacementImpulse = totalDisplacementImpulse; // / count;
             return applyWarpTranslation;
         }
 

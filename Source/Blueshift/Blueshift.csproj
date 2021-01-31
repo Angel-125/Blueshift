@@ -80,6 +80,8 @@
     <Compile Include="WarpEngine\WBIWarpCoil.cs" />
     <Compile Include="WarpEngine\WBIWarpEngine.cs" />
     <Compile Include="Waterfall\WFModuleWaterfallFX.cs" />
+    <Compile Include="HelpersAndManagers\BlueshiftScenario.cs" />
+    <Compile Include="Utility\WBIModuleHarvesterFX.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

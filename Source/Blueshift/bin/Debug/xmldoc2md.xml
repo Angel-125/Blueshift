@@ -59,6 +59,11 @@
             Generators can play a running effect while the generator is running.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIPartModule">
             <summary>
             Just a simple base class to handle common functionality
@@ -184,6 +189,11 @@
             Warp coils can play a running effect while the generator is running.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpCoil.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpCoil.warpCapacity">
             <summary>
             The amount of warp capacity that the coil can produce.
@@ -204,6 +214,11 @@
             Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties.
             Going over this limit incurs performance penalties, but staying under this value provides benefits.
             The displacement value is rated in metric tons.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpCoil.waterfallFXModule">
+            <summary>
+            Optional (but highly recommended) Waterfall effects module
             </summary>
         </member>
         <member name="T:Blueshift.WBIWarpEngine">
@@ -476,11 +491,6 @@
             Fades out the warp effects
             </summary>
         </member>
-        <member name="M:Blueshift.WBIWarpEngine.initWaterfallModule">
-            <summary>
-            Initializes the waterfall module
-            </summary>
-        </member>
         <member name="M:Blueshift.WBIWarpEngine.getAnimatedWarpEngineTextures">
             <summary>
             Finds any animated textures that should be controlled by the warp engine
@@ -518,6 +528,13 @@
             <param name="curveNodeName">The name of the curve to load</param>
             <param name="defaultCurve">An optional default curve to use in case the curve's node doesn't exist in the part module's config.</param>
         </member>
+        <member name="M:Blueshift.WFModuleWaterfallFX.GetWaterfallModule(Part)">
+            <summary>
+            Attempts to obtain the Waterfall FX module from the supplied part.
+            </summary>
+            <param name="part">A Part that might contain a waterfall fx module</param>
+            <returns>A WFModuleWaterfallFX if the part has a waterfall module, or null if not.</returns>
+        </member>
         <member name="M:Blueshift.WFModuleWaterfallFX.#ctor(PartModule)">
             <summary>
             Instantiates a new WFModuleWaterfallFX
@@ -544,6 +561,119 @@
             </summary>
             <param name="controllerName">A string containing the name of the controller to override.</param>
             <param name="value">A float containing the override value.</param>
+        </member>
+        <member name="T:Blueshift.BlueshiftScenario">
+            <summary>
+             This class helps starships determine when they're in interstellar space.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.shared">
+            <summary>
+            Shared instance of the helper.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.homeSystemSOI">
+            <summary>
+            Sphere of influence radius of the home system.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.interstellarWarpSpeedMultiplier">
+            <summary>
+            When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go.
+            For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.homeSOIMultiplier">
+            <summary>
+            In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room,
+            we multiply the computed value by this multiplier.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.OnAwake">
+            <summary>
+            Handles the awake event.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.IsAStar(CelestialBody)">
+            <summary>
+            Determines whether or not the celestial body is a star.
+            </summary>
+            <param name="body">The body to test.</param>
+            <returns>true if the body is a star, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.IsInInterstellarSpace(Vessel)">
+            <summary>
+            Determines whether or not the vessel is in interstellar space.
+            </summary>
+            <param name="vessel"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.IsInSpace(Vessel)">
+            <summary>
+            Determines whether or not the vessel is in space.
+            </summary>
+            <param name="vessel">The Vessel to check.</param>
+            <returns>true if the vessel is in space, false if not.</returns>
+        </member>
+        <member name="T:Blueshift.WBIModuleHarvesterFX">
+            <summary>
+            This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.moduleTitle">
+            <summary>
+            The module's title/display name.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.moduleDescription">
+            <summary>
+            The module's description.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.moduleID">
+            <summary>
+            The ID of the part module. Since parts can have multiple harvesters, this field helps identify them.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.guiVisible">
+            <summary>
+            Toggles visibility of the GUI.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.textureModuleID">
+            <summary>
+            Harvesters can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.animationThrottle">
+            <summary>
+            A throttle control to vary the animation speed of a controlled WBIAnimatedTexture
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.startEffect">
+            <summary>
+            Harvesters can play a start effect when the generator is activated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.stopEffect">
+            <summary>
+            Harvesters can play a stop effect when the generator is deactivated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.runningEffect">
+            <summary>
+            Harvesters can play a running effect while the generator is running.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleHarvesterFX.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
         </member>
     </members>
 </doc>
