@@ -71,6 +71,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HelpersAndManagers\BlueshiftSettings.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
     <Compile Include="Utility\WBIPartModule.cs" />

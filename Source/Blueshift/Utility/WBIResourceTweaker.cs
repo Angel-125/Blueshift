@@ -30,6 +30,9 @@ namespace Blueshift
         [KSPField]
         public string tweakDisabledName = "Disable Tweak";
 
+        [KSPField]
+        public bool isEnabled = false;
+
         PartResourceDefinition resourceDefinition;
 
         public override void OnStart(StartState state)
@@ -51,6 +54,8 @@ namespace Blueshift
                 {
                     this.part.Resources[resourceName].isTweakable = resourceDefinition.isTweakable;
                     updateUI();
+                    if (isEnabled)
+                        enableResourceTweak();
                     GameEvents.onPartResourceListChange.Add(onPartResourceListChange);
                 }
             }

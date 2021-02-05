@@ -75,6 +75,14 @@
             </summary>
             <returns>A ConfigNode for the part module.</returns>
         </member>
+        <member name="M:Blueshift.WBIPartModule.loadCurve(FloatCurve,System.String,ConfigNode)">
+            <summary>
+            Loads the desired FloatCurve from the desired config node.
+            </summary>
+            <param name="curve">The FloatCurve to load</param>
+            <param name="curveNodeName">The name of the curve to load</param>
+            <param name="defaultCurve">An optional default curve to use in case the curve's node doesn't exist in the part module's config.</param>
+        </member>
         <member name="T:Blueshift.WBIAnimatedTexture">
             <summary>
             This class lets you animate textures by displaying a series of images in sequence. You can animate a material's diffuse and emissive texture. You include several textures that
@@ -221,6 +229,31 @@
             Optional (but highly recommended) Waterfall effects module
             </summary>
         </member>
+        <member name="T:Blueshift.WBICircularizationStates">
+            <summary>
+            Circularization states for auto-circularization.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICircularizationStates.doNotCircularize">
+            <summary>
+            Don't circularize.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICircularizationStates.needsCircularization">
+            <summary>
+            Orbit needs to be circularized.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICircularizationStates.hasBeenCircularized">
+            <summary>
+            Orbit has been circularized
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICircularizationStates.canBeCircularized">
+            <summary>
+            Orbit can be circularized.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIWarpEngine">
             <summary>
             The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. 
@@ -361,9 +394,9 @@
             (Debug visible) Flag to indicate that the engine should apply translation effects. Multiple engines can work together as long as each one's minimum requirements are met.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.averageDisplacementImpulse">
+        <member name="F:Blueshift.WBIWarpEngine.totalDisplacementImpulse">
             <summary>
-            (Debug visible) Average displacement impulse calculated from all active warp engines.
+            (Debug visible) Total displacement impulse calculated from all active warp engines.
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.totalWarpCapacity">
@@ -583,6 +616,26 @@
             For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.autoCircularize">
+            <summary>
+            Flag to indicate whether or not to auto-circularize the orbit.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.autoCircularizationDelay">
+            <summary>
+            In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.circularizationResourceDef">
+            <summary>
+            It can cost resources to auto-circularize a ship after warp.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.circularizationCostPerTonne">
+            <summary>
+            How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
+            </summary>
+        </member>
         <member name="F:Blueshift.BlueshiftScenario.homeSOIMultiplier">
             <summary>
             In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room,
@@ -674,6 +727,116 @@
             <summary>
             Name of the Waterfall effects controller that controls the warp effects (if any).
             </summary>
+        </member>
+        <member name="T:Blueshift.WBIMassEffector">
+            <summary>
+            Inspired by Mass Effect, this part module is designed to alter the mass of the vessel. You only need one part with this module.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.textureModuleID">
+            <summary>
+            The WBIAnimatedTexture to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.runningEffect">
+            <summary>
+            The EFFECT to control while running.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.isActivated">
+            <summary>
+            The activation switch.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.massDecreased">
+            <summary>
+            The adjustment mode to use. True = decrease, false = increase
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.status">
+            <summary>
+            Current status of the mass effector
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.effectiveMass">
+            <summary>
+            The current effective mass of the vessel.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.massEffectorPercent">
+            <summary>
+            The percentage of reduction to effect from none (0) to maximum possible (100)
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.effectThrottle">
+            <summary>
+            A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.vesselMassCurve">
+            <summary>
+            This curve describes how to affect the vessel's mass. The first number is a value between 0 and 100 and represents the massEffectorPercent.
+            The second number is the multiplier to apply to the vessel's current total mass.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.animatedTextures">
+            <summary>
+            Array of animated texture modules.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.waterfallFXModule">
+            <summary>
+            Optional (but highly recommended) Waterfall effects module
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.obtainedResources">
+            <summary>
+            Flag to indicate that the last resource cycle was able to obtain resources.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassEffector.totalVesselMass">
+            <summary>
+            Total vessel mass as calculated by the part module.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIMassEffector.CalculateTotalVesselMass">
+            <summary>
+            Calculates the total vessel mass.
+            </summary>
+            <returns>A float containing the total vessel mass.</returns>
+        </member>
+        <member name="T:Blueshift.WBIMassModifier">
+            <summary>
+            Helper class to modify part mass.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassModifier.isActivated">
+            <summary>
+            Flag to indicate whether or not the module is activated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIMassModifier.massMultiplier">
+            <summary>
+            Multiplier for the part mass. Negative values drop pass while positive values increase it.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIMassModifier.GetModuleMass(System.Single,ModifierStagingSituation)">
+            <summary>
+            Calculates the module mass. If decreasing the mass, then the lowest possible mass that a part can have is 0.0001 tonnes.
+            </summary>
+            <param name="defaultMass">The part.partInfo.mass.</param>
+            <param name="situation">The ModifierStagingSituation</param>
+            <returns>The amount of mass to remove or add.</returns>
         </member>
     </members>
 </doc>

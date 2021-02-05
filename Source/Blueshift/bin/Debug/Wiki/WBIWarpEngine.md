@@ -35,8 +35,8 @@ Optional effect to play when the vessel exceeds the speed of light.
 Name of optional bow shock transform.
 ### applyWarpTranslation
 (Debug visible) Flag to indicate that the engine should apply translation effects. Multiple engines can work together as long as each one's minimum requirements are met.
-### averageDisplacementImpulse
-(Debug visible) Average displacement impulse calculated from all active warp engines.
+### totalDisplacementImpulse
+(Debug visible) Total displacement impulse calculated from all active warp engines.
 ### totalWarpCapacity
 (Debug visible) Total warp capacity calculated from all active warp engines.
 ### effectiveWarpCapacity

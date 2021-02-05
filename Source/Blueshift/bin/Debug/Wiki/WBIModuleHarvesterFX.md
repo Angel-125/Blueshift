@@ -24,4 +24,5 @@ Harvesters can play a stop effect when the generator is deactivated.
 ### runningEffect
 Harvesters can play a running effect while the generator is running.
 ### waterfallEffectController
-Name of the Waterfall effects control
+Name of the Waterfall effects controller that controls the warp effects (if any).
+

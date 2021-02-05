@@ -158,8 +158,14 @@ namespace Blueshift
 
                     flowMode = ResourceFlowMode.ALL_VESSEL;
                     if (configNode.HasValue("FlowMode"))
+                    {
                         flowMode = (ResourceFlowMode)Enum.Parse(typeof(ResourceFlowMode), configNode.GetValue("FlowMode"));
-                    resource.FlowMode = ResourceFlowMode.ALL_VESSEL;
+                        resource.FlowMode = flowMode;
+                    }
+                    else
+                    {
+                        resource.FlowMode = ResourceFlowMode.ALL_VESSEL;
+                    }
 
                     drainedResources.Add(resource);
                 }

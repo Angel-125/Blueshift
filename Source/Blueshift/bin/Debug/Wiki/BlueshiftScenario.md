@@ -9,6 +9,14 @@ Shared instance of the helper.
 Sphere of influence radius of the home system.
 ### interstellarWarpSpeedMultiplier
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
+### autoCircularize
+Flag to indicate whether or not to auto-circularize the orbit.
+### autoCircularizationDelay
+In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
+### circularizationResourceDef
+It can cost resources to auto-circularize a ship after warp.
+### circularizationCostPerTonne
+How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
 ### homeSOIMultiplier
 In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room, we multiply the computed value by this multiplier.
 ## Methods

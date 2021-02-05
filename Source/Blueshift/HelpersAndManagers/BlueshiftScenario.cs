@@ -14,9 +14,12 @@ namespace Blueshift
     public class BlueshiftScenario: ScenarioModule
     {
         #region Constants
+        private static string kBlueshiftSettings = "BLUESHIFT_SETTINGS";
         private static string kInterstellarWarpSpeedMultiplier = "interstellarWarpSpeedMultiplier";
         private static string kHomeSOIMultiplier = "homeSOIMultiplier";
-        private static string kBlueshiftSettings = "BLUESHIFT_SETTINGS";
+        private static string kAutoCircularizationDelay = "autoCircularizationDelay";
+        private static string kCircularizationResource = "circularizationResource";
+        private static string kCircularizationCostPerTonne = "circularizationCostPerTonne";
         #endregion
 
         #region Housekeeping
@@ -37,6 +40,26 @@ namespace Blueshift
         public static float interstellarWarpSpeedMultiplier = 1000;
 
         /// <summary>
+        /// Flag to indicate whether or not to auto-circularize the orbit.
+        /// </summary>
+        public static bool autoCircularize = false;
+
+        /// <summary>
+        /// In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
+        /// </summary>
+        public static float autoCircularizationDelay = 5;
+
+        /// <summary>
+        /// It can cost resources to auto-circularize a ship after warp.
+        /// </summary>
+        public static PartResourceDefinition circularizationResourceDef = null;
+
+        /// <summary>
+        /// How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
+        /// </summary>
+        public static double circularizationCostPerTonne = 0;
+
+        /// <summary>
         /// In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room,
         /// we multiply the computed value by this multiplier.
         /// </summary>
@@ -55,6 +78,14 @@ namespace Blueshift
 
             if (HighLogic.LoadedSceneIsFlight)
                 calculateHomeSOI();
+
+            autoCircularize = BlueshiftSettings.AutoCircularize;
+            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+        }
+
+        public void OnDestroy()
+        {
+            GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
         }
         #endregion
 
@@ -100,6 +131,11 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        private void onGameSettingsApplied()
+        {
+            autoCircularize = BlueshiftSettings.AutoCircularize;
+        }
+
         private void loadSettings()
         {
             // Load the settings we need for interstellar travel.
@@ -113,6 +149,21 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kHomeSOIMultiplier))
                     double.TryParse(nodeSettings.GetValue(kHomeSOIMultiplier), out homeSOIMultiplier);
+
+                if (nodeSettings.HasValue(kAutoCircularizationDelay))
+                    float.TryParse(nodeSettings.GetValue(kAutoCircularizationDelay), out autoCircularizationDelay);
+
+                if (nodeSettings.HasValue(kCircularizationResource))
+                {
+                    PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
+
+                    string resourceName = nodeSettings.GetValue(kCircularizationResource);
+                    if (definitions.Contains(resourceName))
+                        circularizationResourceDef = definitions[resourceName];
+                }
+
+                if (nodeSettings.HasValue(kCircularizationCostPerTonne))
+                    double.TryParse(nodeSettings.GetValue(kCircularizationCostPerTonne), out circularizationCostPerTonne);
             }
         }
 

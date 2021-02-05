@@ -42,6 +42,16 @@ Retrieves the module's config node from the part config.
 > #### Return value
 > A ConfigNode for the part module.
 
+### loadCurve(FloatCurve,System.String,ConfigNode)
+Loads the desired FloatCurve from the desired config node.
+> #### Parameters
+> **curve:** The FloatCurve to load
+
+> **curveNodeName:** The name of the curve to load
+
+> **defaultCurve:** An optional default curve to use in case the curve's node doesn't exist in the part module's config.
+
+
 # WBIAnimatedTexture
             
 This class lets you animate textures by displaying a series of images in sequence. You can animate a material's diffuse and emissive texture. You include several textures that act as the individual animation frames, and the part module will show them in sequence. This is NOT as efficient as a texture strip but it's the best I can do for now, and it's easier to set up the UV maps on the meshes being animated.
@@ -118,6 +128,21 @@ Warp coils can efficiently move a certain amount of mass to light speed and beyo
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
 
+# WBICircularizationStates
+            
+Circularization states for auto-circularization.
+        
+## Fields
+
+### doNotCircularize
+Don't circularize.
+### needsCircularization
+Orbit needs to be circularized.
+### hasBeenCircularized
+Orbit has been circularized
+### canBeCircularized
+Orbit can be circularized.
+
 # WBIWarpEngine
             
 The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. ` MODULE { name = WBIWarpEngine ...Standard engine parameters here... moduleDescription = Enables fater than light travel. bowShockTransformName = bowShock minPlanetaryRadius = 3.0 displacementImpulse = 100 planetarySOISpeedCurve { key = 1 0.1 ... key = 0.1 0.005 } warpCurve { key = 1 0 key = 10 1 ... key = 1440 10 } waterfallEffectController = warpEffectController waterfallWarpEffectsCurve { key = 0 0 ... key = 1.5 1 } textureModuleID = WarpCore } `
@@ -156,8 +181,8 @@ Optional effect to play when the vessel exceeds the speed of light.
 Name of optional bow shock transform.
 ### applyWarpTranslation
 (Debug visible) Flag to indicate that the engine should apply translation effects. Multiple engines can work together as long as each one's minimum requirements are met.
-### averageDisplacementImpulse
-(Debug visible) Average displacement impulse calculated from all active warp engines.
+### totalDisplacementImpulse
+(Debug visible) Total displacement impulse calculated from all active warp engines.
 ### totalWarpCapacity
 (Debug visible) Total warp capacity calculated from all active warp engines.
 ### effectiveWarpCapacity
@@ -270,6 +295,14 @@ Shared instance of the helper.
 Sphere of influence radius of the home system.
 ### interstellarWarpSpeedMultiplier
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
+### autoCircularize
+Flag to indicate whether or not to auto-circularize the orbit.
+### autoCircularizationDelay
+In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
+### circularizationResourceDef
+It can cost resources to auto-circularize a ship after warp.
+### circularizationCostPerTonne
+How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
 ### homeSOIMultiplier
 In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room, we multiply the computed value by this multiplier.
 ## Methods
@@ -330,3 +363,70 @@ Harvesters can play a stop effect when the generator is deactivated.
 Harvesters can play a running effect while the generator is running.
 ### waterfallEffectController
 Name of the Waterfall effects controller that controls the warp effects (if any).
+
+# WBIMassEffector
+            
+Inspired by Mass Effect, this part module is designed to alter the mass of the vessel. You only need one part with this module.
+        
+## Fields
+
+### debugMode
+A flag to enable/disable debug mode.
+### textureModuleID
+The WBIAnimatedTexture to control.
+### runningEffect
+The EFFECT to control while running.
+### waterfallEffectController
+Name of the Waterfall effects controller to control.
+### isActivated
+The activation switch.
+### massDecreased
+The adjustment mode to use. True = decrease, false = increase
+### status
+Current status of the mass effector
+### effectiveMass
+The current effective mass of the vessel.
+### massEffectorPercent
+The percentage of reduction to effect from none (0) to maximum possible (100)
+### effectThrottle
+A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+### vesselMassCurve
+This curve describes how to affect the vessel's mass. The first number is a value between 0 and 100 and represents the massEffectorPercent. The second number is the multiplier to apply to the vessel's current total mass.
+### animatedTextures
+Array of animated texture modules.
+### waterfallFXModule
+Optional (but highly recommended) Waterfall effects module
+### obtainedResources
+Flag to indicate that the last resource cycle was able to obtain resources.
+### totalVesselMass
+Total vessel mass as calculated by the part module.
+## Methods
+
+
+### CalculateTotalVesselMass
+Calculates the total vessel mass.
+> #### Return value
+> A float containing the total vessel mass.
+
+# WBIMassModifier
+            
+Helper class to modify part mass.
+        
+## Fields
+
+### isActivated
+Flag to indicate whether or not the module is activated.
+### massMultiplier
+Multiplier for the part mass. Negative values drop pass while positive values increase it.
+## Methods
+
+
+### GetModuleMass(System.Single,ModifierStagingSituation)
+Calculates the module mass. If decreasing the mass, then the lowest possible mass that a part can have is 0.0001 tonnes.
+> #### Parameters
+> **defaultMass:** The part.partInfo.mass.
+
+> **situation:** The ModifierStagingSituation
+
+> #### Return value
+> The amount of mass to remove or add.

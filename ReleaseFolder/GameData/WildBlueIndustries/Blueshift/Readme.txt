@@ -10,32 +10,22 @@ GameData
 
 New Parts
 
-S-2 "Planet's Edge" Warp Core
-S-2 Gravitic Generator
-S-2 FTL Propellant Tank
-S3-2 Warp Ring*
-S-1 Warp Coil*
-S-1 FTL Endcap Tank
-Mk2 "Starflight" Warp Core
-Mk2 Gravimetric Displacement Generator
-Mk2 FTL Propellant Tank
-Mk2 Warp Ring*
-Mk2 Warp Coil*
-* Has part variants
+S-2 Fusion Reactor
+GR-06 Graviolium Container
+GR-12 Graviolium Container
+GR-25 Graviolium Container
 
 Changes
 
-- Adjusted costs on the parts.
-- Most of the parts can now be surface attached.
-- Due to their versatility, warp coils now cost more to obtain the same performance as an equivalent Warp Ring.
-- When in interstellar space, vessels can go much faster. You can change how much of a speed boost ships get by setting the interstellarWarpSpeedMultiplier in the settings.cfg file. The default is 1000, which is about 2.74 light-years per day.
-- Warp engines now require a minimum planetary radius of 1 (down from 3) in order to go to warp.
-- You can now combine warp engines to increase the displacement impulse (lets you move more massive ships).
-- WBIWarpCoil and WBIModuleGeneratorFX can now support Waterfall along with animated textures and more traditional EFFECTS nodes.
-- Added new WBIModuleHarvesterFX. In addition to resource harvesting, it can drive WBIAnimatedTexture modules, a Waterfall effects module, and EFFECT nodes.
+- Stock ISRU Surface Scanner can now scan for Graviolium.
+- Added exospheric resource definitions for Graviolium.
+- Comets might contain Graviolium along with asteroids.
+- Gravitic generators will now drain their Gravity Waves when shut off. Forgot to add that before...
+- You can now enable "Auto-circularize orbit after warp" from the Game Settings -> Custom -> Blueshift menu. If enabled, ships will auto-circularize their orbit around a planet or moon 3 seconds after you cut the throttle and stop warp travel. Going to warp again or shutting down the engine will cancel the timer. You can change the delay by editing the autoCircularizationDelay field in Blueshift's Settings.cfg file.
+NOTE: Auto-circularization costs a small amount of Graviolium and is based on vessel mass. See circularizationResource and circularizationCostPerTonne in Settings.cfg.
 
 ---LICENSE---
-Art Assets, including .mu, .png, and .dds files are copyright 2020 by Michael Billard, All Rights Reserved.
+Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.
 
 Wild Blue Industries is trademarked by Michael Billard. All rights reserved.
 Note that Wild Blue Industries is a ficticious entity 
