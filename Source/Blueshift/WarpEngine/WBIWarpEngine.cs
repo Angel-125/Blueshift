@@ -418,7 +418,7 @@ namespace Blueshift
             Fields["meetsWarpAltitude"].guiActive = debugEnabled;
             Fields["hasWarpCapacity"].guiActive = debugEnabled;
             Fields["applyWarpTranslation"].guiActive = debugEnabled;
-            Fields["averageDisplacementImpulse"].guiActive = debugEnabled;
+            Fields["totalDisplacementImpulse"].guiActive = debugEnabled;
             Fields["totalWarpCapacity"].guiActive = debugEnabled;
             Fields["minPlanetaryRadius"].guiActive = debugEnabled;
             Fields["effectiveWarpCapacity"].guiActive = debugEnabled;

@@ -4,6 +4,56 @@
         <name>Blueshift</name>
     </assembly>
     <members>
+        <member name="T:Blueshift.WBIAnomalySpawnModes">
+            <summary>
+            Space anomalies can be set up in a variety of different orbits.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.randomOrbit">
+            <summary>
+            Spawns in a random solar or planetary orbit.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.randomSolarOrbit">
+            <summary>
+            Spawns in a random solar orbit.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.randomPlanetOrbit">
+            <summary>
+            Spawns in a random planetary orbit.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.everyLastPlanet">
+            <summary>
+            Spawns in random orbit of every last planet in each star system. One per each planet. Ignores maxInstances.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.fixedOrbit">
+            <summary>
+            Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIAnomalyOrbitTypes">
+            <summary>
+            Describes the type of orbit to create when spawning a space anomaly.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalyOrbitTypes.elliptical">
+            <summary>
+            Your garden variety elliptical orbit.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalyOrbitTypes.flyBy">
+            <summary>
+            Fly-by orbit
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalyOrbitTypes.random">
+            <summary>
+            Randomly select either elliptical or flyBy.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIModuleGeneratorFX">
             <summary>
             An enhanced version of the stock ModuleGenerator that supports playing effects.
@@ -636,15 +686,9 @@
             How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
             </summary>
         </member>
-        <member name="F:Blueshift.BlueshiftScenario.homeSOIMultiplier">
+        <member name="F:Blueshift.BlueshiftScenario.spawnSpaceAnomalies">
             <summary>
-            In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room,
-            we multiply the computed value by this multiplier.
-            </summary>
-        </member>
-        <member name="M:Blueshift.BlueshiftScenario.OnAwake">
-            <summary>
-            Handles the awake event.
+            Flag to indicate whether or not Space Anomalies are enabled.
             </summary>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.IsAStar(CelestialBody)">
@@ -667,6 +711,12 @@
             </summary>
             <param name="vessel">The Vessel to check.</param>
             <returns>true if the vessel is in space, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetEveryLastPlanet">
+            <summary>
+            Finds every last planet in every star system.
+            </summary>
+            <returns>A List of CelestialBody</returns>
         </member>
         <member name="T:Blueshift.WBIModuleHarvesterFX">
             <summary>
@@ -728,115 +778,138 @@
             Name of the Waterfall effects controller that controls the warp effects (if any).
             </summary>
         </member>
-        <member name="T:Blueshift.WBIMassEffector">
+        <member name="T:Blueshift.WBISpaceAnomaly">
             <summary>
-            Inspired by Mass Effect, this part module is designed to alter the mass of the vessel. You only need one part with this module.
+            Describes a space anomaly. Similar to asteroids, space anomalies are listed as unknown objects until tracked and visited. Each type of anomaly is defined by a SPACE_ANOMALY config node.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.debugMode">
+        <member name="F:Blueshift.WBISpaceAnomaly.name">
             <summary>
-            A flag to enable/disable debug mode.
+            Identifier for the space anomaly.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.textureModuleID">
+        <member name="F:Blueshift.WBISpaceAnomaly.partName">
             <summary>
-            The WBIAnimatedTexture to control.
+            Name of the part to spawn
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.runningEffect">
+        <member name="F:Blueshift.WBISpaceAnomaly.sizeClass">
             <summary>
-            The EFFECT to control while running.
+            Like asteroids, space anomalies have a size class that ranges from Size A (12 meters) to Size I (100+ meters).
+            The default is A.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.waterfallEffectController">
+        <member name="F:Blueshift.WBISpaceAnomaly.spawnMode">
             <summary>
-            Name of the Waterfall effects controller to control.
+            How does an instance spawn
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.isActivated">
+        <member name="F:Blueshift.WBISpaceAnomaly.orbitType">
             <summary>
-            The activation switch.
+            The type of orbit to create. Default is elliptical.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.massDecreased">
+        <member name="F:Blueshift.WBISpaceAnomaly.maxDaysToClosestApproach">
             <summary>
-            The adjustment mode to use. True = decrease, false = increase
+            For flyBy orbits, the max number of days until the anomaly reaches the closest point in its orbit. Default is 30.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.status">
+        <member name="F:Blueshift.WBISpaceAnomaly.flyByOrbitChance">
             <summary>
-            Current status of the mass effector
+            For orbitType = random, on a roll of 1 to 100, what is the chance that the orbit will be flyBy. Default is 50.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.effectiveMass">
+        <member name="F:Blueshift.WBISpaceAnomaly.fixedBody">
             <summary>
-            The current effective mass of the vessel.
+            For fixedOrbit, the celestial body to spawn around.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.massEffectorPercent">
+        <member name="F:Blueshift.WBISpaceAnomaly.fixedSMA">
             <summary>
-            The percentage of reduction to effect from none (0) to maximum possible (100)
+            For fixedOrbit, the Semi-Major axis of the orbit.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.effectThrottle">
+        <member name="F:Blueshift.WBISpaceAnomaly.fixedEccentricity">
             <summary>
-            A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            For fixedOrbit, the eccentrcity of the orbit.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.vesselMassCurve">
+        <member name="F:Blueshift.WBISpaceAnomaly.fixedInclination">
             <summary>
-            This curve describes how to affect the vessel's mass. The first number is a value between 0 and 100 and represents the massEffectorPercent.
-            The second number is the multiplier to apply to the vessel's current total mass.
+            Fixed inclination. Only used for fixedOrbit. If set to -1 then a random inclination will be used instead.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.animatedTextures">
+        <member name="F:Blueshift.WBISpaceAnomaly.minLifetime">
             <summary>
-            Array of animated texture modules.
+            For undiscovered objects, the minimum number of seconds that the anomaly can exist. Default is 86400 (1 day).
+            Set to -1 to use maximum possible value. When set to -1, maxLifetime is ignored.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIMassEffector.waterfallFXModule">
+        <member name="F:Blueshift.WBISpaceAnomaly.maxLifetime">
+            <summary>
+            For undiscovered objects, the maximum number of seconds that the anomaly can exist. Default is 1728000 (20 days).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.spawnTargetNumber">
+            <summary>
+            Spawn chance in a roll between 1 and 1000
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.maxInstances">
+            <summary>
+            Maximum number of objects of this type that may exist at any given time. Default is 10.
+            Set to -1 for unlimited number.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.vesselId">
+            <summary>
+            ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBISpaceAnomaly.CreateNewInstancesIfNeeded(System.Collections.Generic.List{Blueshift.WBISpaceAnomaly})">
+            <summary>
+            Checks to see if we should create a new instance.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBITechUnlock">
+            <summary>
+            This part module is designed to unlock random nodes in a tech tree. It can also drive Waterfall effects.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.dieRoll">
+            <summary>
+            Maximum RNG value
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.unlockTargetNumber">
+            <summary>
+            Target number to unlock a tech tree node
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.unlockMessage">
+            <summary>
+            Tech unlock message
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.animationThrottle">
+            <summary>
+            A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.hasBeenVisited">
+            <summary>
+            Flag to indicate whether or not the part has been visited.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBITechUnlock.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module
             </summary>
-        </member>
-        <member name="F:Blueshift.WBIMassEffector.obtainedResources">
-            <summary>
-            Flag to indicate that the last resource cycle was able to obtain resources.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIMassEffector.totalVesselMass">
-            <summary>
-            Total vessel mass as calculated by the part module.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIMassEffector.CalculateTotalVesselMass">
-            <summary>
-            Calculates the total vessel mass.
-            </summary>
-            <returns>A float containing the total vessel mass.</returns>
-        </member>
-        <member name="T:Blueshift.WBIMassModifier">
-            <summary>
-            Helper class to modify part mass.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIMassModifier.isActivated">
-            <summary>
-            Flag to indicate whether or not the module is activated.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIMassModifier.massMultiplier">
-            <summary>
-            Multiplier for the part mass. Negative values drop pass while positive values increase it.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIMassModifier.GetModuleMass(System.Single,ModifierStagingSituation)">
-            <summary>
-            Calculates the module mass. If decreasing the mass, then the lowest possible mass that a part can have is 0.0001 tonnes.
-            </summary>
-            <param name="defaultMass">The part.partInfo.mass.</param>
-            <param name="situation">The ModifierStagingSituation</param>
-            <returns>The amount of mass to remove or add.</returns>
         </member>
     </members>
 </doc>

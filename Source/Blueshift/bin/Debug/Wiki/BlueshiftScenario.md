@@ -17,13 +17,10 @@ In seconds, how long to wait between cutting the warp engine throttle and automa
 It can cost resources to auto-circularize a ship after warp.
 ### circularizationCostPerTonne
 How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
-### homeSOIMultiplier
-In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room, we multiply the computed value by this multiplier.
+### spawnSpaceAnomalies
+Flag to indicate whether or not Space Anomalies are enabled.
 ## Methods
 
-
-### OnAwake
-Handles the awake event.
 
 ### IsAStar(CelestialBody)
 Determines whether or not the celestial body is a star.
@@ -48,4 +45,9 @@ Determines whether or not the vessel is in space.
 
 > #### Return value
 > true if the vessel is in space, false if not.
+
+### GetEveryLastPlanet
+Finds every last planet in every star system.
+> #### Return value
+> A List of CelestialBody
 

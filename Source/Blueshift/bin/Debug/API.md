@@ -1,6 +1,36 @@
 ﻿# Blueshift
 
 
+# WBIAnomalySpawnModes
+            
+Space anomalies can be set up in a variety of different orbits.
+        
+## Fields
+
+### randomOrbit
+Spawns in a random solar or planetary orbit.
+### randomSolarOrbit
+Spawns in a random solar orbit.
+### randomPlanetOrbit
+Spawns in a random planetary orbit.
+### everyLastPlanet
+Spawns in random orbit of every last planet in each star system. One per each planet. Ignores maxInstances.
+### fixedOrbit
+Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
+
+# WBIAnomalyOrbitTypes
+            
+Describes the type of orbit to create when spawning a space anomaly.
+        
+## Fields
+
+### elliptical
+Your garden variety elliptical orbit.
+### flyBy
+Fly-by orbit
+### random
+Randomly select either elliptical or flyBy.
+
 # WBIModuleGeneratorFX
             
 An enhanced version of the stock ModuleGenerator that supports playing effects.
@@ -303,13 +333,10 @@ In seconds, how long to wait between cutting the warp engine throttle and automa
 It can cost resources to auto-circularize a ship after warp.
 ### circularizationCostPerTonne
 How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
-### homeSOIMultiplier
-In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room, we multiply the computed value by this multiplier.
+### spawnSpaceAnomalies
+Flag to indicate whether or not Space Anomalies are enabled.
 ## Methods
 
-
-### OnAwake
-Handles the awake event.
 
 ### IsAStar(CelestialBody)
 Determines whether or not the celestial body is a star.
@@ -334,6 +361,11 @@ Determines whether or not the vessel is in space.
 
 > #### Return value
 > true if the vessel is in space, false if not.
+
+### GetEveryLastPlanet
+Finds every last planet in every star system.
+> #### Return value
+> A List of CelestialBody
 
 # WBIModuleHarvesterFX
             
@@ -364,69 +396,67 @@ Harvesters can play a running effect while the generator is running.
 ### waterfallEffectController
 Name of the Waterfall effects controller that controls the warp effects (if any).
 
-# WBIMassEffector
+# WBISpaceAnomaly
             
-Inspired by Mass Effect, this part module is designed to alter the mass of the vessel. You only need one part with this module.
+Describes a space anomaly. Similar to asteroids, space anomalies are listed as unknown objects until tracked and visited. Each type of anomaly is defined by a SPACE_ANOMALY config node.
         
 ## Fields
 
-### debugMode
-A flag to enable/disable debug mode.
-### textureModuleID
-The WBIAnimatedTexture to control.
-### runningEffect
-The EFFECT to control while running.
+### name
+Identifier for the space anomaly.
+### partName
+Name of the part to spawn
+### sizeClass
+Like asteroids, space anomalies have a size class that ranges from Size A (12 meters) to Size I (100+ meters). The default is A.
+### spawnMode
+How does an instance spawn
+### orbitType
+The type of orbit to create. Default is elliptical.
+### maxDaysToClosestApproach
+For flyBy orbits, the max number of days until the anomaly reaches the closest point in its orbit. Default is 30.
+### flyByOrbitChance
+For orbitType = random, on a roll of 1 to 100, what is the chance that the orbit will be flyBy. Default is 50.
+### fixedBody
+For fixedOrbit, the celestial body to spawn around.
+### fixedSMA
+For fixedOrbit, the Semi-Major axis of the orbit.
+### fixedEccentricity
+For fixedOrbit, the eccentrcity of the orbit.
+### fixedInclination
+Fixed inclination. Only used for fixedOrbit. If set to -1 then a random inclination will be used instead.
+### minLifetime
+For undiscovered objects, the minimum number of seconds that the anomaly can exist. Default is 86400 (1 day). Set to -1 to use maximum possible value. When set to -1, maxLifetime is ignored.
+### maxLifetime
+For undiscovered objects, the maximum number of seconds that the anomaly can exist. Default is 1728000 (20 days).
+### spawnTargetNumber
+Spawn chance in a roll between 1 and 1000
+### maxInstances
+Maximum number of objects of this type that may exist at any given time. Default is 10. Set to -1 for unlimited number.
+### vesselId
+ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
+## Methods
+
+
+### CreateNewInstancesIfNeeded(System.Collections.Generic.List{Blueshift.WBISpaceAnomaly})
+Checks to see if we should create a new instance.
+
+# WBITechUnlock
+            
+This part module is designed to unlock random nodes in a tech tree. It can also drive Waterfall effects.
+        
+## Fields
+
+### dieRoll
+Maximum RNG value
+### unlockTargetNumber
+Target number to unlock a tech tree node
+### unlockMessage
+Tech unlock message
 ### waterfallEffectController
-Name of the Waterfall effects controller to control.
-### isActivated
-The activation switch.
-### massDecreased
-The adjustment mode to use. True = decrease, false = increase
-### status
-Current status of the mass effector
-### effectiveMass
-The current effective mass of the vessel.
-### massEffectorPercent
-The percentage of reduction to effect from none (0) to maximum possible (100)
-### effectThrottle
-A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
-### vesselMassCurve
-This curve describes how to affect the vessel's mass. The first number is a value between 0 and 100 and represents the massEffectorPercent. The second number is the multiplier to apply to the vessel's current total mass.
-### animatedTextures
-Array of animated texture modules.
+Name of the Waterfall effects controller that controls the warp effects (if any).
+### animationThrottle
+A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+### hasBeenVisited
+Flag to indicate whether or not the part has been visited.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
-### obtainedResources
-Flag to indicate that the last resource cycle was able to obtain resources.
-### totalVesselMass
-Total vessel mass as calculated by the part module.
-## Methods
-
-
-### CalculateTotalVesselMass
-Calculates the total vessel mass.
-> #### Return value
-> A float containing the total vessel mass.
-
-# WBIMassModifier
-            
-Helper class to modify part mass.
-        
-## Fields
-
-### isActivated
-Flag to indicate whether or not the module is activated.
-### massMultiplier
-Multiplier for the part mass. Negative values drop pass while positive values increase it.
-## Methods
-
-
-### GetModuleMass(System.Single,ModifierStagingSituation)
-Calculates the module mass. If decreasing the mass, then the lowest possible mass that a part can have is 0.0001 tonnes.
-> #### Parameters
-> **defaultMass:** The part.partInfo.mass.
-
-> **situation:** The ModifierStagingSituation
-
-> #### Return value
-> The amount of mass to remove or add.

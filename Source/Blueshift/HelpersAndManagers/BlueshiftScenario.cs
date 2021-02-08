@@ -20,6 +20,11 @@ namespace Blueshift
         private static string kAutoCircularizationDelay = "autoCircularizationDelay";
         private static string kCircularizationResource = "circularizationResource";
         private static string kCircularizationCostPerTonne = "circularizationCostPerTonne";
+        private static string kAnomalyCheckSeconds = "anomalyCheckSeconds";
+        private static string kCelestialBlacklist = "celestialBlacklist";
+        private static string kLastPlanetNode = "LAST_PLANET";
+        private static string kStarName = "starName";
+        private static string kLastPlanetName = "lastPlanetName";
         #endregion
 
         #region Housekeeping
@@ -60,32 +65,100 @@ namespace Blueshift
         public static double circularizationCostPerTonne = 0;
 
         /// <summary>
-        /// In game, the Sun has infinite Sphere of Influence, so we compute an artificial one based on the furthest planet from the Sun. To give a little wiggle room,
-        /// we multiply the computed value by this multiplier.
+        /// Flag to indicate whether or not Space Anomalies are enabled.
         /// </summary>
+        public static bool spawnSpaceAnomalies = true;
+
         private double homeSOIMultiplier = 1.1;
+        private List<WBISpaceAnomaly> spaceAnomalies;
+        private List<WBISpaceAnomaly> anomalyTemplates;
+        private double anomalyCheckSeconds = 600;
+        private double anomalyTimer = 0;
+        private double anomalyCleanerSeconds = 60;
+        private double anomalyCleanerTimer = 0;
+        private List<CelestialBody> lastPlanets;
+        private List<CelestialBody> stars;
+        private List<CelestialBody> planets;
+        private string[] celestialBlacklists;
+        private Dictionary<string, string> lastPlanetsMap;
         #endregion
 
         #region Overrides
-        /// <summary>
-        /// Handles the awake event.
-        /// </summary>
+        public void FixedUpdate()
+        {
+            double currentTime = Planetarium.GetUniversalTime();
+
+            // Check for anomaly spawns
+            if (spawnSpaceAnomalies && (anomalyTimer == 0 || currentTime - anomalyTimer >= anomalyCheckSeconds))
+            {
+                anomalyTimer = currentTime;
+                checkForNewAnomalies();
+            }
+        }
+
         public override void OnAwake()
         {
             base.OnAwake();
             shared = this;
+
+            lastPlanets = new List<CelestialBody>();
+            stars = new List<CelestialBody>();
+            planets = new List<CelestialBody>();
+
             loadSettings();
+            loadLastPlanetsMap();
+
+            autoCircularize = BlueshiftSettings.AutoCircularize;
+            spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
+            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
 
             if (HighLogic.LoadedSceneIsFlight)
                 calculateHomeSOI();
 
-            autoCircularize = BlueshiftSettings.AutoCircularize;
-            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+            if (!spawnSpaceAnomalies)
+                removeSpaceAnomalies();
         }
 
         public void OnDestroy()
         {
             GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
+        }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            base.OnLoad(node);
+
+            // Load anomalies
+            spaceAnomalies = new List<WBISpaceAnomaly>();
+            if (node.HasNode(WBISpaceAnomaly.kNodeName))
+            {
+                ConfigNode[] nodes = node.GetNodes(WBISpaceAnomaly.kNodeName);
+                for (int index = 0; index < nodes.Length; index++)
+                    spaceAnomalies.Add(WBISpaceAnomaly.CreateFromNode(nodes[index]));
+            }
+
+            // Load anomaly templates
+            anomalyTemplates = new List<WBISpaceAnomaly>();
+            ConfigNode[] templateNodes = GameDatabase.Instance.GetConfigNodes(WBISpaceAnomaly.kNodeName);
+            WBISpaceAnomaly anomaly;
+            if (templateNodes != null)
+            {
+                for (int index = 0; index < templateNodes.Length; index++)
+                {
+                    anomaly = WBISpaceAnomaly.CreateFromNode(templateNodes[index]);
+
+                    anomalyTemplates.Add(anomaly);
+                }
+            }
+        }
+
+        public override void OnSave(ConfigNode node)
+        {
+            base.OnSave(node);
+
+            int count = spaceAnomalies.Count;
+            for (int index = 0; index < count; index++)
+                node.AddNode(spaceAnomalies[index].Save());
         }
         #endregion
 
@@ -128,12 +201,165 @@ namespace Blueshift
                 vessel.situation == Vessel.Situations.ORBITING ||
                 vessel.situation == Vessel.Situations.ESCAPING;
         }
+
+        /// <summary>
+        /// Finds every last planet in every star system.
+        /// </summary>
+        /// <returns>A List of CelestialBody</returns>
+        public List<CelestialBody> GetEveryLastPlanet()
+        {
+            if (lastPlanets.Count > 0)
+                return lastPlanets;
+
+            getLastPlanet(Planetarium.fetch.Sun);
+
+            return lastPlanets;
+        }
+
+        public List<CelestialBody> GetStars()
+        {
+            if (stars.Count > 0)
+                return stars;
+
+            List<CelestialBody> bodies = FlightGlobals.fetch.bodies;
+            int count = bodies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (IsAStar(bodies[index]))
+                    stars.Add(bodies[index]);
+            }
+
+            return stars;
+        }
+
+        public List<CelestialBody> GetPlanets()
+        {
+            if (planets.Count > 0)
+                return planets;
+
+            List<CelestialBody> bodies = FlightGlobals.fetch.bodies;
+            int count = bodies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (!IsAStar(bodies[index]) && !isOnBlackList(bodies[index]))
+                    planets.Add(bodies[index]);
+            }
+
+            return planets;
+        }
         #endregion
 
         #region Helpers
+        private void removeSpaceAnomalies()
+        {
+            int count = FlightGlobals.VesselsUnloaded.Count;
+            Dictionary<string, Vessel> unloadedVessels = new Dictionary<string, Vessel>();
+            WBISpaceAnomaly anomaly;
+            Vessel vessel;
+
+            for (int index = 0; index < count; index++)
+            {
+                vessel = FlightGlobals.VesselsUnloaded[index];
+                unloadedVessels.Add(vessel.persistentId.ToString(), vessel);
+            }
+
+            count = spaceAnomalies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                anomaly = spaceAnomalies[index];
+                if (unloadedVessels.ContainsKey(anomaly.vesselId))
+                {
+                    vessel = unloadedVessels[anomaly.vesselId];
+                    unloadedVessels.Remove(anomaly.vesselId);
+                    FlightGlobals.VesselsUnloaded.Remove(vessel);
+                }
+            }
+
+            spaceAnomalies.Clear();
+        }
+
+        private void checkForNewAnomalies()
+        {
+            int count = anomalyTemplates.Count;
+            WBISpaceAnomaly anomalyTemplate;
+
+            for (int index = 0; index < count; index++)
+            {
+                anomalyTemplate = anomalyTemplates[index];
+                anomalyTemplate.CreateNewInstancesIfNeeded(spaceAnomalies);
+            }
+        }
+
+        private bool isOnBlackList(CelestialBody body)
+        {
+            if (celestialBlacklists == null || celestialBlacklists.Length == 0)
+                return false;
+
+            string bodyName = body.bodyName.ToLower();
+            for (int index = 0; index < celestialBlacklists.Length; index++)
+            {
+                if (bodyName.Contains(celestialBlacklists[index].ToLower()))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void getLastPlanet(CelestialBody star)
+        {
+            List<CelestialBody> orbitingBodies = star.orbitingBodies;
+            List<CelestialBody> orbitingStars = new List<CelestialBody>();
+            CelestialBody body, furthestBody = null;
+            int count = orbitingBodies.Count;
+            double furthestDistance = 0;
+            bool isAStar = false;
+            bool blacklisted = false;
+
+            // First find the last planet around the star as well as orbiting stars.
+            for (int index = 0; index < count; index++)
+            {
+                body = orbitingBodies[index];
+
+                // If the celestial body is a planet then check to see if it is the furthest.
+                isAStar = IsAStar(body);
+                blacklisted = isOnBlackList(body);
+                if (!isAStar && !blacklisted && body.orbit.semiMajorAxis > furthestDistance)
+                    furthestBody = body;
+
+                // Add the star to our list.
+                else if (isAStar && !blacklisted)
+                    orbitingStars.Add(body);
+            }
+
+            // We might have a helper to tell us what the last planet is. Use that instead.
+            if (lastPlanetsMap.ContainsKey(star.bodyName))
+            {
+                lastPlanets.Add(FlightGlobals.GetBodyByName(lastPlanetsMap[star.bodyName]));
+                Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + lastPlanetsMap[star.bodyName]);
+            }
+
+            // Ok, we can use the calculated furthest body if we found one and it's not on the blacklist.
+            else if (furthestBody != null)
+            {
+                lastPlanets.Add(furthestBody);
+                Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + furthestBody.name);
+            }
+
+            // Now check for other starts
+            count = orbitingStars.Count;
+            for (int index = 0; index < count; index++)
+            {
+                getLastPlanet(orbitingStars[index]);
+            }
+        }
+
         private void onGameSettingsApplied()
         {
             autoCircularize = BlueshiftSettings.AutoCircularize;
+            spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
+
+            if (!spawnSpaceAnomalies)
+                removeSpaceAnomalies();
         }
 
         private void loadSettings()
@@ -164,6 +390,31 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kCircularizationCostPerTonne))
                     double.TryParse(nodeSettings.GetValue(kCircularizationCostPerTonne), out circularizationCostPerTonne);
+
+                if (nodeSettings.HasValue(kAnomalyCheckSeconds))
+                    double.TryParse(nodeSettings.GetValue(kAnomalyCheckSeconds), out anomalyCheckSeconds);
+
+                if (nodeSettings.HasValue(kCelestialBlacklist))
+                    celestialBlacklists = nodeSettings.GetValues(kCelestialBlacklist);
+            }
+        }
+
+        private void loadLastPlanetsMap()
+        {
+            lastPlanetsMap = new Dictionary<string, string>();
+
+            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes(kLastPlanetNode);
+            ConfigNode node;
+            if (nodes != null)
+            {
+                for (int index = 0; index < nodes.Length; index++)
+                {
+                    node = nodes[index];
+                    if (node.HasValue(kStarName) && node.HasValue(kLastPlanetName))
+                    {
+                        lastPlanetsMap.Add(node.GetValue(kStarName), node.GetValue(kLastPlanetName));
+                    }
+                }
             }
         }
 
@@ -179,7 +430,7 @@ namespace Blueshift
                 body = orbitingBodies[index];
 
                 // If the celestial body is a planet then calculate its average distance from the sun.
-                if (!IsAStar(body) && body.orbit.semiMajorAxis > homeSystemSOI)
+                if (!IsAStar(body) && !isOnBlackList(body) && body.orbit.semiMajorAxis > homeSystemSOI)
                     homeSystemSOI = body.orbit.semiMajorAxis;
             }
 

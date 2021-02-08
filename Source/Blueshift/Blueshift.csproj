@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HelpersAndManagers\BlueshiftSettings.cs" />
+    <Compile Include="SpaceAnomaly\Enumerators.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
     <Compile Include="Utility\WBIPartModule.cs" />
@@ -83,6 +84,8 @@
     <Compile Include="Waterfall\WFModuleWaterfallFX.cs" />
     <Compile Include="HelpersAndManagers\BlueshiftScenario.cs" />
     <Compile Include="Utility\WBIModuleHarvesterFX.cs" />
+    <Compile Include="SpaceAnomaly\WBISpaceAnomaly.cs" />
+    <Compile Include="SpaceAnomaly\WBITechUnlock.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

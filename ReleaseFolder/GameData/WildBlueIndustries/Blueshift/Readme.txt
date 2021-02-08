@@ -8,21 +8,18 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-New Parts
+New Features
 
-S-2 Fusion Reactor
-GR-06 Graviolium Container
-GR-12 Graviolium Container
-GR-25 Graviolium Container
+- Space Anomalies now exist! Like asteroids and comets, space anomalies can randomly spawn and de-spawn in solar orbit. If visited, then they'll stick around- and might help out your quest for knowledge... You can disable Space Anomalies in the Settings menu.
+- Added new WBITechUnlock part module. It is designed for anomalies and has the ability to randomly unlock a tech tree node in Career or Science Sandbox mode.
+- Added celestialBlacklist value to the Settings.cfg file. This value lets you blacklist celestial bodies from being counted as stars and planets. This is to help ignore things like barycenters.
+- Added LAST_PLANET node that helps Blueshift determine what is the last planet for the specified star. This is to help in situations where Blueshift can't figure out what is the last planet for a given star system. You can see an example in Settings.cfg.
+- Added Graviolium support for SpaceDust and Far Future Technologies. These will need testing...
 
 Changes
 
-- Stock ISRU Surface Scanner can now scan for Graviolium.
-- Added exospheric resource definitions for Graviolium.
-- Comets might contain Graviolium along with asteroids.
-- Gravitic generators will now drain their Gravity Waves when shut off. Forgot to add that before...
-- You can now enable "Auto-circularize orbit after warp" from the Game Settings -> Custom -> Blueshift menu. If enabled, ships will auto-circularize their orbit around a planet or moon 3 seconds after you cut the throttle and stop warp travel. Going to warp again or shutting down the engine will cancel the timer. You can change the delay by editing the autoCircularizationDelay field in Blueshift's Settings.cfg file.
-NOTE: Auto-circularization costs a small amount of Graviolium and is based on vessel mass. See circularizationResource and circularizationCostPerTonne in Settings.cfg.
+- Fixed issue where the warp multiplier couldn't figure out where the edge of the SOI is for the home system.
+- Fixed NRE in WBIWarpEngine that occurs during starup.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.
