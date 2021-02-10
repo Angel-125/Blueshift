@@ -5,8 +5,6 @@ This class helps starships determine when they're in interstellar space.
 
 ### shared
 Shared instance of the helper.
-### homeSystemSOI
-Sphere of influence radius of the home system.
 ### interstellarWarpSpeedMultiplier
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
 ### autoCircularize
@@ -21,6 +19,14 @@ How much circularizationResource does it cost per metric ton of ship to circular
 Flag to indicate whether or not Space Anomalies are enabled.
 ## Methods
 
+
+### GetSpatialLocation(Vessel)
+Determines thevessel's spatial location.
+> #### Parameters
+> **vessel:** The Vessel to check.
+
+> #### Return value
+> A WBISpatialLocations withe spatial location.
 
 ### IsAStar(CelestialBody)
 Determines whether or not the celestial body is a star.

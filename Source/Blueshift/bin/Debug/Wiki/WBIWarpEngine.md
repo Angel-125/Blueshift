@@ -11,6 +11,12 @@ Minimum planetary radius needed to go to warp. This is used to calculate the use
 Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
 ### warpSpeed
 The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+### spatialLocation
+Where we are in space.
+### vesselCourse
+The vessel's course- which is really just the selected target.
+### targetDistance
+Distance to the vessel's target
 ### planetarySOISpeedCurve
 Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body. Out in interplanetary space we don't have a speed limit. The first number represents how close to the SOI edge the vessel is (1 = right at the edge, 0.1 = 10% of the distance to the SOI edge) The second number is the top speed multiplier.
 ### displacementImpulse

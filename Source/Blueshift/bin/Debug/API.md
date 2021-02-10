@@ -31,6 +31,21 @@ Fly-by orbit
 ### random
 Randomly select either elliptical or flyBy.
 
+# WBISpatialLocations
+            
+Describes the vessel's current spatial location.
+        
+## Fields
+
+### Unknown
+Location unknown.
+### Planetary
+Planetary space: vessel's mainBody is a planet or a moon.
+### Interplanetary
+Interplanetary space: vessel's mainBody is a star.
+### Interstellar
+Interstellar space: the void between the stars...
+
 # WBIModuleGeneratorFX
             
 An enhanced version of the stock ModuleGenerator that supports playing effects.
@@ -187,6 +202,12 @@ Minimum planetary radius needed to go to warp. This is used to calculate the use
 Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
 ### warpSpeed
 The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+### spatialLocation
+Where we are in space.
+### vesselCourse
+The vessel's course- which is really just the selected target.
+### targetDistance
+Distance to the vessel's target
 ### planetarySOISpeedCurve
 Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body. Out in interplanetary space we don't have a speed limit. The first number represents how close to the SOI edge the vessel is (1 = right at the edge, 0.1 = 10% of the distance to the SOI edge) The second number is the top speed multiplier.
 ### displacementImpulse
@@ -321,8 +342,6 @@ This class helps starships determine when they're in interstellar space.
 
 ### shared
 Shared instance of the helper.
-### homeSystemSOI
-Sphere of influence radius of the home system.
 ### interstellarWarpSpeedMultiplier
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
 ### autoCircularize
@@ -337,6 +356,14 @@ How much circularizationResource does it cost per metric ton of ship to circular
 Flag to indicate whether or not Space Anomalies are enabled.
 ## Methods
 
+
+### GetSpatialLocation(Vessel)
+Determines thevessel's spatial location.
+> #### Parameters
+> **vessel:** The Vessel to check.
+
+> #### Return value
+> A WBISpatialLocations withe spatial location.
 
 ### IsAStar(CelestialBody)
 Determines whether or not the celestial body is a star.
