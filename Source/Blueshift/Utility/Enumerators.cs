@@ -59,4 +59,30 @@ namespace Blueshift
         /// </summary>
         random
     }
+
+    /// <summary>
+    /// Describes the vessel's current spatial location.
+    /// </summary>
+    public enum WBISpatialLocations
+    {
+        /// <summary>
+        /// Location unknown.
+        /// </summary>
+        Unknown,
+
+        /// <summary>
+        /// Planetary space: vessel's mainBody is a planet or a moon.
+        /// </summary>
+        Planetary,
+
+        /// <summary>
+        /// Interplanetary space: vessel's mainBody is a star.
+        /// </summary>
+        Interplanetary,
+
+        /// <summary>
+        /// Interstellar space: the void between the stars...
+        /// </summary>
+        Interstellar
+    }
 }

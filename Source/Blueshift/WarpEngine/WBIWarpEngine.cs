@@ -88,15 +88,18 @@ namespace Blueshift
     public class WBIWarpEngine : ModuleEnginesFX
     {
         #region constants
-        protected float kLightSpeed = 299792458;
-        protected float kMessageDuration = 3f;
-        protected string kNeedsSpaceflight = "Needs to be in space";
-        protected string kNeedsAltitude = "Needs higher altitude";
-        protected string kNeedsWarpCapacity = "Needs more warp capacity";
-        protected string kFlameOutGeneric = "Something went wrong";
-        protected string kWarpReady = "Ready";
-        protected string kTerrainWarning = "Warp halted to avoid collision with celestial body. Reduce speed to approach minimum warp altitude.";
-        protected string kOrbitCircularized = "Orbit circularized";
+        float kLightSpeed = 299792458;
+        double kLightYear = 9460700000000000;
+        double kGigaMeter = 1000000000;
+        double kMegaMeter = 1000000;
+        float kMessageDuration = 3f;
+        string kNeedsSpaceflight = "Needs to be in space";
+        string kNeedsAltitude = "Needs higher altitude";
+        string kNeedsWarpCapacity = "Needs more warp capacity";
+        string kFlameOutGeneric = "Something went wrong";
+        string kWarpReady = "Ready";
+        string kTerrainWarning = "Warp halted to avoid collision with celestial body. Reduce speed to approach minimum warp altitude.";
+        string kOrbitCircularized = "Orbit circularized";
         #endregion
 
         #region Fields
@@ -126,6 +129,24 @@ namespace Blueshift
         /// </summary>
         [KSPField(guiActive = true, guiName = "Warp Speed", guiFormat = "n3", guiUnits = "C")]
         public float warpSpeed = 0;
+
+        /// <summary>
+        /// Where we are in space.
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "Spatial Location")]
+        public WBISpatialLocations spatialLocation = WBISpatialLocations.Unknown;
+
+        /// <summary>
+        /// The vessel's course- which is really just the selected target.
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "Course")]
+        public string vesselCourse = string.Empty;
+
+        /// <summary>
+        /// Distance to the vessel's target
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "Distance", guiFormat = "n3")]
+        public double targetDistance = 0f;
 
         /// <summary>
         /// Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body.
@@ -327,6 +348,14 @@ namespace Blueshift
             base.OnFixedUpdate();
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
+
+            // Update spatial location.
+            spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
+
+            // Vessel course - just the selected target.
+            updateVesselCourse();
+
+            // Make sure the engine is running and we should apply warp.
             if (!EngineIgnited)
                 return;
             if (!shouldApplyWarp())
@@ -432,6 +461,7 @@ namespace Blueshift
             base.Flameout(message, statusOnly, showFX);
             warpFlameout = true;
             hasExceededLightSpeed = false;
+            spatialLocation = WBISpatialLocations.Unknown;
         }
 
         public override void UnFlameout(bool showFX = true)
@@ -460,6 +490,7 @@ namespace Blueshift
         {
             base.Shutdown();
             hasExceededLightSpeed = false;
+            spatialLocation = WBISpatialLocations.Unknown;
 
             Fields["warpSpeed"].guiActive = false;
 
@@ -632,6 +663,7 @@ namespace Blueshift
             {
                 minWarpAltitudeDisplay = double.NaN;
                 Fields["minWarpAltitudeDisplay"].guiActive = false;
+                spatialLocation = WBISpatialLocations.Unknown;
             }
         }
         #endregion
@@ -805,19 +837,25 @@ namespace Blueshift
             }
             maxWarpSpeed = bestWarpSpeed;
 
-            // Limit speed if we're in a planetary SOI
-            if (this.part.vessel.mainBody.scaledBody.GetComponentsInChildren<SunShaderController>(true).Length == 0)
+            // Adjust warp speed based on spatial location.
+            switch (spatialLocation)
             {
-                float speedRatio = (float)(this.part.vessel.altitude / this.part.vessel.mainBody.sphereOfInfluence);
-                maxWarpSpeed *= planetarySOISpeedCurve.Evaluate(speedRatio);
-            }
+                // If we're in interstellar space then we can increase our max warp speed.
+                case WBISpatialLocations.Interstellar:
+                    maxWarpSpeed *= BlueshiftScenario.interstellarWarpSpeedMultiplier;
+                    break;
 
-            // If we're in interstellar space then we can increase our max warp speed.
-            else if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
-            {
-                maxWarpSpeed *= BlueshiftScenario.interstellarWarpSpeedMultiplier;
-            }
+                // Limit speed if we're in a planetary SOI
+                case WBISpatialLocations.Planetary:
+                    float speedRatio = (float)(this.part.vessel.altitude / this.part.vessel.mainBody.sphereOfInfluence);
+                    maxWarpSpeed *= planetarySOISpeedCurve.Evaluate(speedRatio);
+                    break;
 
+                // No speed adjustment while interplanetary.
+                case WBISpatialLocations.Interplanetary:
+                default:
+                    break;
+            }
 
             // Account for throttle setting and thrust limiter.
             throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
@@ -1022,6 +1060,52 @@ namespace Blueshift
 
             // Apply translation.
             FloatingOrigin.SetOutOfFrameOffset(offsetPosition);
+        }
+
+        private void updateVesselCourse()
+        {
+            ITargetable targetObject = this.part.vessel.targetObject;
+
+            //First check to see if the vessel has selected a target.
+            if (targetObject != null)
+            {
+                vesselCourse = targetObject.GetDisplayName().Replace("^N", "");
+                targetDistance = Math.Abs((part.vessel.GetWorldPos3D() - (Vector3d)targetObject.GetTransform().position).magnitude);
+
+                // Light-years
+                if (targetDistance > (kGigaMeter * 1000))
+                {
+                    targetDistance /= kLightYear;
+                    Fields["targetDistance"].guiUnits = "Ly";
+                }
+
+                // Giga-meters
+                else if (targetDistance > (kMegaMeter * 1000))
+                {
+                    targetDistance /= kGigaMeter;
+                    Fields["targetDistance"].guiUnits = "Gm";
+                }
+
+                // Mega-meters
+                else if (targetDistance > 1000 * 1000)
+                {
+                    targetDistance /= kMegaMeter;
+                    Fields["targetDistance"].guiUnits = "Mm";
+                }
+
+                else
+                {
+                    targetDistance /= 1000;
+                    Fields["targetDistance"].guiUnits = "Km";
+                }
+
+            }
+            else
+            {
+                vesselCourse = "None";
+                targetDistance = 0;
+                Fields["targetDistance"].guiUnits = "m";
+            }
         }
         #endregion
     }

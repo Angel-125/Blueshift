@@ -16,15 +16,16 @@ namespace Blueshift
         #region Constants
         private static string kBlueshiftSettings = "BLUESHIFT_SETTINGS";
         private static string kInterstellarWarpSpeedMultiplier = "interstellarWarpSpeedMultiplier";
-        private static string kHomeSOIMultiplier = "homeSOIMultiplier";
+        private static string kSOIMultiplier = "soiMultiplier";
         private static string kAutoCircularizationDelay = "autoCircularizationDelay";
         private static string kCircularizationResource = "circularizationResource";
         private static string kCircularizationCostPerTonne = "circularizationCostPerTonne";
         private static string kAnomalyCheckSeconds = "anomalyCheckSeconds";
         private static string kCelestialBlacklist = "celestialBlacklist";
         private static string kLastPlanetNode = "LAST_PLANET";
+        private static string kName = "name";
         private static string kStarName = "starName";
-        private static string kLastPlanetName = "lastPlanetName";
+        private static string kSoiNoPlanetsMultiplier = "soiNoPlanetsMultiplier";
         #endregion
 
         #region Housekeeping
@@ -32,11 +33,6 @@ namespace Blueshift
         /// Shared instance of the helper.
         /// </summary>
         public static BlueshiftScenario shared;
-
-        /// <summary>
-        /// Sphere of influence radius of the home system.
-        /// </summary>
-        public static double homeSystemSOI = 0;
 
         /// <summary>
         /// When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go.
@@ -69,7 +65,8 @@ namespace Blueshift
         /// </summary>
         public static bool spawnSpaceAnomalies = true;
 
-        private double homeSOIMultiplier = 1.1;
+        private double soiMultiplier = 1.1;
+        private double soiNoPlanetsMultiplier = 100;
         private List<WBISpaceAnomaly> spaceAnomalies;
         private List<WBISpaceAnomaly> anomalyTemplates;
         private double anomalyCheckSeconds = 600;
@@ -77,10 +74,12 @@ namespace Blueshift
         private double anomalyCleanerSeconds = 60;
         private double anomalyCleanerTimer = 0;
         private List<CelestialBody> lastPlanets;
+        private Dictionary<CelestialBody, CelestialBody> lastPlanetByStar;
         private List<CelestialBody> stars;
         private List<CelestialBody> planets;
         private string[] celestialBlacklists;
-        private Dictionary<string, string> lastPlanetsMap;
+        private Dictionary<string, string> lastPlanetOverrides;
+        private Dictionary<CelestialBody, double> solarSOIs;
         #endregion
 
         #region Overrides
@@ -102,18 +101,19 @@ namespace Blueshift
             shared = this;
 
             lastPlanets = new List<CelestialBody>();
+            lastPlanetByStar = new Dictionary<CelestialBody, CelestialBody>();
             stars = new List<CelestialBody>();
             planets = new List<CelestialBody>();
+            solarSOIs = new Dictionary<CelestialBody, double>();
 
             loadSettings();
-            loadLastPlanetsMap();
+            loadLastPlanetOverrides();
+            GetEveryLastPlanet();
+            calculateSolarSOIs();
 
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
-
-            if (HighLogic.LoadedSceneIsFlight)
-                calculateHomeSOI();
 
             if (!spawnSpaceAnomalies)
                 removeSpaceAnomalies();
@@ -164,6 +164,25 @@ namespace Blueshift
 
         #region API
         /// <summary>
+        /// Determines thevessel's spatial location.
+        /// </summary>
+        /// <param name="vessel">The Vessel to check.</param>
+        /// <returns>A WBISpatialLocations withe spatial location.</returns>
+        public WBISpatialLocations GetSpatialLocation(Vessel vessel)
+        {
+            // If we're not in space then our spatial location is unknown.
+            if (!IsInSpace(vessel))
+                return WBISpatialLocations.Unknown;
+
+            // If the mainBody is on our solarSOIs list then check altitude. If altitude > soi then we're interstellar. Otherwise, we're interplanetary.
+            if (solarSOIs.ContainsKey(vessel.mainBody))
+                return vessel.altitude > solarSOIs[vessel.mainBody] ? WBISpatialLocations.Interstellar : WBISpatialLocations.Interplanetary;
+
+            // If the mainBody is on the blacklist then we're interstellar. Otherwise we're planetary.
+            return isOnBlackList(vessel.mainBody) ? WBISpatialLocations.Interstellar : WBISpatialLocations.Planetary;
+        }
+
+        /// <summary>
         /// Determines whether or not the celestial body is a star.
         /// </summary>
         /// <param name="body">The body to test.</param>
@@ -183,11 +202,12 @@ namespace Blueshift
             if (!IsInSpace(vessel))
                 return false;
 
-            // Since the Sun has infinite SOI in the game, and satellite stars have a finite SOI, we just need to know if we're orbiting the Sun, and if we're out past its artificial SOI radius.
-            if (vessel.mainBody != Planetarium.fetch.Sun)
-                return false;
+            // If the mainBody is on our soi list then check altitude.
+            if (solarSOIs.ContainsKey(vessel.mainBody))
+                return vessel.altitude > solarSOIs[vessel.mainBody];
 
-            return vessel.orbit.altitude > homeSystemSOI;
+            // If we're orbiting a blacklisted body then we're in interstellar space. Otherwise we're orbiting a planet.
+            return isOnBlackList(vessel.mainBody);
         }
 
         /// <summary>
@@ -210,8 +230,32 @@ namespace Blueshift
         {
             if (lastPlanets.Count > 0)
                 return lastPlanets;
+            if (stars.Count == 0)
+                GetStars();
 
-            getLastPlanet(Planetarium.fetch.Sun);
+            int count = stars.Count;
+            CelestialBody body;
+            for (int index = 0; index < count; index++)
+            {
+                // Check for override first.
+                if (lastPlanetOverrides.ContainsKey(stars[index].bodyName))
+                {
+                    body = FlightGlobals.GetBodyByName(stars[index].bodyName);
+                    if (body != null)
+                    {
+                        lastPlanets.Add(body);
+                        lastPlanetByStar.Add(stars[index], body);
+                    }
+                }
+
+                // Try to figure it out based on distance.
+                body = getLastPlanet(stars[index]);
+                if (body != null)
+                {
+                    lastPlanets.Add(body);
+                    lastPlanetByStar.Add(stars[index], body);
+                }
+            }
 
             return lastPlanets;
         }
@@ -305,17 +349,16 @@ namespace Blueshift
             return false;
         }
 
-        private void getLastPlanet(CelestialBody star)
+        private CelestialBody getLastPlanet(CelestialBody star)
         {
             List<CelestialBody> orbitingBodies = star.orbitingBodies;
-            List<CelestialBody> orbitingStars = new List<CelestialBody>();
             CelestialBody body, furthestBody = null;
             int count = orbitingBodies.Count;
             double furthestDistance = 0;
             bool isAStar = false;
             bool blacklisted = false;
 
-            // First find the last planet around the star as well as orbiting stars.
+            // First find the last planet around the star.
             for (int index = 0; index < count; index++)
             {
                 body = orbitingBodies[index];
@@ -325,32 +368,13 @@ namespace Blueshift
                 blacklisted = isOnBlackList(body);
                 if (!isAStar && !blacklisted && body.orbit.semiMajorAxis > furthestDistance)
                     furthestBody = body;
-
-                // Add the star to our list.
-                else if (isAStar && !blacklisted)
-                    orbitingStars.Add(body);
-            }
-
-            // We might have a helper to tell us what the last planet is. Use that instead.
-            if (lastPlanetsMap.ContainsKey(star.bodyName))
-            {
-                lastPlanets.Add(FlightGlobals.GetBodyByName(lastPlanetsMap[star.bodyName]));
-                Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + lastPlanetsMap[star.bodyName]);
             }
 
             // Ok, we can use the calculated furthest body if we found one and it's not on the blacklist.
-            else if (furthestBody != null)
-            {
-                lastPlanets.Add(furthestBody);
+            if (furthestBody != null)
                 Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + furthestBody.name);
-            }
 
-            // Now check for other starts
-            count = orbitingStars.Count;
-            for (int index = 0; index < count; index++)
-            {
-                getLastPlanet(orbitingStars[index]);
-            }
+            return furthestBody;
         }
 
         private void onGameSettingsApplied()
@@ -373,8 +397,8 @@ namespace Blueshift
                 if (nodeSettings.HasValue(kInterstellarWarpSpeedMultiplier))
                     float.TryParse(nodeSettings.GetValue(kInterstellarWarpSpeedMultiplier), out interstellarWarpSpeedMultiplier);
 
-                if (nodeSettings.HasValue(kHomeSOIMultiplier))
-                    double.TryParse(nodeSettings.GetValue(kHomeSOIMultiplier), out homeSOIMultiplier);
+                if (nodeSettings.HasValue(kSOIMultiplier))
+                    double.TryParse(nodeSettings.GetValue(kSOIMultiplier), out soiMultiplier);
 
                 if (nodeSettings.HasValue(kAutoCircularizationDelay))
                     float.TryParse(nodeSettings.GetValue(kAutoCircularizationDelay), out autoCircularizationDelay);
@@ -396,12 +420,15 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kCelestialBlacklist))
                     celestialBlacklists = nodeSettings.GetValues(kCelestialBlacklist);
+
+                if (nodeSettings.HasValue(kSoiNoPlanetsMultiplier))
+                    double.TryParse(nodeSettings.GetValue(kSoiNoPlanetsMultiplier), out soiNoPlanetsMultiplier);
             }
         }
 
-        private void loadLastPlanetsMap()
+        private void loadLastPlanetOverrides()
         {
-            lastPlanetsMap = new Dictionary<string, string>();
+            lastPlanetOverrides = new Dictionary<string, string>();
 
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes(kLastPlanetNode);
             ConfigNode node;
@@ -410,32 +437,40 @@ namespace Blueshift
                 for (int index = 0; index < nodes.Length; index++)
                 {
                     node = nodes[index];
-                    if (node.HasValue(kStarName) && node.HasValue(kLastPlanetName))
+                    if (node.HasValue(kName) && node.HasValue(kStarName))
                     {
-                        lastPlanetsMap.Add(node.GetValue(kStarName), node.GetValue(kLastPlanetName));
+                        lastPlanetOverrides.Add(node.GetValue(kStarName), node.GetValue(kName));
                     }
                 }
             }
         }
 
-        private void calculateHomeSOI()
+        private void calculateSolarSOIs()
         {
-            // Calculate the SOI of the home system. Technically it is infinite but we will will arbitrarily set it past the furthest planet from the sun.
-            List<CelestialBody> orbitingBodies = Planetarium.fetch.Sun.orbitingBodies;
-            CelestialBody body;
-            int bodyCount = orbitingBodies.Count;
-            homeSystemSOI = 0;
-            for (int index = 0; index < bodyCount; index++)
+            if (lastPlanets.Count == 0 || stars.Count == 0)
+                GetEveryLastPlanet();
+
+            CelestialBody solarBody;
+            CelestialBody lastPlanet;
+            int count = stars.Count;
+
+            for (int index = 0; index < count; index++)
             {
-                body = orbitingBodies[index];
+                solarBody = stars[index];
 
-                // If the celestial body is a planet then calculate its average distance from the sun.
-                if (!IsAStar(body) && !isOnBlackList(body) && body.orbit.semiMajorAxis > homeSystemSOI)
-                    homeSystemSOI = body.orbit.semiMajorAxis;
+                // If we were able to determine the last planet for the star then we can use the last planet's SMA to determine the solar SOI.
+                if (lastPlanetByStar.ContainsKey(solarBody))
+                {
+                    lastPlanet = lastPlanetByStar[solarBody];
+                    solarSOIs.Add(solarBody, lastPlanet.orbit.semiMajorAxis * soiMultiplier);
+                }
+
+                // Either we could not determine the star's last planet, or the star has no planets. In this case, we create an arbitrary SOI based on soiNoPlanetsMultiplier.
+                else
+                {
+                    solarSOIs.Add(solarBody, solarBody.Radius * soiNoPlanetsMultiplier * soiMultiplier);
+                }
             }
-
-            // Add our home SOI multiplier.
-            homeSystemSOI *= homeSOIMultiplier;
         }
         #endregion
     }

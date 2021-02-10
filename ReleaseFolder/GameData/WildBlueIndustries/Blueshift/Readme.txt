@@ -8,18 +8,38 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-New Features
-
-- Space Anomalies now exist! Like asteroids and comets, space anomalies can randomly spawn and de-spawn in solar orbit. If visited, then they'll stick around- and might help out your quest for knowledge... You can disable Space Anomalies in the Settings menu.
-- Added new WBITechUnlock part module. It is designed for anomalies and has the ability to randomly unlock a tech tree node in Career or Science Sandbox mode.
-- Added celestialBlacklist value to the Settings.cfg file. This value lets you blacklist celestial bodies from being counted as stars and planets. This is to help ignore things like barycenters.
-- Added LAST_PLANET node that helps Blueshift determine what is the last planet for the specified star. This is to help in situations where Blueshift can't figure out what is the last planet for a given star system. You can see an example in Settings.cfg.
-- Added Graviolium support for SpaceDust and Far Future Technologies. These will need testing...
-
 Changes
 
-- Fixed issue where the warp multiplier couldn't figure out where the edge of the SOI is for the home system.
-- Fixed NRE in WBIWarpEngine that occurs during starup.
+Anomalies
+- Reduced time between anomaly checks.
+- Improved chances for a space anomaly to spawn.
+
+Spheres of Influence
+- Updated how stellar spheres of influences are calculated to improve interstellar space detection.
+- Changed homeSOIMultiplier in Settings.cfg soiMultiplier. It is now used for all star systems.
+- Added new soiNoPlanetsMultiplier to artificially create an SOI for star systems without planets.
+
+Warp Tech
+- New navigation assistance- warp engines have some additional fields in their Part Action Window:
+  Spatial Situation: Planetary/Interplanetary/Interstellar/Unknown
+  Course: <name of the selected target, if any>
+  Distance: <Ly, Gm, Mm Km>
+
+CKAN
+- Added Blueshift to CKAN (pending PR approval).
+
+Config Nodes
+New format for LAST_PLANET
+LAST_PLANET
+{
+	// Name of the last planet.
+	// This is the name of the celestial body, NOT the display name!
+	name = Cernunnos
+
+	// Name of the star that the planet orbits.
+	// This is the name of the celestial body, NOT the display name!
+	starName = Grannus
+}
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.
@@ -29,7 +49,7 @@ Note that Wild Blue Industries is a ficticious entity
 created for entertainment purposes. It is in no way meant to represent a real entity.
 Any similarity to a real entity is purely coincidental.
 
-Source code copyright 2020 by Michael Billard (Angel-125)
+Source code copyright 2021 by Michael Billard (Angel-125)
 
     This source code is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

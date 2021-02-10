@@ -54,6 +54,31 @@
             Randomly select either elliptical or flyBy.
             </summary>
         </member>
+        <member name="T:Blueshift.WBISpatialLocations">
+            <summary>
+            Describes the vessel's current spatial location.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpatialLocations.Unknown">
+            <summary>
+            Location unknown.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpatialLocations.Planetary">
+            <summary>
+            Planetary space: vessel's mainBody is a planet or a moon.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpatialLocations.Interplanetary">
+            <summary>
+            Interplanetary space: vessel's mainBody is a star.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpatialLocations.Interstellar">
+            <summary>
+            Interstellar space: the void between the stars...
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIModuleGeneratorFX">
             <summary>
             An enhanced version of the stock ModuleGenerator that supports playing effects.
@@ -366,6 +391,21 @@
             The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpEngine.spatialLocation">
+            <summary>
+            Where we are in space.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.vesselCourse">
+            <summary>
+            The vessel's course- which is really just the selected target.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.targetDistance">
+            <summary>
+            Distance to the vessel's target
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.planetarySOISpeedCurve">
             <summary>
             Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body.
@@ -655,11 +695,6 @@
             Shared instance of the helper.
             </summary>
         </member>
-        <member name="F:Blueshift.BlueshiftScenario.homeSystemSOI">
-            <summary>
-            Sphere of influence radius of the home system.
-            </summary>
-        </member>
         <member name="F:Blueshift.BlueshiftScenario.interstellarWarpSpeedMultiplier">
             <summary>
             When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go.
@@ -690,6 +725,13 @@
             <summary>
             Flag to indicate whether or not Space Anomalies are enabled.
             </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetSpatialLocation(Vessel)">
+            <summary>
+            Determines thevessel's spatial location.
+            </summary>
+            <param name="vessel">The Vessel to check.</param>
+            <returns>A WBISpatialLocations withe spatial location.</returns>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.IsAStar(CelestialBody)">
             <summary>
