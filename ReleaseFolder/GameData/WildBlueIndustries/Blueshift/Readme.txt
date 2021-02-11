@@ -10,36 +10,9 @@ GameData
 
 Changes
 
-Anomalies
-- Reduced time between anomaly checks.
-- Improved chances for a space anomaly to spawn.
-
-Spheres of Influence
-- Updated how stellar spheres of influences are calculated to improve interstellar space detection.
-- Changed homeSOIMultiplier in Settings.cfg soiMultiplier. It is now used for all star systems.
-- Added new soiNoPlanetsMultiplier to artificially create an SOI for star systems without planets.
-
-Warp Tech
-- New navigation assistance- warp engines have some additional fields in their Part Action Window:
-  Spatial Situation: Planetary/Interplanetary/Interstellar/Unknown
-  Course: <name of the selected target, if any>
-  Distance: <Ly, Gm, Mm Km>
-
-CKAN
-- Added Blueshift to CKAN (pending PR approval).
-
-Config Nodes
-New format for LAST_PLANET
-LAST_PLANET
-{
-	// Name of the last planet.
-	// This is the name of the celestial body, NOT the display name!
-	name = Cernunnos
-
-	// Name of the star that the planet orbits.
-	// This is the name of the celestial body, NOT the display name!
-	starName = Grannus
-}
+- 1.0 release!
+- Updated SOI multiplier for stars with no planets to 500x the star's radius. It was too easy to miss the star otherwise...
+- If Auto-circularize is enabled, then starships will automatically circularize in interplanetary space if a star has no planets.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

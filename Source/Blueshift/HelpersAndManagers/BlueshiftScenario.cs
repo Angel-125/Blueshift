@@ -14,6 +14,21 @@ namespace Blueshift
     public class BlueshiftScenario: ScenarioModule
     {
         #region Constants
+        /// <summary>
+        /// Light-year unit of measurement. Abbreviated "Ly."
+        /// </summary>
+        public double kLightYear = 9460700000000000;
+
+        /// <summary>
+        /// Gigameter unit of measurement. Abbreviate "Gm."
+        /// </summary>
+        public double kGigaMeter = 1000000000;
+
+        /// <summary>
+        /// Megameter unit of measurement. Abbreviated "Mm."
+        /// </summary>
+        public double kMegaMeter = 1000000;
+
         private static string kBlueshiftSettings = "BLUESHIFT_SETTINGS";
         private static string kInterstellarWarpSpeedMultiplier = "interstellarWarpSpeedMultiplier";
         private static string kSOIMultiplier = "soiMultiplier";
@@ -249,7 +264,7 @@ namespace Blueshift
                 }
 
                 // Try to figure it out based on distance.
-                body = getLastPlanet(stars[index]);
+                body = GetLastPlanet(stars[index]);
                 if (body != null)
                 {
                     lastPlanets.Add(body);
@@ -260,6 +275,10 @@ namespace Blueshift
             return lastPlanets;
         }
 
+        /// <summary>
+        /// Finds all the stars in the game.
+        /// </summary>
+        /// <returns>A Listcontaining all the stars in the game. Celestial bodies that are on the celestialBlacklist are ignored.</returns>
         public List<CelestialBody> GetStars()
         {
             if (stars.Count > 0)
@@ -276,6 +295,10 @@ namespace Blueshift
             return stars;
         }
 
+        /// <summary>
+        /// Returns a list of all the planets in the game.
+        /// </summary>
+        /// <returns>A Listcontaining all the planets in the game. Celestial bodies that are on the celestialBlacklist are ignored.</returns>
         public List<CelestialBody> GetPlanets()
         {
             if (planets.Count > 0)
@@ -290,6 +313,121 @@ namespace Blueshift
             }
 
             return planets;
+        }
+
+        /// <summary>
+        /// Finds the last planet in the supplied star system.
+        /// </summary>
+        /// <param name="star">A Celestial Body that is the star to check.</param>
+        /// <returns>A CelestialBody representing the last planet in the star system (if any)</returns>
+        public CelestialBody GetLastPlanet(CelestialBody star)
+        {
+            if (!IsAStar(star))
+                return null;
+
+            List<CelestialBody> orbitingBodies = star.orbitingBodies;
+            CelestialBody body, furthestBody = null;
+            int count = orbitingBodies.Count;
+            double furthestDistance = 0;
+            bool isAStar = false;
+            bool blacklisted = false;
+
+            // First find the last planet around the star.
+            for (int index = 0; index < count; index++)
+            {
+                body = orbitingBodies[index];
+
+                // If the celestial body is a planet then check to see if it is the furthest.
+                isAStar = IsAStar(body);
+                blacklisted = isOnBlackList(body);
+                if (!isAStar && !blacklisted && body.orbit.semiMajorAxis > furthestDistance)
+                    furthestBody = body;
+            }
+
+            // Ok, we can use the calculated furthest body if we found one and it's not on the blacklist.
+            if (furthestBody != null)
+                Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + furthestBody.name);
+
+            return furthestBody;
+        }
+
+        /// <summary>
+        /// Determines whether or not the celestial body has planets orbiting it.
+        /// </summary>
+        /// <param name="celestialBody">The CelestialBody to check for planets.</param>
+        /// <returns>true if the celestialBody has orbiting planets, false if not.</returns>
+        public bool HasPlanets(CelestialBody celestialBody)
+        {
+            List<CelestialBody> orbitingBodies = celestialBody.orbitingBodies;
+            CelestialBody body;
+            int count = orbitingBodies.Count;
+            bool isAStar = false;
+            bool blacklisted = false;
+
+            for (int index = 0; index < count; index++)
+            {
+                body = orbitingBodies[index];
+
+                // If the celestial body is not a star and it isn't blacklisted then we have planets.
+                isAStar = IsAStar(body);
+                blacklisted = isOnBlackList(body);
+                if (!isAStar && !blacklisted)
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Calculates the distance and units of measurement to the vessel's target (if any).
+        /// </summary>
+        /// <param name="vessel">The Vessel to check for targets.</param>
+        /// <param name="units">A string representing the units of measurement computed for the distance.</param>
+        /// <param name="targetName">A string representing the name of the vessel's target.</param>
+        /// <returns>A double containing the distance. If there is no target then the distance is 0.</returns>
+        public double GetDistanceToTarget(Vessel vessel, out string units, out string targetName)
+        {
+            ITargetable targetObject = vessel.targetObject;
+            double targetDistance = 0;
+            units = "m";
+            targetName = "None";
+
+            //First check to see if the vessel has selected a target.
+            if (targetObject != null)
+            {
+                targetName = targetObject.GetDisplayName().Replace("^N", "");
+                targetDistance = Math.Abs((vessel.GetWorldPos3D() - (Vector3d)targetObject.GetTransform().position).magnitude);
+
+                // Light-years
+                if (targetDistance > (kGigaMeter * 1000))
+                {
+                    targetDistance /= kLightYear;
+                    units = "Ly";
+                }
+
+                // Giga-meters
+                else if (targetDistance > (kMegaMeter * 1000))
+                {
+                    targetDistance /= kGigaMeter;
+                    units = "Gm";
+                }
+
+                // Mega-meters
+                else if (targetDistance > 1000 * 1000)
+                {
+                    targetDistance /= kMegaMeter;
+                    units = "Mm";
+                }
+
+                else
+                {
+                    targetDistance /= 1000;
+                    units = "Km";
+                }
+
+            }
+
+            return targetDistance;
         }
         #endregion
 
@@ -347,34 +485,6 @@ namespace Blueshift
             }
 
             return false;
-        }
-
-        private CelestialBody getLastPlanet(CelestialBody star)
-        {
-            List<CelestialBody> orbitingBodies = star.orbitingBodies;
-            CelestialBody body, furthestBody = null;
-            int count = orbitingBodies.Count;
-            double furthestDistance = 0;
-            bool isAStar = false;
-            bool blacklisted = false;
-
-            // First find the last planet around the star.
-            for (int index = 0; index < count; index++)
-            {
-                body = orbitingBodies[index];
-
-                // If the celestial body is a planet then check to see if it is the furthest.
-                isAStar = IsAStar(body);
-                blacklisted = isOnBlackList(body);
-                if (!isAStar && !blacklisted && body.orbit.semiMajorAxis > furthestDistance)
-                    furthestBody = body;
-            }
-
-            // Ok, we can use the calculated furthest body if we found one and it's not on the blacklist.
-            if (furthestBody != null)
-                Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + furthestBody.name);
-
-            return furthestBody;
         }
 
         private void onGameSettingsApplied()

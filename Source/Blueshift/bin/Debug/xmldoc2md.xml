@@ -690,6 +690,21 @@
              This class helps starships determine when they're in interstellar space.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.kLightYear">
+            <summary>
+            Light-year unit of measurement. Abbreviated "Ly."
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.kGigaMeter">
+            <summary>
+            Gigameter unit of measurement. Abbreviate "Gm."
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.kMegaMeter">
+            <summary>
+            Megameter unit of measurement. Abbreviated "Mm."
+            </summary>
+        </member>
         <member name="F:Blueshift.BlueshiftScenario.shared">
             <summary>
             Shared instance of the helper.
@@ -759,6 +774,41 @@
             Finds every last planet in every star system.
             </summary>
             <returns>A List of CelestialBody</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetStars">
+            <summary>
+            Finds all the stars in the game.
+            </summary>
+            <returns>A Listcontaining all the stars in the game. Celestial bodies that are on the celestialBlacklist are ignored.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetPlanets">
+            <summary>
+            Returns a list of all the planets in the game.
+            </summary>
+            <returns>A Listcontaining all the planets in the game. Celestial bodies that are on the celestialBlacklist are ignored.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetLastPlanet(CelestialBody)">
+            <summary>
+            Finds the last planet in the supplied star system.
+            </summary>
+            <param name="star">A Celestial Body that is the star to check.</param>
+            <returns>A CelestialBody representing the last planet in the star system (if any)</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.HasPlanets(CelestialBody)">
+            <summary>
+            Determines whether or not the celestial body has planets orbiting it.
+            </summary>
+            <param name="celestialBody">The CelestialBody to check for planets.</param>
+            <returns>true if the celestialBody has orbiting planets, false if not.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetDistanceToTarget(Vessel,System.String@,System.String@)">
+            <summary>
+            Calculates the distance and units of measurement to the vessel's target (if any).
+            </summary>
+            <param name="vessel">The Vessel to check for targets.</param>
+            <param name="units">A string representing the units of measurement computed for the distance.</param>
+            <param name="targetName">A string representing the name of the vessel's target.</param>
+            <returns>A double containing the distance. If there is no target then the distance is 0.</returns>
         </member>
         <member name="T:Blueshift.WBIModuleHarvesterFX">
             <summary>

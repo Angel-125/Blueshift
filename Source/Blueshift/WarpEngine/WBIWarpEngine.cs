@@ -89,9 +89,6 @@ namespace Blueshift
     {
         #region constants
         float kLightSpeed = 299792458;
-        double kLightYear = 9460700000000000;
-        double kGigaMeter = 1000000000;
-        double kMegaMeter = 1000000;
         float kMessageDuration = 3f;
         string kNeedsSpaceflight = "Needs to be in space";
         string kNeedsAltitude = "Needs higher altitude";
@@ -705,8 +702,14 @@ namespace Blueshift
                 elapsedTime >= BlueshiftScenario.autoCircularizationDelay
                 )
             {
-                // We don't circularize if the ship is orbiting a star or we're in interstellar space.
-                if (BlueshiftScenario.shared.IsAStar(this.part.vessel.mainBody) || BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
+                // We don't circularize if the ship is in interstellar space.
+                if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
+                {
+                    circularizationState = WBICircularizationStates.doNotCircularize;
+                    return false;
+                }
+                // We don't circularize if the ship is in interplanetary space and the star has planets orbiting it.
+                else if (BlueshiftScenario.shared.IsAStar(part.vessel.mainBody) && BlueshiftScenario.shared.HasPlanets(part.vessel.mainBody))
                 {
                     circularizationState = WBICircularizationStates.doNotCircularize;
                     return false;
@@ -1064,47 +1067,13 @@ namespace Blueshift
 
         private void updateVesselCourse()
         {
-            ITargetable targetObject = this.part.vessel.targetObject;
+            string units = string.Empty;
 
-            //First check to see if the vessel has selected a target.
-            if (targetObject != null)
+            targetDistance = BlueshiftScenario.shared.GetDistanceToTarget(part.vessel, out units, out vesselCourse);
+
+            if (targetDistance > 0)
             {
-                vesselCourse = targetObject.GetDisplayName().Replace("^N", "");
-                targetDistance = Math.Abs((part.vessel.GetWorldPos3D() - (Vector3d)targetObject.GetTransform().position).magnitude);
-
-                // Light-years
-                if (targetDistance > (kGigaMeter * 1000))
-                {
-                    targetDistance /= kLightYear;
-                    Fields["targetDistance"].guiUnits = "Ly";
-                }
-
-                // Giga-meters
-                else if (targetDistance > (kMegaMeter * 1000))
-                {
-                    targetDistance /= kGigaMeter;
-                    Fields["targetDistance"].guiUnits = "Gm";
-                }
-
-                // Mega-meters
-                else if (targetDistance > 1000 * 1000)
-                {
-                    targetDistance /= kMegaMeter;
-                    Fields["targetDistance"].guiUnits = "Mm";
-                }
-
-                else
-                {
-                    targetDistance /= 1000;
-                    Fields["targetDistance"].guiUnits = "Km";
-                }
-
-            }
-            else
-            {
-                vesselCourse = "None";
-                targetDistance = 0;
-                Fields["targetDistance"].guiUnits = "m";
+                Fields["targetDistance"].guiUnits = units;
             }
         }
         #endregion
