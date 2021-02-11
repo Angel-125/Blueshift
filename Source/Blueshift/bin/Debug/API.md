@@ -340,6 +340,12 @@ This class helps starships determine when they're in interstellar space.
         
 ## Fields
 
+### kLightYear
+Light-year unit of measurement. Abbreviated "Ly."
+### kGigaMeter
+Gigameter unit of measurement. Abbreviate "Gm."
+### kMegaMeter
+Megameter unit of measurement. Abbreviated "Mm."
 ### shared
 Shared instance of the helper.
 ### interstellarWarpSpeedMultiplier
@@ -393,6 +399,44 @@ Determines whether or not the vessel is in space.
 Finds every last planet in every star system.
 > #### Return value
 > A List of CelestialBody
+
+### GetStars
+Finds all the stars in the game.
+> #### Return value
+> A Listcontaining all the stars in the game. Celestial bodies that are on the celestialBlacklist are ignored.
+
+### GetPlanets
+Returns a list of all the planets in the game.
+> #### Return value
+> A Listcontaining all the planets in the game. Celestial bodies that are on the celestialBlacklist are ignored.
+
+### GetLastPlanet(CelestialBody)
+Finds the last planet in the supplied star system.
+> #### Parameters
+> **star:** A Celestial Body that is the star to check.
+
+> #### Return value
+> A CelestialBody representing the last planet in the star system (if any)
+
+### HasPlanets(CelestialBody)
+Determines whether or not the celestial body has planets orbiting it.
+> #### Parameters
+> **celestialBody:** The CelestialBody to check for planets.
+
+> #### Return value
+> true if the celestialBody has orbiting planets, false if not.
+
+### GetDistanceToTarget(Vessel,System.String@,System.String@)
+Calculates the distance and units of measurement to the vessel's target (if any).
+> #### Parameters
+> **vessel:** The Vessel to check for targets.
+
+> **units:** A string representing the units of measurement computed for the distance.
+
+> **targetName:** A string representing the name of the vessel's target.
+
+> #### Return value
+> A double containing the distance. If there is no target then the distance is 0.
 
 # WBIModuleHarvesterFX
             
