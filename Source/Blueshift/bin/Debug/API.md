@@ -210,6 +210,10 @@ The vessel's course- which is really just the selected target.
 Distance to the vessel's target
 ### planetarySOISpeedCurve
 Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body. Out in interplanetary space we don't have a speed limit. The first number represents how close to the SOI edge the vessel is (1 = right at the edge, 0.1 = 10% of the distance to the SOI edge) The second number is the top speed multiplier.
+### interstellarAccelerationCurve
+Whenever you cross into interstellar space, or are already in interstellar space and throttled down, then apply this acceleration curve. The warp speed will be max warp speed * curve's speed modifier. The first number represents the time since crossing the boundary/throttling up, and the second number is the multiplier. We don't apply this curve when going from interstellar to interplanetary space.
+### interstellarPowerMultiplier
+Multiplies resource consumption and production rates by this multiplier when in interstellar space. Generators identified by warpPowerGeneratorID will be affected by this multiplier. Default multiplier is 10.
 ### displacementImpulse
 Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
 ### warpCurve
@@ -220,6 +224,8 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 Waterfall Warp Effects Curve. This is used to control the Waterfall warp field effects based on the vessel's current warp speed. The first number represents multiples of C, and the second number represents the level at which to drive the warp effects. The effects value ranges from 0 to 1, while there's no upper limit to multiples of C, so keep that in mind. The default curve is: key = 0 0 key = 1 0.5 key = 1.5 1
 ### textureModuleID
 The name of the WBIAnimatedTexture to drive as part of the warp effects.
+### warpPowerGeneratorID
+Engines can drive WBIModuleGeneratorFX that produce resources needed for warp travel if their moduleID matches this value.
 ### photonicBoomEffectName
 Optional effect to play when the vessel exceeds the speed of light.
 ### isInSpace
@@ -271,6 +277,15 @@ Flag to indicate whether or not the vessel has exceeded light speed.
 ## Methods
 
 
+### CircularizeOrbit
+Circularizes the ship's orbit
+
+### CircularizeOrbitAction(KSPActionParam)
+Action menu item to circularize the ship's orbit.
+> #### Parameters
+> **param:** 
+
+
 ### IsActivated
 Determines whether or not the engine is ignited and operational.
 > #### Return value
@@ -310,6 +325,9 @@ Calculates the best possible warp speed from the vessel's active warp engines.
 
 ### getTotalWarpCapacity
 Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
+
+### updateWarpPowerGenerators
+Updates the generators that provide warp power.
 
 ### consumeCoilResources(Blueshift.WBIWarpCoil)
 Consumes the warp coil's required resources.
@@ -352,8 +370,6 @@ Shared instance of the helper.
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
 ### autoCircularize
 Flag to indicate whether or not to auto-circularize the orbit.
-### autoCircularizationDelay
-In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
 ### circularizationResourceDef
 It can cost resources to auto-circularize a ship after warp.
 ### circularizationCostPerTonne

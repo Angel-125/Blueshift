@@ -32,7 +32,6 @@ namespace Blueshift
         private static string kBlueshiftSettings = "BLUESHIFT_SETTINGS";
         private static string kInterstellarWarpSpeedMultiplier = "interstellarWarpSpeedMultiplier";
         private static string kSOIMultiplier = "soiMultiplier";
-        private static string kAutoCircularizationDelay = "autoCircularizationDelay";
         private static string kCircularizationResource = "circularizationResource";
         private static string kCircularizationCostPerTonne = "circularizationCostPerTonne";
         private static string kAnomalyCheckSeconds = "anomalyCheckSeconds";
@@ -59,11 +58,6 @@ namespace Blueshift
         /// Flag to indicate whether or not to auto-circularize the orbit.
         /// </summary>
         public static bool autoCircularize = false;
-
-        /// <summary>
-        /// In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
-        /// </summary>
-        public static float autoCircularizationDelay = 5;
 
         /// <summary>
         /// It can cost resources to auto-circularize a ship after warp.
@@ -509,9 +503,6 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kSOIMultiplier))
                     double.TryParse(nodeSettings.GetValue(kSOIMultiplier), out soiMultiplier);
-
-                if (nodeSettings.HasValue(kAutoCircularizationDelay))
-                    float.TryParse(nodeSettings.GetValue(kAutoCircularizationDelay), out autoCircularizationDelay);
 
                 if (nodeSettings.HasValue(kCircularizationResource))
                 {

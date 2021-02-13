@@ -97,6 +97,7 @@ namespace Blueshift
         string kWarpReady = "Ready";
         string kTerrainWarning = "Warp halted to avoid collision with celestial body. Reduce speed to approach minimum warp altitude.";
         string kOrbitCircularized = "Orbit circularized";
+        string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
         #endregion
 
         #region Fields
@@ -155,6 +156,23 @@ namespace Blueshift
         public FloatCurve planetarySOISpeedCurve;
 
         /// <summary>
+        /// Whenever you cross into interstellar space, or are already in interstellar space and throttled down,
+        /// then apply this acceleration curve. The warp speed will be max warp speed * curve's speed modifier.
+        /// The first number represents the time since crossing the boundary/throttling up, and the second number is the multiplier.
+        /// We don't apply this curve when going from interstellar to interplanetary space.
+        /// </summary>
+        [KSPField]
+        public FloatCurve interstellarAccelerationCurve;
+
+        /// <summary>
+        /// Multiplies resource consumption and production rates by this multiplier when in interstellar space.
+        /// Generators identified by warpPowerGeneratorID will be affected by this multiplier.
+        /// Default multiplier is 10.
+        /// </summary>
+        [KSPField]
+        public float interstellarPowerMultiplier = 10f;
+
+        /// <summary>
         /// Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties.
         /// Going over this limit incurs performance penalties, but staying under this value provides benefits.
         /// The displacement value is rated in metric tons.
@@ -198,6 +216,13 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string textureModuleID = string.Empty;
+
+
+        /// <summary>
+        /// Engines can drive WBIModuleGeneratorFX that produce resources needed for warp travel if their moduleID matches this value.
+        /// </summary>
+        [KSPField]
+        public string warpPowerGeneratorID = string.Empty;
 
         /// <summary>
         /// Optional effect to play when the vessel exceeds the speed of light.
@@ -290,6 +315,7 @@ namespace Blueshift
         /// List of enabled warp coils
         /// </summary>
         protected List<WBIWarpCoil> warpCoils = null;
+        protected List<WBIModuleGeneratorFX> warpGenerators = null;
         /// <summary>
         /// List of animated textures driven by the warp engine
         /// </summary>
@@ -330,9 +356,80 @@ namespace Blueshift
         // These are used to auto-circularize the vessel's orbit
         private WBICircularizationStates circularizationState = WBICircularizationStates.doNotCircularize;
         private double circularizeStartTime = 0f;
+
+        // Used for gradually accelerating to interstellar speed.
+        private WBISpatialLocations prevSpatialLocation = WBISpatialLocations.Unknown;
+        private double speedStartTime = 0f;
+        private float prevInterstellarAcceleration = 0;
         #endregion
 
-        #region Actions
+        #region Actions And Events
+        /// <summary>
+        /// Circularizes the ship's orbit
+        /// </summary>
+        [KSPEvent(guiActive = true, guiName = "Auto-circularize orbit")]
+        public void CircularizeOrbit()
+        {
+            if ( FlightInputHandler.state.mainThrottle <= 0)
+            {
+                // We don't circularize if the ship is in interstellar space.
+                if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
+                {
+                    circularizationState = WBICircularizationStates.doNotCircularize;
+                    return;
+                }
+                // We don't circularize if the ship is in interplanetary space and the star has planets orbiting it.
+                else if (BlueshiftScenario.shared.IsAStar(part.vessel.mainBody) && BlueshiftScenario.shared.HasPlanets(part.vessel.mainBody))
+                {
+                    circularizationState = WBICircularizationStates.doNotCircularize;
+                    return;
+                }
+
+                // It costs resources to circularize. Make sure we can.
+                if (BlueshiftScenario.circularizationResourceDef != null && BlueshiftScenario.circularizationCostPerTonne > 0)
+                {
+                    double amount, maxAmount = 0;
+                    double resourceCost = (this.part.vessel.GetTotalMass() * BlueshiftScenario.circularizationCostPerTonne);
+
+                    this.part.GetConnectedResourceTotals(BlueshiftScenario.circularizationResourceDef.id, out amount, out maxAmount);
+                    if (amount < resourceCost)
+                    {
+                        circularizationState = WBICircularizationStates.doNotCircularize;
+                        return;
+                    }
+
+                    amount = this.part.RequestResource(BlueshiftScenario.circularizationResourceDef.id, resourceCost);
+                }
+
+                // Get current orbit.
+                Orbit orbit = this.part.vessel.orbitDriver.orbit;
+                double inclination = orbit.inclination;
+                double altitude = this.part.vessel.altitude;
+                double planetRadius = this.part.vessel.mainBody.Radius;
+                int planetIndex = this.part.vessel.mainBody.flightGlobalsIndex;
+                double currentTime = Planetarium.GetUniversalTime();
+                Orbit circlularOrbit = new Orbit(inclination, 0, planetRadius + altitude, 0, 0, 0, currentTime, this.part.vessel.mainBody);
+                Orbit.State state;
+
+                // Adjust the state vectors. This will shift the vessel's position, but the ship would've shifted around during normal gravity braking anyway.
+                circlularOrbit.GetOrbitalStateVectorsAtUT(currentTime, out state);
+                circlularOrbit.UpdateFromFixedVectors(orbit.pos, state.vel, this.part.vessel.mainBody.referenceBody, currentTime + 0.02);
+                FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, circlularOrbit.inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
+
+                ScreenMessages.PostScreenMessage(kOrbitCircularized, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                circularizationState = WBICircularizationStates.hasBeenCircularized;
+            }
+        }
+
+        /// <summary>
+        /// Action menu item to circularize the ship's orbit.
+        /// </summary>
+        /// <param name="param"></param>
+        [KSPAction("Auto-circularize orbit")]
+        public void CircularizeOrbitAction(KSPActionParam param)
+        {
+            CircularizeOrbit();
+        }
         #endregion
 
         #region Overrides
@@ -359,6 +456,7 @@ namespace Blueshift
                 return;
 
             // Drive warp coil resource consumption and get total available warp capacity.
+            updateWarpPowerGenerators();
             getTotalWarpCapacity();
 
             // Update our precondition states
@@ -370,10 +468,6 @@ namespace Blueshift
                 resetWarpParameters();
                 return;
             }
-
-            // Check for auto-orbit circularization
-            if (orbitCircularized())
-                return;
 
             // Calculate the best warp curve to get maximum FTL speed.
             calculateBestWarpSpeed();
@@ -391,6 +485,7 @@ namespace Blueshift
             base.OnUpdate();
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
+            getCoilsAndGenerators();
             if (!isOperational && !EngineIgnited)
             {
                 fadeOutEffects();
@@ -402,6 +497,9 @@ namespace Blueshift
             }
 
             UpdateWarpStatus();
+
+            Events["CircularizeOrbit"].active = BlueshiftScenario.autoCircularize;
+            Actions["CircularizeOrbitAction"].active = BlueshiftScenario.autoCircularize;
         }
 
         public override string GetInfo()
@@ -416,17 +514,11 @@ namespace Blueshift
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
-            loadCurve(warpCurve, "warpCurve");
-            loadCurve(planetarySOISpeedCurve, "planetarySOISpeedCurve");
-
-            ConfigNode defaultCurve = new ConfigNode("waterfallWarpEffectsCurve");
-            defaultCurve.AddValue("key", "0 0");
-            defaultCurve.AddValue("key", "1 0.5");
-            defaultCurve.AddValue("key", "1.5 1");
-            loadCurve(waterfallWarpEffectsCurve, "waterfallWarpEffectsCurve", defaultCurve);
+            loadFloatCurves();
 
             warpEngines = new List<WBIWarpEngine>();
             warpCoils = new List<WBIWarpCoil>();
+            warpGenerators = new List<WBIModuleGeneratorFX>();
             waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
             getAnimatedWarpEngineTextures();
 
@@ -693,66 +785,6 @@ namespace Blueshift
         }
         */
 
-        private bool orbitCircularized()
-        {
-            double elapsedTime = Planetarium.GetUniversalTime() - circularizeStartTime;
-            if (BlueshiftScenario.autoCircularize &&
-                circularizationState == WBICircularizationStates.needsCircularization &&
-                FlightInputHandler.state.mainThrottle <= 0 &&
-                elapsedTime >= BlueshiftScenario.autoCircularizationDelay
-                )
-            {
-                // We don't circularize if the ship is in interstellar space.
-                if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
-                {
-                    circularizationState = WBICircularizationStates.doNotCircularize;
-                    return false;
-                }
-                // We don't circularize if the ship is in interplanetary space and the star has planets orbiting it.
-                else if (BlueshiftScenario.shared.IsAStar(part.vessel.mainBody) && BlueshiftScenario.shared.HasPlanets(part.vessel.mainBody))
-                {
-                    circularizationState = WBICircularizationStates.doNotCircularize;
-                    return false;
-                }
-
-                // It costs resources to circularize. Make sure we can.
-                if (BlueshiftScenario.circularizationResourceDef != null && BlueshiftScenario.circularizationCostPerTonne > 0)
-                {
-                    double amount, maxAmount = 0;
-                    double resourceCost = this.part.vessel.GetTotalMass() * BlueshiftScenario.circularizationCostPerTonne;
-
-                    this.part.GetConnectedResourceTotals(BlueshiftScenario.circularizationResourceDef.id, out amount, out maxAmount);
-                    if (amount < resourceCost)
-                    {
-                        circularizationState = WBICircularizationStates.doNotCircularize;
-                        return false;
-                    }
-
-                    amount = this.part.RequestResource(BlueshiftScenario.circularizationResourceDef.id, resourceCost);
-                }
-
-                // Get current orbit.
-                Orbit orbit = this.part.vessel.orbitDriver.orbit;
-                double altitude = this.part.vessel.altitude;
-                double planetRadius = this.part.vessel.mainBody.Radius;
-                int planetIndex = this.part.vessel.mainBody.flightGlobalsIndex;
-                double currentTime = Planetarium.GetUniversalTime();
-                Orbit circlularOrbit = new Orbit(orbit.inclination, 0, planetRadius + altitude, 0, 0, 0, currentTime, this.part.vessel.mainBody);
-                Orbit.State state;
-
-                // Adjust the state vectors. This will shift the vessel's position, but the ship would've shifted around during normal gravity braking anyway.
-                circlularOrbit.GetOrbitalStateVectorsAtUT(currentTime, out state);
-                circlularOrbit.UpdateFromFixedVectors(orbit.pos, state.vel, this.part.vessel.mainBody.referenceBody, currentTime + 0.02);
-                FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, circlularOrbit.inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
-
-                ScreenMessages.PostScreenMessage(kOrbitCircularized, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
-                circularizationState = WBICircularizationStates.hasBeenCircularized;
-                return true;
-            }
-
-            return false;
-        }
-
         /*
          * Keep this for jump engines
         [KSPEvent(guiActive = true)]
@@ -831,12 +863,13 @@ namespace Blueshift
             effectiveWarpCapacity = totalWarpCapacity * (totalDisplacementImpulse / this.part.vessel.GetTotalMass());
 
             int count = warpEngines.Count;
-            float bestWarpSpeed = 0;
+            float bestWarpSpeed = -1f;
+            float warpCurveSpeed = 0;
             for (int index = 0; index < count; index++)
             {
-                warpSpeed = warpEngines[index].warpCurve.Evaluate(effectiveWarpCapacity);
-                if (warpSpeed > bestWarpSpeed)
-                    bestWarpSpeed = warpSpeed;
+                warpCurveSpeed = warpEngines[index].warpCurve.Evaluate(effectiveWarpCapacity);
+                if (warpCurveSpeed > bestWarpSpeed)
+                    bestWarpSpeed = warpCurveSpeed;
             }
             maxWarpSpeed = bestWarpSpeed;
 
@@ -862,7 +895,56 @@ namespace Blueshift
 
             // Account for throttle setting and thrust limiter.
             throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
-            warpSpeed = maxWarpSpeed * throttleLevel;
+            if (throttleLevel <= 0)
+            {
+                warpSpeed = 0;
+                maxWarpSpeed = 0;
+                prevInterstellarAcceleration = 0;
+                if (spatialLocation == WBISpatialLocations.Interstellar)
+                    speedStartTime = Planetarium.GetUniversalTime();
+                return;
+            }
+            maxWarpSpeed *= throttleLevel;
+
+            // If we've transitioned from interplanetary to interstellar or vice-versa, then transition to the appropriate speed.
+            if (prevSpatialLocation != spatialLocation)
+            {
+                if (prevSpatialLocation == WBISpatialLocations.Interplanetary && spatialLocation == WBISpatialLocations.Interstellar)
+                {
+                    speedStartTime = Planetarium.GetUniversalTime();
+                }
+
+                else
+                {
+                    speedStartTime = 0;
+                }
+
+                prevSpatialLocation = spatialLocation;
+            }
+
+            // Still in same spatial location, but we may need to accelerate
+            else if (speedStartTime > 0)
+            {
+                float elapsedTime = (float)(Planetarium.GetUniversalTime() - speedStartTime);
+                float curveSpeed = Mathf.Abs(interstellarAccelerationCurve.Evaluate(elapsedTime));
+
+                // For reasons unknown the float curve can go negative in its evaluation, so we skip any evaluations that are less than the previous evaluation.
+                if (curveSpeed > prevInterstellarAcceleration)
+                {
+                    prevInterstellarAcceleration = curveSpeed;
+                    warpSpeed = maxWarpSpeed * curveSpeed;
+                }
+
+                // Stop accelerating if we've hit our end time.
+                if (elapsedTime >= interstellarAccelerationCurve.maxTime)
+                    speedStartTime = 0;      
+            }
+
+            // No acceleration, just cruising...
+            else
+            {
+                warpSpeed = maxWarpSpeed;
+            }
         }
 
         /// <summary>
@@ -870,22 +952,45 @@ namespace Blueshift
         /// </summary>
         protected void getTotalWarpCapacity()
         {
-            List<WBIWarpCoil> coils = this.part.vessel.FindPartModulesImplementing<WBIWarpCoil>();
-            int count = coils.Count;
+            int count = warpCoils.Count;
             WBIWarpCoil warpCoil;
             float coilCapacity;
-            float vesselMass = this.part.vessel.GetTotalMass();
+            float vesselMass = part.vessel.GetTotalMass();
 
             totalWarpCapacity = 0;
-            warpCoils.Clear();
             for (int index = 0; index < count; index++)
             {
-                warpCoil = coils[index];
+                warpCoil = warpCoils[index];
                 if (warpCoil.isActivated && consumeCoilResources(warpCoil))
                 {
                     coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
                     totalWarpCapacity += coilCapacity;
-                    warpCoils.Add(warpCoil);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Updates the generators that provide warp power.
+        /// </summary>
+        protected void updateWarpPowerGenerators()
+        {
+            int count = warpGenerators.Count;
+            WBIModuleGeneratorFX generator;
+
+            for (int index = 0; index < count; index++)
+            {
+                generator = warpGenerators[index];
+                if (spatialLocation == WBISpatialLocations.Interstellar)
+                {
+                    if (!generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
+                        generator.EfficiencyModifiers.Add(kInterstellarEfficiencyModifier, 0);
+                    generator.EfficiencyModifiers[kInterstellarEfficiencyModifier] = Mathf.Clamp(interstellarPowerMultiplier * throttleLevel, 1, interstellarPowerMultiplier);
+                    generator.TallyEfficiencyModifiers();
+                }
+                else if (spatialLocation != WBISpatialLocations.Interstellar && generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
+                {
+                    generator.EfficiencyModifiers.Remove(kInterstellarEfficiencyModifier);
+                    generator.TallyEfficiencyModifiers();
                 }
             }
         }
@@ -905,7 +1010,7 @@ namespace Blueshift
             if (count == 0)
                 return true;
 
-            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, 1.0, 0.1, true, true);
+            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, spatialLocation != WBISpatialLocations.Interstellar ? 1.0 : interstellarPowerMultiplier, 0.1, true, true);
             for (int index = 0; index < count; index++)
             {
                 if (!warpCoil.resHandler.inputResources[index].available)
@@ -1001,6 +1106,72 @@ namespace Blueshift
             }
         }
 
+        private void loadFloatCurves()
+        {
+            ConfigNode defaultCurve = new ConfigNode("waterfallWarpEffectsCurve");
+            loadCurve(warpCurve, "warpCurve");
+
+            defaultCurve = new ConfigNode("planetarySOISpeedCurve");
+            defaultCurve.AddValue("key", "1 0.1");
+            defaultCurve.AddValue("key", "0.5 0.05");
+            defaultCurve.AddValue("key", "0.25 0.01");
+            defaultCurve.AddValue("key", "0.1 0.005");
+            loadCurve(planetarySOISpeedCurve, "planetarySOISpeedCurve");
+
+            defaultCurve = new ConfigNode("waterfallWarpEffectsCurve");
+            defaultCurve.AddValue("key", "0 0");
+            defaultCurve.AddValue("key", "0.001 0.1");
+            defaultCurve.AddValue("key", "0.01 0.25");
+            defaultCurve.AddValue("key", "0.1 0.25");
+            defaultCurve.AddValue("key", "0.5 0.375");
+            defaultCurve.AddValue("key", "1.0 0.5");
+            defaultCurve.AddValue("key", "1.5 1");
+            loadCurve(waterfallWarpEffectsCurve, "waterfallWarpEffectsCurve", defaultCurve);
+
+
+            defaultCurve = new ConfigNode("interstellarAccelerationCurve");
+            defaultCurve.AddValue("key", "0 0.001");
+            defaultCurve.AddValue("key", "5 0.01");
+            defaultCurve.AddValue("key", "7 0.1");
+            defaultCurve.AddValue("key", "9 0.5");
+            defaultCurve.AddValue("key", "10 1");
+            loadCurve(interstellarAccelerationCurve, "interstellarAccelerationCurve", defaultCurve);
+        }
+
+        int vesselPartCount = 0;
+        private void getCoilsAndGenerators()
+        {
+            if (vesselPartCount != part.vessel.parts.Count)
+            {
+                vesselPartCount = part.vessel.parts.Count;
+
+                // Warp coils
+                List<WBIWarpCoil> coils = part.vessel.FindPartModulesImplementing<WBIWarpCoil>();
+                if (coils != null && coils.Count > 0)
+                {
+                    warpCoils.Clear();
+                    warpCoils.AddRange(coils);
+                }
+
+                // Warp Power generators
+                List<WBIModuleGeneratorFX> generators = part.vessel.FindPartModulesImplementing<WBIModuleGeneratorFX>();
+                WBIModuleGeneratorFX generator;
+                if (generators != null && generators.Count > 0)
+                {
+                    warpGenerators.Clear();
+                    int count = generators.Count;
+                    for (int index = 0; index < count; index++)
+                    {
+                        generator = generators[index];
+                        if (generator.moduleID == warpPowerGeneratorID)
+                        {
+                            warpGenerators.Add(generator);
+                        }
+                    }
+                }
+            }
+        }
+
         private void updatePreconditionStates()
         {
             isInSpace = IsInSpace();
@@ -1028,9 +1199,11 @@ namespace Blueshift
 
         private void resetWarpParameters()
         {
-            warpDistance = 0;
             maxWarpSpeed = 0;
             warpSpeed = 0;
+            speedStartTime = 0;
+            warpDistance = 0;
+            speedStartTime = 0f;
             effectiveWarpCapacity = 0;
             hasExceededLightSpeed = false;
             FlightInputHandler.state.mainThrottle = 0;
@@ -1043,7 +1216,7 @@ namespace Blueshift
                 return;
 
             // Calculate offset position
-            warpDistance = kLightSpeed * maxWarpSpeed * throttleLevel * TimeWarp.fixedDeltaTime;
+            warpDistance = kLightSpeed * warpSpeed * TimeWarp.fixedDeltaTime;
             Transform refTransform = this.part.vessel.transform;
             Vector3 warpVector = refTransform.up * warpDistance;
             Vector3d offsetPosition = refTransform.position + warpVector;

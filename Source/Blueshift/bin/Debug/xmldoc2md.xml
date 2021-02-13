@@ -414,6 +414,21 @@
             The second number is the top speed multiplier.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpEngine.interstellarAccelerationCurve">
+            <summary>
+            Whenever you cross into interstellar space, or are already in interstellar space and throttled down,
+            then apply this acceleration curve. The warp speed will be max warp speed * curve's speed modifier.
+            The first number represents the time since crossing the boundary/throttling up, and the second number is the multiplier.
+            We don't apply this curve when going from interstellar to interplanetary space.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.interstellarPowerMultiplier">
+            <summary>
+            Multiplies resource consumption and production rates by this multiplier when in interstellar space.
+            Generators identified by warpPowerGeneratorID will be affected by this multiplier.
+            Default multiplier is 10.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.displacementImpulse">
             <summary>
             Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties.
@@ -452,6 +467,11 @@
         <member name="F:Blueshift.WBIWarpEngine.textureModuleID">
             <summary>
             The name of the WBIAnimatedTexture to drive as part of the warp effects.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpPowerGeneratorID">
+            <summary>
+            Engines can drive WBIModuleGeneratorFX that produce resources needed for warp travel if their moduleID matches this value.
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.photonicBoomEffectName">
@@ -574,6 +594,17 @@
             Flag to indicate whether or not the vessel has exceeded light speed.
             </summary>
         </member>
+        <member name="M:Blueshift.WBIWarpEngine.CircularizeOrbit">
+            <summary>
+            Circularizes the ship's orbit
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.CircularizeOrbitAction(KSPActionParam)">
+            <summary>
+            Action menu item to circularize the ship's orbit.
+            </summary>
+            <param name="param"></param>
+        </member>
         <member name="M:Blueshift.WBIWarpEngine.IsActivated">
             <summary>
             Determines whether or not the engine is ignited and operational.
@@ -627,6 +658,11 @@
         <member name="M:Blueshift.WBIWarpEngine.getTotalWarpCapacity">
             <summary>
             Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIWarpEngine.updateWarpPowerGenerators">
+            <summary>
+            Updates the generators that provide warp power.
             </summary>
         </member>
         <member name="M:Blueshift.WBIWarpEngine.consumeCoilResources(Blueshift.WBIWarpCoil)">
@@ -719,11 +755,6 @@
         <member name="F:Blueshift.BlueshiftScenario.autoCircularize">
             <summary>
             Flag to indicate whether or not to auto-circularize the orbit.
-            </summary>
-        </member>
-        <member name="F:Blueshift.BlueshiftScenario.autoCircularizationDelay">
-            <summary>
-            In seconds, how long to wait between cutting the warp engine throttle and automatically circularizing the ship's orbit.
             </summary>
         </member>
         <member name="F:Blueshift.BlueshiftScenario.circularizationResourceDef">

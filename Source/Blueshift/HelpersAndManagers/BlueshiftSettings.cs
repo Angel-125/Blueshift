@@ -10,7 +10,7 @@ namespace Blueshift
 {
     public class BlueshiftSettings : GameParameters.CustomParameterNode
     {
-        [GameParameters.CustomParameterUI("Auto-circularize orbit after warp", toolTip = "Auto-circularize your orbit after warp- no gravity braking needed.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        [GameParameters.CustomParameterUI("Enable circularization helper", toolTip = "Adds a button to the warp engine PAW to Auto-circularize your orbit- no gravity braking needed.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool autoCircularize = false;
 
         [GameParameters.CustomParameterUI("Allow Space Anomalies", toolTip = "Allows Space Anomalies to spawn in game.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
