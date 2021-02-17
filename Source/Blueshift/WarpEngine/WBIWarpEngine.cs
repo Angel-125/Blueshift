@@ -513,7 +513,9 @@ namespace Blueshift
 
             UpdateWarpStatus();
 
-            Events["CircularizeOrbit"].active = BlueshiftScenario.autoCircularize && spatialLocation == WBISpatialLocations.Planetary;
+            bool enableCircularizeOrbit = BlueshiftScenario.autoCircularize && (spatialLocation == WBISpatialLocations.Planetary || 
+                (BlueshiftScenario.shared.IsAStar(vessel.mainBody) && BlueshiftScenario.shared.GetLastPlanet(vessel.mainBody) == null));
+            Events["CircularizeOrbit"].active = enableCircularizeOrbit;
             Actions["CircularizeOrbitAction"].active = BlueshiftScenario.autoCircularize;
         }
 
