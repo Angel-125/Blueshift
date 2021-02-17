@@ -89,6 +89,10 @@ namespace Blueshift
     {
         #region constants
         float kLightSpeed = 299792458;
+        // How close do you have to be to a targeted vessel before you can rendezvous with it during auto-circularization.
+        float kMinRendezvousDistance = 10000;
+        // How close to the targed vessel should you end up at when you rendezvous with it during auto-circularization.
+        float kRendezvousDistance = 100;
         float kMessageDuration = 3f;
         string kNeedsSpaceflight = "Needs to be in space";
         string kNeedsAltitude = "Needs higher altitude";
@@ -97,6 +101,7 @@ namespace Blueshift
         string kWarpReady = "Ready";
         string kTerrainWarning = "Warp halted to avoid collision with celestial body. Reduce speed to approach minimum warp altitude.";
         string kOrbitCircularized = "Orbit circularized";
+        string kRendezvousComplete = "Rendezvous completed";
         string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
         #endregion
 
@@ -401,6 +406,16 @@ namespace Blueshift
                     amount = this.part.RequestResource(BlueshiftScenario.circularizationResourceDef.id, resourceCost);
                 }
 
+                // If we are targeting a vessel and we're near it (10km) then rendezvous with it instead.
+                if (vessel.targetObject != null && vessel.targetObject.GetVessel() != null && targetDistance <= kMinRendezvousDistance)
+                {
+                    Vector3 position = UnityEngine.Random.onUnitSphere * kRendezvousDistance;
+                    FlightGlobals.fetch.SetShipOrbitRendezvous(vessel.targetObject.GetVessel(), position, Vector3d.zero);
+                    ScreenMessages.PostScreenMessage(kRendezvousComplete, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                    circularizationState = WBICircularizationStates.hasBeenCircularized;
+                    return;
+                }
+
                 // Get current orbit.
                 Orbit orbit = this.part.vessel.orbitDriver.orbit;
                 double inclination = orbit.inclination;
@@ -498,7 +513,7 @@ namespace Blueshift
 
             UpdateWarpStatus();
 
-            Events["CircularizeOrbit"].active = BlueshiftScenario.autoCircularize;
+            Events["CircularizeOrbit"].active = BlueshiftScenario.autoCircularize && spatialLocation == WBISpatialLocations.Planetary;
             Actions["CircularizeOrbitAction"].active = BlueshiftScenario.autoCircularize;
         }
 
@@ -1235,7 +1250,10 @@ namespace Blueshift
             }
 
             // Apply translation.
-            FloatingOrigin.SetOutOfFrameOffset(offsetPosition);
+            if (FlightGlobals.VesselsLoaded.Count > 1)
+                this.part.vessel.SetPosition(offsetPosition);
+            else
+                FloatingOrigin.SetOutOfFrameOffset(offsetPosition);
         }
 
         private void updateVesselCourse()

@@ -249,8 +249,8 @@ namespace Blueshift
                 // Check for override first.
                 if (lastPlanetOverrides.ContainsKey(stars[index].bodyName))
                 {
-                    body = FlightGlobals.GetBodyByName(stars[index].bodyName);
-                    if (body != null)
+                    body = FlightGlobals.GetBodyByName(lastPlanetOverrides[stars[index].bodyName]);
+                    if (body != null && !lastPlanetByStar.ContainsKey(stars[index]))
                     {
                         lastPlanets.Add(body);
                         lastPlanetByStar.Add(stars[index], body);
@@ -259,7 +259,7 @@ namespace Blueshift
 
                 // Try to figure it out based on distance.
                 body = GetLastPlanet(stars[index]);
-                if (body != null)
+                if (body != null && !lastPlanetByStar.ContainsKey(stars[index]))
                 {
                     lastPlanets.Add(body);
                     lastPlanetByStar.Add(stars[index], body);
