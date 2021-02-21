@@ -828,6 +828,11 @@
             Flag to indicate whether or not Jumpgate anomalies are enabled.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.jumpgateStartupIsDestructive">
+            <summary>
+            The jumpgate startup sequence is destructive. Stay clear!
+            </summary>
+        </member>
         <member name="M:Blueshift.BlueshiftScenario.AddJumpgateToNetwork(Blueshift.WBISpaceAnomaly)">
             <summary>
             Adds the jumpgate anomaly to the network.
@@ -1252,6 +1257,18 @@
         <member name="F:Blueshift.WBIJumpGate.interactionRange">
             <summary>
             Range at which players can interact with the gate's PAW. Default is 500 meters.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.portalTriggerTransform">
+            <summary>
+            Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.triggerStartupScaleCurve">
+            <summary>
+            Scale curve to use during startup. This should follow the Waterfall effect (if any).
+            During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught
+            by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled.
             </summary>
         </member>
         <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">

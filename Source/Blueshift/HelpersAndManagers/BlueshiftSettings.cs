@@ -19,6 +19,9 @@ namespace Blueshift
         [GameParameters.CustomParameterUI("Allow Jumpgates", toolTip = "Allows Jumpgate Anomalies to spawn in game. Player-built gates are unaffected.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableJumpGates = false;
 
+        [GameParameters.CustomParameterUI("Jumpgates: desctructive startup", toolTip = "Stay clear of a jumpgate starting up!", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool enableDestructiveGateStartup = false;
+
         #region CustomParameterNode
 
         public override string DisplaySection
@@ -76,12 +79,24 @@ namespace Blueshift
 
         public override bool Enabled(System.Reflection.MemberInfo member, GameParameters parameters)
         {
-            if (member.Name == "enableJumpGates")
+            if (member.Name == "enableDestructiveGateStartup")
+                return enableSpaceAnomalies && enableJumpGates;
+
+            else if (member.Name == "enableJumpGates")
                 return enableSpaceAnomalies;
 
             return true;
         }
         #endregion
+
+        public static bool JumpgateStartupIsDestructive
+        {
+            get
+            {
+                BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
+                return settings.enableDestructiveGateStartup;
+            }
+        }
 
         public static bool JumpgatesEnabled
         {

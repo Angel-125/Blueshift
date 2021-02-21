@@ -1,6 +1,42 @@
 ﻿# Blueshift
 
 
+# GateSelectedDelegate
+            
+Callback to indicate that a jumpgate was selected
+            
+> **destinationGate:** A Vessel representing the destination.
+
+        
+
+# JumpgateSelector
+            
+A simple dialog to select a jumpgate destination from.
+        
+## Fields
+
+### jumpgates
+List of jumpgates to select from.
+### titleText
+Title of the selection dialog.
+### selectionMessage
+Jumpgate selection message.
+### selectButtonTitle
+Jumpgate select button title.
+### gateSelectedDelegate
+Gate selected delegate.
+
+# WBIAnomalyTypes
+            
+Type of anomaly.
+        
+## Fields
+
+### generic
+Generic anomaly (the default).
+### jumpGate
+A special type of anomaly that is a jumpgate. Jumpgates can be enabled/disabled from the Game Difficulty menu.
+
 # WBIAnomalySpawnModes
             
 Space anomalies can be set up in a variety of different orbits.
@@ -376,8 +412,62 @@ It can cost resources to auto-circularize a ship after warp.
 How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
 ### spawnSpaceAnomalies
 Flag to indicate whether or not Space Anomalies are enabled.
+### spawnJumpgates
+Flag to indicate whether or not Jumpgate anomalies are enabled.
+### jumpgateStartupIsDestructive
+The jumpgate startup sequence is destructive. Stay clear!
 ## Methods
 
+
+### AddJumpgateToNetwork(Blueshift.WBISpaceAnomaly)
+Adds the jumpgate anomaly to the network.
+> #### Parameters
+> **anomaly:** The WBISpaceAnomaly to add.
+
+
+### AddJumpgateToNetwork(System.String,System.String)
+Adds the jumpgate to the network.
+> #### Parameters
+> **vesselID:** A string containing the ID of the jumpgate vessel.
+
+> **networkID:** A string containing the ID of the jumpgate network.
+
+
+### GetJumpgates(System.String,Vector3d,System.Double)
+Returns the list of vesselIDs in the jumpgate network.
+> #### Parameters
+> **networkID:** A string containing the network ID.
+
+> **originPoint:** A Vector3d containing the origin point to check for gates in range.
+
+> **maxJumpRange:** A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.
+
+> #### Return value
+> A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.
+
+### GetAnomaly(System.String)
+Returns the anomaly matching the desired vesselID.
+> #### Parameters
+> **vesselID:** A string containing the vessel ID.
+
+> #### Return value
+> A WBISpaceAnomaly if the anomaly can be found, or null if not.
+
+### GetDestinationVesselID(System.String)
+Attempts to find the vessel ID that matches the desired paired gate address.
+> #### Parameters
+> **pairedGateAddress:** A string containing the paired gate address to search for.
+
+> #### Return value
+> A string containing the vessel ID if found, or null if not found.
+
+### GetVessel(System.String)
+Attempts to locate the destination vessel based on the ID supplied.
+> #### Parameters
+> **vesselID:** A string containing the vessel ID
+
+> #### Return value
+> A Vessel if one can be found, null if not.
 
 ### GetSpatialLocation(Vessel)
 Determines thevessel's spatial location.
@@ -493,6 +583,8 @@ Describes a space anomaly. Similar to asteroids, space anomalies are listed as u
 Identifier for the space anomaly.
 ### partName
 Name of the part to spawn
+### anomalyType
+Type of anomaly. Default is generic.
 ### sizeClass
 Like asteroids, space anomalies have a size class that ranges from Size A (12 meters) to Size I (100+ meters). The default is A.
 ### spawnMode
@@ -521,8 +613,38 @@ Spawn chance in a roll between 1 and 1000
 Maximum number of objects of this type that may exist at any given time. Default is 10. Set to -1 for unlimited number.
 ### vesselId
 ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
+### isKnown
+Flag to indicate whether or not the gate should automatically be added to the network's known gates. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
+### networkID
+Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
+### gateAddress
+For paired gates, the address of the gate. Default is an empty address. Applies to anomalyType = jumpGate.
+### pairedGateAddress
+For paired gates, the address of the paired gate. Default is an empty address. Applies to anomalyType = jumpGate.
 ## Methods
 
+
+### CopyFrom(Blueshift.WBISpaceAnomaly)
+Copies the fields from another space anomaly.
+> #### Parameters
+> **copyFrom:** The WBISpaceAnomaly whose fields we're interested in.
+
+
+### Load(Blueshift.WBISpaceAnomaly,ConfigNode)
+Loads the ConfigNode data into the anomaly object.
+> #### Parameters
+> **anomaly:** A WBISpaceAnomaly to load the data into.
+
+> **node:** A ConfigNode containing serialized data.
+
+
+### Save(System.String)
+Serializes the anomaly to a ConfigNode.
+> #### Parameters
+> **nodeName:** A string containing the name of the node.
+
+> #### Return value
+> A ConfigNode with the serialized data.
 
 ### CreateNewInstancesIfNeeded(System.Collections.Generic.List{Blueshift.WBISpaceAnomaly})
 Checks to see if we should create a new instance.

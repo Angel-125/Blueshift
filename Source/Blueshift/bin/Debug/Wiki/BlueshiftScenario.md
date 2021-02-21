@@ -21,8 +21,62 @@ It can cost resources to auto-circularize a ship after warp.
 How much circularizationResource does it cost per metric ton of ship to circularize its orbit.
 ### spawnSpaceAnomalies
 Flag to indicate whether or not Space Anomalies are enabled.
+### spawnJumpgates
+Flag to indicate whether or not Jumpgate anomalies are enabled.
+### jumpgateStartupIsDestructive
+The jumpgate startup sequence is destructive. Stay clear!
 ## Methods
 
+
+### AddJumpgateToNetwork(Blueshift.WBISpaceAnomaly)
+Adds the jumpgate anomaly to the network.
+> #### Parameters
+> **anomaly:** The WBISpaceAnomaly to add.
+
+
+### AddJumpgateToNetwork(System.String,System.String)
+Adds the jumpgate to the network.
+> #### Parameters
+> **vesselID:** A string containing the ID of the jumpgate vessel.
+
+> **networkID:** A string containing the ID of the jumpgate network.
+
+
+### GetJumpgates(System.String,Vector3d,System.Double)
+Returns the list of vesselIDs in the jumpgate network.
+> #### Parameters
+> **networkID:** A string containing the network ID.
+
+> **originPoint:** A Vector3d containing the origin point to check for gates in range.
+
+> **maxJumpRange:** A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.
+
+> #### Return value
+> A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.
+
+### GetAnomaly(System.String)
+Returns the anomaly matching the desired vesselID.
+> #### Parameters
+> **vesselID:** A string containing the vessel ID.
+
+> #### Return value
+> A WBISpaceAnomaly if the anomaly can be found, or null if not.
+
+### GetDestinationVesselID(System.String)
+Attempts to find the vessel ID that matches the desired paired gate address.
+> #### Parameters
+> **pairedGateAddress:** A string containing the paired gate address to search for.
+
+> #### Return value
+> A string containing the vessel ID if found, or null if not found.
+
+### GetVessel(System.String)
+Attempts to locate the destination vessel based on the ID supplied.
+> #### Parameters
+> **vesselID:** A string containing the vessel ID
+
+> #### Return value
+> A Vessel if one can be found, null if not.
 
 ### GetSpatialLocation(Vessel)
 Determines thevessel's spatial location.

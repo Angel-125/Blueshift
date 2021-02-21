@@ -83,6 +83,11 @@ namespace Blueshift
         /// </summary>
         public static bool spawnJumpgates = false;
 
+        /// <summary>
+        /// The jumpgate startup sequence is destructive. Stay clear!
+        /// </summary>
+        public static bool jumpgateStartupIsDestructive = false;
+
         private double soiMultiplier = 1.1;
         private double soiNoPlanetsMultiplier = 100;
         private List<WBISpaceAnomaly> spaceAnomalies;
@@ -772,6 +777,7 @@ namespace Blueshift
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
+            jumpgateStartupIsDestructive = BlueshiftSettings.JumpgateStartupIsDestructive;
 
             if (!spawnSpaceAnomalies)
                 removeSpaceAnomalies();

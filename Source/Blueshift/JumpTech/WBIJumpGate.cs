@@ -105,6 +105,20 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public float interactionRange = 500f;
+
+        /// <summary>
+        /// Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity.
+        /// </summary>
+        [KSPField]
+        public string portalTriggerTransform = string.Empty;
+
+        /// <summary>
+        /// Scale curve to use during startup. This should follow the Waterfall effect (if any).
+        /// During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught
+        /// by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled.
+        /// </summary>
+        [KSPField]
+        public FloatCurve triggerStartupScaleCurve;
         #endregion
 
         #region Housekeeping
@@ -129,6 +143,7 @@ namespace Blueshift
         List<Vessel> jumpgates;
         JumpgateSelector jumpgateSelector;
         bool playEffects = false;
+        Transform portalTrigger = null;
         #endregion
 
         #region IModuleInfo
@@ -170,7 +185,7 @@ namespace Blueshift
         #region Trigger handling
         public void OnTriggerEnter(Collider collider)
         {
-            if (collider.attachedRigidbody == null || !collider.CompareTag("Untagged") || !isActivated || destinationVessel == null)
+            if (collider.attachedRigidbody == null || !collider.CompareTag("Untagged") || destinationVessel == null)
                 return;
 
             //Get the vessel that collided with the trigger
@@ -178,6 +193,16 @@ namespace Blueshift
             if (collidedPart == null)
                 return;
             Vessel vesselToTeleport = collidedPart.vessel;
+
+            // Parts stuck in the startup wash go boom.
+            if (!isActivated && playEffects && BlueshiftSettings.JumpgateStartupIsDestructive && collidedPart != this.part)
+            {
+                collidedPart.explosionPotential = 0.1f;
+                collidedPart.explode();
+                if (vesselToTeleport.parts.Count == 0)
+                    FlightGlobals.ForceSetActiveVessel(part.vessel);
+                return;
+            }
 
             // Make sure that the vessel can fit.
             vesselToTeleport.UpdateVesselSize();
@@ -270,12 +295,24 @@ namespace Blueshift
 
             if (!isActivated && playEffects)
             {
+                // Update the effects throttle
                 effectsThrottle += (effectSpoolTime * TimeWarp.fixedDeltaTime);
+
+                // Scale the portal trigger
+                if (portalTrigger != null && triggerStartupScaleCurve != null)
+                {
+                    float scale = triggerStartupScaleCurve.Evaluate(effectsThrottle);
+                    portalTrigger.localScale = new Vector3(1, 1, scale);
+                }
+
+                // See if we're done.
                 if (effectsThrottle >= 1)
                 {
                     isActivated = true;
                     playEffects = false;
                     effectsThrottle = 1;
+                    if (portalTrigger != null)
+                        portalTrigger.localScale = Vector3.one;
                 }
             }
         }
@@ -326,6 +363,13 @@ namespace Blueshift
                 string[] dimensions = jumpMaxDimensions.Split(new char[] {','});
                 float.TryParse(dimensions[0], out jumpDimensions.x);
                 float.TryParse(dimensions[1], out jumpDimensions.y);
+            }
+
+            // Get portal trigger, if any.
+            if (!string.IsNullOrEmpty(portalTriggerTransform))
+            {
+                portalTrigger = part.FindModelTransform(portalTriggerTransform);
+                loadCurve(triggerStartupScaleCurve, "triggerStartupScaleCurve");
             }
 
             // Setup anomaly-specific parameters if needed.
