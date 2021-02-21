@@ -57,6 +57,10 @@
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
@@ -72,6 +76,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HelpersAndManagers\BlueshiftSettings.cs" />
+    <Compile Include="JumpgateSelector.cs" />
+    <Compile Include="Utility\Dialog\Dialog.cs" />
+    <Compile Include="Utility\Dialog\DialogManager.cs" />
+    <Compile Include="Utility\Dialog\DialogUils.cs" />
     <Compile Include="Utility\Enumerators.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
@@ -86,8 +94,11 @@
     <Compile Include="Utility\WBIModuleHarvesterFX.cs" />
     <Compile Include="SpaceAnomaly\WBISpaceAnomaly.cs" />
     <Compile Include="SpaceAnomaly\WBITechUnlock.cs" />
+    <Compile Include="JumpTech\WBIJumpGate.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="GUI\" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="MarkdownSeparator.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

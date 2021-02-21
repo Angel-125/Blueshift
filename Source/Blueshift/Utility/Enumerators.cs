@@ -7,6 +7,22 @@ using System.Threading.Tasks;
 namespace Blueshift
 {
     /// <summary>
+    /// Type of anomaly.
+    /// </summary>
+    public enum WBIAnomalyTypes
+    {
+        /// <summary>
+        /// Generic anomaly (the default).
+        /// </summary>
+        generic,
+
+        /// <summary>
+        /// A special type of anomaly that is a jumpgate. Jumpgates can be enabled/disabled from the Game Difficulty menu.
+        /// </summary>
+        jumpGate
+    }
+
+    /// <summary>
     /// Space anomalies can be set up in a variety of different orbits.
     /// </summary>
     public enum WBIAnomalySpawnModes

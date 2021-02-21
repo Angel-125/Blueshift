@@ -4,6 +4,57 @@
         <name>Blueshift</name>
     </assembly>
     <members>
+        <member name="T:Blueshift.GateSelectedDelegate">
+            <summary>
+            Callback to indicate that a jumpgate was selected
+            </summary>
+            <param name="destinationGate">A Vessel representing the destination.</param>
+        </member>
+        <member name="T:Blueshift.JumpgateSelector">
+            <summary>
+            A simple dialog to select a jumpgate destination from.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpgateSelector.jumpgates">
+            <summary>
+            List of jumpgates to select from.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpgateSelector.titleText">
+            <summary>
+            Title of the selection dialog.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpgateSelector.selectionMessage">
+            <summary>
+            Jumpgate selection message.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpgateSelector.selectButtonTitle">
+            <summary>
+            Jumpgate select button title.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpgateSelector.gateSelectedDelegate">
+            <summary>
+            Gate selected delegate.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIAnomalyTypes">
+            <summary>
+            Type of anomaly.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalyTypes.generic">
+            <summary>
+            Generic anomaly (the default).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIAnomalyTypes.jumpGate">
+            <summary>
+            A special type of anomaly that is a jumpgate. Jumpgates can be enabled/disabled from the Game Difficulty menu.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIAnomalySpawnModes">
             <summary>
             Space anomalies can be set up in a variety of different orbits.
@@ -772,6 +823,54 @@
             Flag to indicate whether or not Space Anomalies are enabled.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.spawnJumpgates">
+            <summary>
+            Flag to indicate whether or not Jumpgate anomalies are enabled.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.AddJumpgateToNetwork(Blueshift.WBISpaceAnomaly)">
+            <summary>
+            Adds the jumpgate anomaly to the network.
+            </summary>
+            <param name="anomaly">The WBISpaceAnomaly to add.</param>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.AddJumpgateToNetwork(System.String,System.String)">
+            <summary>
+            Adds the jumpgate to the network.
+            </summary>
+            <param name="vesselID">A string containing the ID of the jumpgate vessel.</param>
+            <param name="networkID">A string containing the ID of the jumpgate network.</param>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetJumpgates(System.String,Vector3d,System.Double)">
+            <summary>
+            Returns the list of vesselIDs in the jumpgate network.
+            </summary>
+            <param name="networkID">A string containing the network ID.</param>
+            <param name="originPoint">A Vector3d containing the origin point to check for gates in range.</param>
+            <param name="maxJumpRange">A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.</param>
+            <returns>A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetAnomaly(System.String)">
+            <summary>
+            Returns the anomaly matching the desired vesselID.
+            </summary>
+            <param name="vesselID">A string containing the vessel ID.</param>
+            <returns>A WBISpaceAnomaly if the anomaly can be found, or null if not.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetDestinationVesselID(System.String)">
+            <summary>
+            Attempts to find the vessel ID that matches the desired paired gate address.
+            </summary>
+            <param name="pairedGateAddress">A string containing the paired gate address to search for.</param>
+            <returns>A string containing the vessel ID if found, or null if not found.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetVessel(System.String)">
+            <summary>
+            Attempts to locate the destination vessel based on the ID supplied.
+            </summary>
+            <param name="vesselID">A string containing the vessel ID</param>
+            <returns>A Vessel if one can be found, null if not.</returns>
+        </member>
         <member name="M:Blueshift.BlueshiftScenario.GetSpatialLocation(Vessel)">
             <summary>
             Determines thevessel's spatial location.
@@ -916,6 +1015,11 @@
             Name of the part to spawn
             </summary>
         </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.anomalyType">
+            <summary>
+            Type of anomaly. Default is generic.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBISpaceAnomaly.sizeClass">
             <summary>
             Like asteroids, space anomalies have a size class that ranges from Size A (12 meters) to Size I (100+ meters).
@@ -989,6 +1093,55 @@
             ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
             </summary>
         </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.isKnown">
+            <summary>
+            Flag to indicate whether or not the gate should automatically be added to the network's known gates.
+            If set to false (the default), then players must visit the gate in order for it to be added to the network.
+            Applies to anomalyType = jumpGate.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.networkID">
+            <summary>
+            Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network.
+            If there are only two gates in the network then there is no need to select the other gate from the list.
+            You can add additional networks by adding a semicolon character in between network IDs.
+            Applies to anomalyType = jumpGate.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.gateAddress">
+            <summary>
+            For paired gates, the address of the gate.
+            Default is an empty address.
+            Applies to anomalyType = jumpGate.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.pairedGateAddress">
+            <summary>
+            For paired gates, the address of the paired gate.
+            Default is an empty address.
+            Applies to anomalyType = jumpGate.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBISpaceAnomaly.CopyFrom(Blueshift.WBISpaceAnomaly)">
+            <summary>
+            Copies the fields from another space anomaly.
+            </summary>
+            <param name="copyFrom">The WBISpaceAnomaly whose fields we're interested in.</param>
+        </member>
+        <member name="M:Blueshift.WBISpaceAnomaly.Load(Blueshift.WBISpaceAnomaly,ConfigNode)">
+            <summary>
+            Loads the ConfigNode data into the anomaly object.
+            </summary>
+            <param name="anomaly">A WBISpaceAnomaly to load the data into.</param>
+            <param name="node">A ConfigNode containing serialized data.</param>
+        </member>
+        <member name="M:Blueshift.WBISpaceAnomaly.Save(System.String)">
+            <summary>
+            Serializes the anomaly to a ConfigNode.
+            </summary>
+            <param name="nodeName">A string containing the name of the node.</param>
+            <returns>A ConfigNode with the serialized data.</returns>
+        </member>
         <member name="M:Blueshift.WBISpaceAnomaly.CreateNewInstancesIfNeeded(System.Collections.Generic.List{Blueshift.WBISpaceAnomaly})">
             <summary>
             Checks to see if we should create a new instance.
@@ -1032,6 +1185,83 @@
         <member name="F:Blueshift.WBITechUnlock.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.textureModuleID">
+            <summary>
+            This field tells the module which WBIAnimatedTexture to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.runningEffect">
+            <summary>
+            Warp coils can play a running effect while the generator is running.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.effectSpoolTime">
+            <summary>
+            In seconds, how quickly to throttle up the waterfall effect from 0 to 1.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.effectsThrottle">
+            <summary>
+            A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.networkID">
+            <summary>
+            Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network.
+            If there are only two gates in the network then there is no need to select the other gate from the list.
+            You can add additional networks by adding a semicolon character in between network IDs.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.gateAddress">
+            <summary>
+            For paired gates, the address of the gate. This should be set using JUMPGATE_ANOMALY.
+            Default is an empty address.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.pairedGateAddress">
+            <summary>
+            For paired gates, the address of the paired gate. This should be set using JUMPGATE_ANOMALY.
+            Default is an empty address.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.maxJumpRange">
+            <summary>
+            If the gate has a limited jump range, then only those gates that are in the network and within range can be selected.
+            The exception is a network of two gates; max range is ignored.
+            Set to -1 (the default) for unlimited jump range.
+            Units are in light-years (9460700000000000 meters)
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.jumpMaxDimensions">
+            <summary>
+            Maximum width and height of the vessel that the gate can support.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.interactionRange">
+            <summary>
+            Range at which players can interact with the gate's PAW. Default is 500 meters.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">
+            <summary>
+            Optional (but highly recommended) Waterfall effects module
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.vesselID">
+            <summary>
+            The ID of the vessel when it was first created.
             </summary>
         </member>
     </members>

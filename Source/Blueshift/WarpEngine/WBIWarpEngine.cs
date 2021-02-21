@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using KSP.Localization;
 
 /*
 Source code copyright 2021, by Michael Billard (Angel-125)
@@ -775,32 +776,6 @@ namespace Blueshift
         #endregion
 
         #region Helpers
-        /*
-         * keep this for the jump engine
-        public Vector3 getVesselDimensions()
-        {
-            Bounds bounds; 
-            List<Bounds> boundsList = new List<Bounds>();
-            Bounds[] renderBounds;
-            int count = this.part.vessel.parts.Count;
-            Part firstPart = this.part.vessel.parts[0];
-            Part vesselPart;
-
-            for (int index = 0; index < count; index++)
-            {
-                vesselPart = this.part.vessel.parts[index];
-                renderBounds = PartGeometryUtil.GetPartRendererBounds(vesselPart);
-                for (int boundsIndex = 0; boundsIndex < renderBounds.Length; boundsIndex++)
-                {
-                    bounds = renderBounds[boundsIndex];
-                    bounds.size *= vesselPart.boundsMultiplier;
-                    bounds.Expand(vesselPart.GetModuleSize(bounds.size, ModifierStagingSituation.CURRENT));
-                    boundsList.Add(bounds);
-                }
-            }
-            return PartGeometryUtil.MergeBounds(boundsList.ToArray(), firstPart.transform.root).size;
-        }
-        */
 
         /*
          * Keep this for jump engines

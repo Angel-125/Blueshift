@@ -10,10 +10,9 @@ GameData
 
 Changes
 
-- The auto-circularize PAW button won't appear unless you're in planetary space or in interplanetary space and the star has no planets.
-- There's an easter egg built into auto-circularization. I'm sure it won't take long for people to figure it out. :)
-- Fixed issue with starships "warp dragging" other starships around that are in physics range.
-- Fixed issue with last planet overrides where the parent star was mistakenly added as the last planet.
+- Added new jumpgate anomaly. Jumpgates can be enabled/disabled from the Game Difficulty menu. By default, they aren't enabled. When you discover a new jumpgate, it will be added to your network of known gates, and the more that you discover, the more destinations that you can reach. It does cost some Graviolium to traverse a gate, and be sure to make a vessel that isn't too tall or wide in order to fit.
+
+- Warp engines have a new engine sound.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

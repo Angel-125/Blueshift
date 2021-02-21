@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using KSP.IO;
 using KSP.UI.Screens;
+using KSP.Localization;
 
 /*
 Source code copyright 2021, by Michael Billard (Angel-125)

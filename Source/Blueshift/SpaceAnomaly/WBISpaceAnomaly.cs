@@ -8,7 +8,7 @@ using KSP.UI.Screens;
 using KSP.Localization;
 
 /*
-Source code copyrighgt 2015, by Michael Billard (Angel-125)
+Source code copyrighgt 2021, by Michael Billard (Angel-125)
 License: GPLV3
 
 If you want to use this code, give me a shout on the KSP forums! :)
@@ -44,6 +44,11 @@ namespace Blueshift
         public const string kOrbitType = "orbitType";
         public const string kFlyByOrbitChance = "flyByOrbitChance";
         public const string kMaxDaysToClosestApproach = "maxDaysToClosestApproach";
+        public const string kIsKnown = "isKnown";
+        public const string kNetworkID = "networkID";
+        public const string kGateAddress = "gateAddress";
+        public const string kPairedGateAddress = "pairedGateAddress";
+        public const string kAnomalyType = "anomalyType";
         #endregion
 
         #region Fields
@@ -56,6 +61,11 @@ namespace Blueshift
         /// Name of the part to spawn
         /// </summary>
         public string partName = string.Empty;
+
+        /// <summary>
+        /// Type of anomaly. Default is generic.
+        /// </summary>
+        public WBIAnomalyTypes anomalyType = WBIAnomalyTypes.generic;
 
         /// <summary>
         /// Like asteroids, space anomalies have a size class that ranges from Size A (12 meters) to Size I (100+ meters).
@@ -129,22 +139,109 @@ namespace Blueshift
         /// ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
         /// </summary>
         public string vesselId = string.Empty;
+
+        /// <summary>
+        /// Flag to indicate whether or not the gate should automatically be added to the network's known gates.
+        /// If set to false (the default), then players must visit the gate in order for it to be added to the network.
+        /// Applies to anomalyType = jumpGate.
+        /// </summary>
+        public bool isKnown = false;
+
+        /// <summary>
+        /// Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network.
+        /// If there are only two gates in the network then there is no need to select the other gate from the list.
+        /// You can add additional networks by adding a semicolon character in between network IDs.
+        /// Applies to anomalyType = jumpGate.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public string networkID = string.Empty;
+
+        /// <summary>
+        /// For paired gates, the address of the gate.
+        /// Default is an empty address.
+        /// Applies to anomalyType = jumpGate.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public string gateAddress = string.Empty;
+
+        /// <summary>
+        /// For paired gates, the address of the paired gate.
+        /// Default is an empty address.
+        /// Applies to anomalyType = jumpGate.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public string pairedGateAddress = string.Empty;
         #endregion
 
         #region Housekeeping
-        int lastSeed = 0;
+        protected int lastSeed = 0;
         #endregion
 
         #region Initializers
         public static WBISpaceAnomaly CreateFromNode(ConfigNode node)
         {
             WBISpaceAnomaly anomaly = new WBISpaceAnomaly();
+            Load(anomaly, node);
+            return anomaly;
+        }
 
+        public WBISpaceAnomaly()
+        {
+
+        }
+
+        public WBISpaceAnomaly(WBISpaceAnomaly copyFrom)
+        {
+            CopyFrom(copyFrom);
+        }
+
+        /// <summary>
+        /// Copies the fields from another space anomaly.
+        /// </summary>
+        /// <param name="copyFrom">The WBISpaceAnomaly whose fields we're interested in.</param>
+        public void CopyFrom(WBISpaceAnomaly copyFrom)
+        {
+            name = copyFrom.name;
+            partName = copyFrom.partName;
+            anomalyType = copyFrom.anomalyType;
+            sizeClass = copyFrom.sizeClass;
+            spawnMode = copyFrom.spawnMode;
+            orbitType = copyFrom.orbitType;
+            maxDaysToClosestApproach = copyFrom.maxDaysToClosestApproach;
+            flyByOrbitChance = copyFrom.flyByOrbitChance;
+            fixedBody = copyFrom.fixedBody;
+            fixedSMA = copyFrom.fixedSMA;
+            fixedEccentricity = copyFrom.fixedEccentricity;
+            fixedInclination = copyFrom.fixedInclination;
+            minLifetime = copyFrom.minLifetime;
+            maxLifetime = copyFrom.maxLifetime;
+            spawnTargetNumber = copyFrom.spawnTargetNumber;
+            maxInstances = copyFrom.maxInstances;
+            vesselId = copyFrom.vesselId;
+            isKnown = copyFrom.isKnown;
+            networkID = copyFrom.networkID;
+            gateAddress = copyFrom.gateAddress;
+            pairedGateAddress = copyFrom.pairedGateAddress;
+
+            lastSeed = UnityEngine.Random.Range(0, int.MaxValue);
+            UnityEngine.Random.InitState(lastSeed);
+        }
+
+        /// <summary>
+        /// Loads the ConfigNode data into the anomaly object.
+        /// </summary>
+        /// <param name="anomaly">A WBISpaceAnomaly to load the data into.</param>
+        /// <param name="node">A ConfigNode containing serialized data.</param>
+        public static void Load(WBISpaceAnomaly anomaly, ConfigNode node)
+        {
             if (node.HasValue(kName))
                 anomaly.name = node.GetValue(kName);
 
             if (node.HasValue(kPartName))
                 anomaly.partName = node.GetValue(kPartName);
+
+            if (node.HasValue(kAnomalyType))
+                anomaly.anomalyType = (WBIAnomalyTypes)Enum.Parse(typeof(WBIAnomalyTypes), node.GetValue(kAnomalyType));
 
             if (node.HasValue(kSizeClass))
                 anomaly.sizeClass = node.GetValue(kSizeClass);
@@ -188,43 +285,32 @@ namespace Blueshift
             if (node.HasValue(kMaxDaysToClosestApproach))
                 float.TryParse(node.GetValue(kMaxDaysToClosestApproach), out anomaly.maxDaysToClosestApproach);
 
-            return anomaly;
+            if (node.HasValue(kIsKnown))
+                bool.TryParse(node.GetValue(kIsKnown), out anomaly.isKnown);
+
+            if (node.HasValue(kNetworkID))
+                anomaly.networkID = node.GetValue(kNetworkID);
+
+            if (node.HasValue(kGateAddress))
+                anomaly.gateAddress = node.GetValue(kGateAddress);
+
+            if (node.HasValue(kPairedGateAddress))
+                anomaly.pairedGateAddress = node.GetValue(kPairedGateAddress);
+
         }
 
-        public WBISpaceAnomaly()
+        /// <summary>
+        /// Serializes the anomaly to a ConfigNode.
+        /// </summary>
+        /// <param name="nodeName">A string containing the name of the node.</param>
+        /// <returns>A ConfigNode with the serialized data.</returns>
+        public virtual ConfigNode Save(string nodeName = kNodeName)
         {
-
-        }
-
-        public WBISpaceAnomaly(WBISpaceAnomaly copyFrom)
-        {
-            name = copyFrom.name;
-            partName = copyFrom.partName;
-            sizeClass = copyFrom.sizeClass;
-            spawnMode = copyFrom.spawnMode;
-            orbitType = copyFrom.orbitType;
-            maxDaysToClosestApproach = copyFrom.maxDaysToClosestApproach;
-            flyByOrbitChance = copyFrom.flyByOrbitChance;
-            fixedBody = copyFrom.fixedBody;
-            fixedSMA = copyFrom.fixedSMA;
-            fixedEccentricity = copyFrom.fixedEccentricity;
-            fixedInclination = copyFrom.fixedInclination;
-            minLifetime = copyFrom.minLifetime;
-            maxLifetime = copyFrom.maxLifetime;
-            spawnTargetNumber = copyFrom.spawnTargetNumber;
-            maxInstances = copyFrom.maxInstances;
-            vesselId = copyFrom.vesselId;
-
-            lastSeed = UnityEngine.Random.Range(0, int.MaxValue);
-            UnityEngine.Random.InitState(lastSeed);
-        }
-
-        public ConfigNode Save()
-        {
-            ConfigNode node = new ConfigNode(kNodeName);
+            ConfigNode node = new ConfigNode(nodeName);
 
             node.AddValue(kName, name);
             node.AddValue(kPartName, partName);
+            node.AddValue(kAnomalyType, anomalyType.ToString());
             node.AddValue(kSizeClass, sizeClass);
             node.AddValue(kSpawnMode, spawnMode.ToString());
             node.AddValue(kOrbitType, orbitType.ToString());
@@ -239,6 +325,9 @@ namespace Blueshift
             node.AddValue(kSpawnTargetNumber, spawnTargetNumber.ToString());
             node.AddValue(kMaxInstances, maxInstances.ToString());
             node.AddValue(kVesselId, vesselId);
+            node.AddValue(kNetworkID, networkID);
+            node.AddValue(kGateAddress, gateAddress);
+            node.AddValue(kPairedGateAddress, pairedGateAddress);
 
             return node;
         }
@@ -248,7 +337,7 @@ namespace Blueshift
         /// <summary>
         /// Checks to see if we should create a new instance.
         /// </summary>
-        public void CreateNewInstancesIfNeeded(List<WBISpaceAnomaly> spaceAnomalies)
+        public virtual void CreateNewInstancesIfNeeded(List<WBISpaceAnomaly> spaceAnomalies)
         {
             // Roll RNG to make sure we're allowed to spawn a new anomaly.
             if (UnityEngine.Random.Range(1, 1000) < spawnTargetNumber)
@@ -260,16 +349,37 @@ namespace Blueshift
 
             if (spawnMode != WBIAnomalySpawnModes.everyLastPlanet)
             {
-                spaceAnomalies.Add(createRandomAnomaly());
+                WBISpaceAnomaly anomaly = createRandomAnomaly();
+                setupJumpgateNetwork(anomaly);
+                spaceAnomalies.Add(anomaly);
             }
             else
             {
-                spaceAnomalies.AddRange(createLastPlanetAnomalies(spaceAnomalies));
+                List<WBISpaceAnomaly> anomalies = createLastPlanetAnomalies(spaceAnomalies);
+                setupJumpgateNetwork(anomalies);
+                spaceAnomalies.AddRange(anomalies);
             }
         }
         #endregion
 
         #region Helpers
+        private void setupJumpgateNetwork(WBISpaceAnomaly anomaly)
+        {
+            if (anomaly.anomalyType != WBIAnomalyTypes.jumpGate)
+                return;
+            if (!anomaly.isKnown)
+                return;
+
+            BlueshiftScenario.shared.AddJumpgateToNetwork(anomaly);
+        }
+
+        private void setupJumpgateNetwork(List<WBISpaceAnomaly> anomalies)
+        {
+            int count = anomalies.Count;
+            for (int index = 0; index < count; index++)
+                setupJumpgateNetwork(anomalies[index]);
+        }
+
         private WBISpaceAnomaly createRandomAnomaly()
         {
             WBISpaceAnomaly anomaly = new WBISpaceAnomaly(this);
@@ -325,8 +435,8 @@ namespace Blueshift
             // Generate orbit
             Orbit orbit = generateOrbit(anomaly);
 
-            // Create part nodes
-            ConfigNode[] partNodes = new ConfigNode[] { ProtoVessel.CreatePartNode(anomaly.partName, 0) };
+            // Create part node
+            ConfigNode partNode = ProtoVessel.CreatePartNode(anomaly.partName, 0);
 
             // Determine lifetime
             double minLifetime = anomaly.minLifetime;
@@ -346,14 +456,15 @@ namespace Blueshift
             ConfigNode[] additionalNodes = new ConfigNode[] { new ConfigNode("ACTIONGROUPS"), discoveryNode };
 
             // Create vessel node
-            ConfigNode vesselNode = ProtoVessel.CreateVesselNode(vesselName, VesselType.SpaceObject, orbit, 0, partNodes, additionalNodes);
+            ConfigNode vesselNode = ProtoVessel.CreateVesselNode(vesselName, VesselType.SpaceObject, orbit, 0, new ConfigNode[] { partNode }, additionalNodes);
+            Debug.Log("[WBISpaceAnomaly] - vesselNode: " + vesselNode.ToString());
 
             // Add vessel node to the game.
             HighLogic.CurrentGame.AddVessel(vesselNode);
 
             // Get vessel ID
-            if (vesselNode.HasValue("persistentId"))
-                anomaly.vesselId = vesselNode.GetValue("persistentId");
+            if (vesselNode.HasValue("pid"))
+                anomaly.vesselId = vesselNode.GetValue("pid").Replace("-", "");
 
             return vesselNode;
         }

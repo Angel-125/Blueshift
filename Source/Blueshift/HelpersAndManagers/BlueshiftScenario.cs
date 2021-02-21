@@ -40,6 +40,10 @@ namespace Blueshift
         private static string kName = "name";
         private static string kStarName = "starName";
         private static string kSoiNoPlanetsMultiplier = "soiNoPlanetsMultiplier";
+        private static string kUniversalNetworkID = "Any";
+        private static string kGateNetworkNode = "JUMPGATE_NETWORK";
+        private static string kNetworkID = "networkID";
+        private static string kJumpgateID = "jumpgateID";
         #endregion
 
         #region Housekeeping
@@ -74,6 +78,11 @@ namespace Blueshift
         /// </summary>
         public static bool spawnSpaceAnomalies = true;
 
+        /// <summary>
+        /// Flag to indicate whether or not Jumpgate anomalies are enabled.
+        /// </summary>
+        public static bool spawnJumpgates = false;
+
         private double soiMultiplier = 1.1;
         private double soiNoPlanetsMultiplier = 100;
         private List<WBISpaceAnomaly> spaceAnomalies;
@@ -89,6 +98,7 @@ namespace Blueshift
         private string[] celestialBlacklists;
         private Dictionary<string, string> lastPlanetOverrides;
         private Dictionary<CelestialBody, double> solarSOIs;
+        Dictionary<string, List<string>> jumpgateNetwork;
         #endregion
 
         #region Overrides
@@ -114,6 +124,7 @@ namespace Blueshift
             stars = new List<CelestialBody>();
             planets = new List<CelestialBody>();
             solarSOIs = new Dictionary<CelestialBody, double>();
+            jumpgateNetwork = new Dictionary<string, List<string>>();
 
             loadSettings();
             loadLastPlanetOverrides();
@@ -122,10 +133,13 @@ namespace Blueshift
 
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
+            spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
 
             if (!spawnSpaceAnomalies)
                 removeSpaceAnomalies();
+            else if (!spawnJumpgates)
+                removeJumpgates();
         }
 
         public void OnDestroy()
@@ -159,6 +173,36 @@ namespace Blueshift
                     anomalyTemplates.Add(anomaly);
                 }
             }
+
+            // Load Jumpgate anomalies
+            if (node.HasNode(kGateNetworkNode))
+            {
+                ConfigNode[] gateNodes = node.GetNodes(kGateNetworkNode);
+                ConfigNode gateNode;
+                List<string> jumpgates;
+                string networkID;
+                string jumpgateID;
+                string[] jumpgateIDs;
+                for (int index = 0; index < gateNodes.Length; index++)
+                {
+                    gateNode = gateNodes[index];
+                    if (!gateNode.HasValue(kNetworkID) || !gateNode.HasValue(kJumpgateID))
+                        continue;
+
+                    networkID = gateNode.GetValue(kNetworkID);
+                    if (!jumpgateNetwork.ContainsKey(networkID))
+                        jumpgateNetwork.Add(networkID, new List<string>());
+                    jumpgates = jumpgateNetwork[networkID];
+
+                    jumpgateIDs = gateNode.GetValues(kJumpgateID);
+                    for (int gateIndex = 0; gateIndex < jumpgateIDs.Length; gateIndex++)
+                    {
+                        jumpgateID = jumpgateIDs[gateIndex];
+                        if (!jumpgates.Contains(jumpgateID))
+                            jumpgates.Add(jumpgateID);
+                    }
+                }
+            }
         }
 
         public override void OnSave(ConfigNode node)
@@ -168,10 +212,194 @@ namespace Blueshift
             int count = spaceAnomalies.Count;
             for (int index = 0; index < count; index++)
                 node.AddNode(spaceAnomalies[index].Save());
+
+            string[] keys = jumpgateNetwork.Keys.ToArray();
+            string networkID;
+            List<string> jumpgates;
+            ConfigNode gateNetworkNode;
+            for (int index = 0; index < keys.Length; index++)
+            {
+                networkID = keys[index];
+
+                jumpgates = jumpgateNetwork[networkID];
+                count = jumpgates.Count;
+                if (count == 0)
+                    continue;
+
+                gateNetworkNode = new ConfigNode(kGateNetworkNode);
+                gateNetworkNode.AddValue(kNetworkID, networkID);
+
+                for (int jumpgateIndex = 0; jumpgateIndex < count; jumpgateIndex++)
+                {
+                    gateNetworkNode.AddValue(kJumpgateID, jumpgates[jumpgateIndex]);
+                }
+
+                node.AddNode(gateNetworkNode);
+            }
         }
         #endregion
 
         #region API
+
+        #region Jumpgates
+        /// <summary>
+        /// Adds the jumpgate anomaly to the network.
+        /// </summary>
+        /// <param name="anomaly">The WBISpaceAnomaly to add.</param>
+        public void AddJumpgateToNetwork(WBISpaceAnomaly anomaly)
+        {
+            if (string.IsNullOrEmpty(anomaly.networkID))
+                anomaly.networkID = kUniversalNetworkID;
+            string networkID = anomaly.networkID;
+
+            AddJumpgateToNetwork(anomaly.vesselId, networkID);
+        }
+
+        /// <summary>
+        /// Adds the jumpgate to the network.
+        /// </summary>
+        /// <param name="vesselID">A string containing the ID of the jumpgate vessel.</param>
+        /// <param name="networkID">A string containing the ID of the jumpgate network.</param>
+        public void AddJumpgateToNetwork(string vesselID, string networkID)
+        {
+            List<string> jumpgates = null;
+            string gateNetwork = networkID;
+            if (string.IsNullOrEmpty(gateNetwork))
+                gateNetwork = kUniversalNetworkID;
+
+            if (!jumpgateNetwork.ContainsKey(gateNetwork))
+            {
+                jumpgates = new List<string>();
+                jumpgateNetwork.Add(gateNetwork, jumpgates);
+            }
+
+            jumpgates = jumpgateNetwork[gateNetwork];
+            string vesselPID = vesselID.Replace("-", "");
+            if (!jumpgates.Contains(vesselPID))
+                jumpgates.Add(vesselPID);
+        }
+
+        /// <summary>
+        /// Returns the list of vesselIDs in the jumpgate network.
+        /// </summary>
+        /// <param name="networkID">A string containing the network ID.</param>
+        /// <param name="originPoint">A Vector3d containing the origin point to check for gates in range.</param>
+        /// <param name="maxJumpRange">A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.</param>
+        /// <returns>A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.</returns>
+        public List<Vessel> GetJumpgates(string networkID, Vector3d originPoint, double maxJumpRange = -1)
+        {
+            string gateNetwork = networkID;
+            if (string.IsNullOrEmpty(gateNetwork))
+                gateNetwork = kUniversalNetworkID;
+
+            if (!jumpgateNetwork.ContainsKey(gateNetwork))
+                return null;
+            List<string> jumpgateIDs = jumpgateNetwork[gateNetwork];
+            List<Vessel> jumpgates = new List<Vessel>();
+            int count = jumpgateIDs.Count;
+            string vesselID = string.Empty;
+            Vessel vessel;
+            double jumpRange = 0;
+
+            for (int index = 0; index < count; index++)
+            {
+                vessel = GetVessel(jumpgateIDs[index]);
+                if (vessel != null)
+                {
+                    jumpRange = Math.Abs((originPoint - vessel.GetWorldPos3D()).magnitude);
+
+                    if (maxJumpRange < 0)
+                        jumpgates.Add(vessel);
+                    else if (jumpRange > 0 && jumpRange <= (maxJumpRange * kLightYear))
+                        jumpgates.Add(vessel);
+                }
+            }
+
+            return jumpgates.Count > 0 ? jumpgates : null;
+        }
+
+        /// <summary>
+        /// Returns the anomaly matching the desired vesselID.
+        /// </summary>
+        /// <param name="vesselID">A string containing the vessel ID.</param>
+        /// <returns>A WBISpaceAnomaly if the anomaly can be found, or null if not.</returns>
+        public WBISpaceAnomaly GetAnomaly(string vesselID)
+        {
+            if (spaceAnomalies.Count == 0)
+                return null;
+
+            int count = spaceAnomalies.Count;
+            string vesselPID = vesselID.Replace("-", "");
+            WBISpaceAnomaly anomaly;
+            for (int index = 0; index < count; index++)
+            {
+                anomaly = spaceAnomalies[index];
+                if (anomaly.vesselId == vesselPID)
+                    return anomaly;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Attempts to find the vessel ID that matches the desired paired gate address.
+        /// </summary>
+        /// <param name="pairedGateAddress">A string containing the paired gate address to search for.</param>
+        /// <returns>A string containing the vessel ID if found, or null if not found.</returns>
+        public string GetDestinationVesselID(string pairedGateAddress)
+        {
+            int count = spaceAnomalies.Count;
+            WBISpaceAnomaly anomaly = null;
+            for (int index = 0; index < count; index++)
+            {
+                anomaly = spaceAnomalies[index];
+                if (anomaly.pairedGateAddress == pairedGateAddress)
+                    break;
+                else
+                    anomaly = null;
+            }
+            if (anomaly == null)
+                return null;
+
+            return anomaly.vesselId;
+        }
+
+        /// <summary>
+        /// Attempts to locate the destination vessel based on the ID supplied.
+        /// </summary>
+        /// <param name="vesselID">A string containing the vessel ID</param>
+        /// <returns>A Vessel if one can be found, null if not.</returns>
+        public Vessel GetVessel(string vesselID)
+        {
+            // Check unloaded vessels first.
+            int count = FlightGlobals.VesselsUnloaded.Count;
+            string pid;
+            string vesselPID = vesselID.Replace("-", "");
+            Vessel vessel;
+
+            for (int index = 0; index < count; index++)
+            {
+                vessel = FlightGlobals.VesselsUnloaded[index];
+                pid = vessel.id.ToString().Replace("-", "");
+                if (pid == vesselPID)
+                    return vessel;
+            }
+
+            // Check loaded vessels.
+            count = FlightGlobals.VesselsLoaded.Count;
+            for (int index = 0; index < count; index++)
+            {
+                vessel = FlightGlobals.VesselsLoaded[index];
+                pid = vessel.id.ToString().Replace("-", "");
+                if (pid == vesselPID)
+                    return vessel;
+            }
+
+            return null;
+        }
+        #endregion
+
+        #region WarpTech
         /// <summary>
         /// Determines thevessel's spatial location.
         /// </summary>
@@ -425,7 +653,65 @@ namespace Blueshift
         }
         #endregion
 
+        #endregion
+
         #region Helpers
+        private void removeJumpgates()
+        {
+            int count = FlightGlobals.VesselsUnloaded.Count;
+            if (count == 0)
+                return;
+            Dictionary<string, Vessel> unloadedVessels = new Dictionary<string, Vessel>();
+            WBISpaceAnomaly anomaly;
+            Vessel vessel;
+            List<WBISpaceAnomaly> doomed = new List<WBISpaceAnomaly>();
+            List<string> doomedNetworkIDs = new List<string>();
+
+            // Build the dictionary of unloaded vessels
+            for (int index = 0; index < count; index++)
+            {
+                vessel = FlightGlobals.VesselsUnloaded[index];
+                unloadedVessels.Add(vessel.id.ToString().Replace("-", ""), vessel);
+            }
+
+            // Remove the doomed gates from the FlightGlobals
+            count = spaceAnomalies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                anomaly = spaceAnomalies[index];
+                if (unloadedVessels.ContainsKey(anomaly.vesselId) && anomaly.anomalyType == WBIAnomalyTypes.jumpGate)
+                {
+                    vessel = unloadedVessels[anomaly.vesselId];
+                    unloadedVessels.Remove(anomaly.vesselId);
+                    doomed.Add(anomaly);
+                    doomedNetworkIDs.Add(anomaly.vesselId);
+                    FlightGlobals.VesselsUnloaded.Remove(vessel);
+                }
+            }
+
+            // Find and remove the jumpgate from the network.
+            string[] networkIDs = jumpgateNetwork.Keys.ToArray();
+            List<string> jumpgates;
+            for (int index = 0; index < networkIDs.Length; index++)
+            {
+                jumpgates = jumpgateNetwork[networkIDs[index]];
+                count = doomedNetworkIDs.Count;
+                for (int doomedIndex = 0; doomedIndex < count; doomedIndex++)
+                {
+                    if (jumpgates.Contains(doomedNetworkIDs[doomedIndex]))
+                        jumpgates.Remove(doomedNetworkIDs[doomedIndex]);
+                }
+            }
+
+            // remove the jumpgate from space anomalies
+            count = doomed.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (spaceAnomalies.Contains(doomed[index]))
+                    spaceAnomalies.Remove(doomed[index]);
+            }
+        }
+
         private void removeSpaceAnomalies()
         {
             int count = FlightGlobals.VesselsUnloaded.Count;
@@ -436,7 +722,7 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 vessel = FlightGlobals.VesselsUnloaded[index];
-                unloadedVessels.Add(vessel.persistentId.ToString(), vessel);
+                unloadedVessels.Add(vessel.id.ToString().Replace("-", ""), vessel);
             }
 
             count = spaceAnomalies.Count;
@@ -485,9 +771,12 @@ namespace Blueshift
         {
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
+            spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
 
             if (!spawnSpaceAnomalies)
                 removeSpaceAnomalies();
+            else if (!spawnJumpgates)
+                removeJumpgates();
         }
 
         private void loadSettings()
