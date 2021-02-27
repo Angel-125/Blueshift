@@ -44,6 +44,7 @@ namespace Blueshift
         private static string kGateNetworkNode = "JUMPGATE_NETWORK";
         private static string kNetworkID = "networkID";
         private static string kJumpgateID = "jumpgateID";
+        private static string kAnomalyTimer = "anomalyTimer";
         #endregion
 
         #region Housekeeping
@@ -110,14 +111,27 @@ namespace Blueshift
         public void FixedUpdate()
         {
             double currentTime = Planetarium.GetUniversalTime();
+            if (anomalyTimer == 0)
+            {
+                anomalyTimer = currentTime + anomalyCheckSeconds;
+                StartCoroutine(handleAnomalyChecks());
+            }
 
             // Check for anomaly spawns
-            if (spawnSpaceAnomalies && (anomalyTimer == 0 || currentTime - anomalyTimer >= anomalyCheckSeconds))
+            if (spawnSpaceAnomalies && currentTime > anomalyTimer)
             {
-                anomalyTimer = currentTime;
-                checkForNewAnomalies();
-                removeExpiredAnomalies();
+                anomalyTimer = currentTime + anomalyCheckSeconds;
+                StartCoroutine(handleAnomalyChecks());
             }
+        }
+
+        protected IEnumerator<YieldInstruction> handleAnomalyChecks()
+        {
+            checkForNewAnomalies();
+            yield return new WaitForFixedUpdate();
+
+            removeExpiredAnomalies();
+            yield return new WaitForFixedUpdate();
         }
 
         public override void OnAwake()
@@ -131,6 +145,8 @@ namespace Blueshift
             planets = new List<CelestialBody>();
             solarSOIs = new Dictionary<CelestialBody, double>();
             jumpgateNetwork = new Dictionary<string, List<string>>();
+            spaceAnomalies = new List<WBISpaceAnomaly>();
+            anomalyTemplates = new List<WBISpaceAnomaly>();
 
             loadSettings();
             loadLastPlanetOverrides();
@@ -157,8 +173,11 @@ namespace Blueshift
         {
             base.OnLoad(node);
 
+            // Timer
+            if (node.HasValue(kAnomalyTimer))
+                double.TryParse(node.GetValue(kAnomalyTimer), out anomalyTimer);
+
             // Load anomalies
-            spaceAnomalies = new List<WBISpaceAnomaly>();
             if (node.HasNode(WBISpaceAnomaly.kNodeName))
             {
                 ConfigNode[] nodes = node.GetNodes(WBISpaceAnomaly.kNodeName);
@@ -167,7 +186,6 @@ namespace Blueshift
             }
 
             // Load anomaly templates
-            anomalyTemplates = new List<WBISpaceAnomaly>();
             ConfigNode[] templateNodes = GameDatabase.Instance.GetConfigNodes(WBISpaceAnomaly.kNodeName);
             WBISpaceAnomaly anomaly;
             if (templateNodes != null)
@@ -215,10 +233,15 @@ namespace Blueshift
         {
             base.OnSave(node);
 
+            // Anomaly timer
+            node.AddValue(kAnomalyTimer, anomalyTimer.ToString());
+
+            // Space anomalies
             int count = spaceAnomalies.Count;
             for (int index = 0; index < count; index++)
                 node.AddNode(spaceAnomalies[index].Save());
 
+            // Jumpgates
             string[] keys = jumpgateNetwork.Keys.ToArray();
             string networkID;
             List<string> jumpgates;
@@ -655,86 +678,71 @@ namespace Blueshift
         #region Helpers
         private void removeJumpgates()
         {
-            int count = FlightGlobals.VesselsUnloaded.Count;
-            if (count == 0)
-                return;
-            Dictionary<string, Vessel> unloadedVessels = new Dictionary<string, Vessel>();
+            int count = spaceAnomalies.Count;
+            List<WBISpaceAnomaly> doomedAnomalies = new List<WBISpaceAnomaly>();
             WBISpaceAnomaly anomaly;
             Vessel vessel;
-            List<WBISpaceAnomaly> doomed = new List<WBISpaceAnomaly>();
-            List<string> doomedNetworkIDs = new List<string>();
 
-            // Build the dictionary of unloaded vessels
-            for (int index = 0; index < count; index++)
-            {
-                vessel = FlightGlobals.VesselsUnloaded[index];
-                unloadedVessels.Add(vessel.id.ToString().Replace("-", ""), vessel);
-            }
-
-            // Remove the doomed gates from the FlightGlobals
-            count = spaceAnomalies.Count;
             for (int index = 0; index < count; index++)
             {
                 anomaly = spaceAnomalies[index];
-                if (unloadedVessels.ContainsKey(anomaly.vesselId) && anomaly.anomalyType == WBIAnomalyTypes.jumpGate)
-                {
-                    vessel = unloadedVessels[anomaly.vesselId];
-                    unloadedVessels.Remove(anomaly.vesselId);
-                    doomed.Add(anomaly);
-                    doomedNetworkIDs.Add(anomaly.vesselId);
-                    FlightGlobals.VesselsUnloaded.Remove(vessel);
-                }
+                if (anomaly.anomalyType != WBIAnomalyTypes.jumpGate)
+                    continue;
+
+                vessel = GetVessel(anomaly.vesselId);
+                if (vessel != null)
+                    FlightGlobals.RemoveVessel(vessel);
+                doomedAnomalies.Add(anomaly);
             }
 
-            // Find and remove the jumpgate from the network.
-            string[] networkIDs = jumpgateNetwork.Keys.ToArray();
-            List<string> jumpgates;
-            for (int index = 0; index < networkIDs.Length; index++)
-            {
-                jumpgates = jumpgateNetwork[networkIDs[index]];
-                count = doomedNetworkIDs.Count;
-                for (int doomedIndex = 0; doomedIndex < count; doomedIndex++)
-                {
-                    if (jumpgates.Contains(doomedNetworkIDs[doomedIndex]))
-                        jumpgates.Remove(doomedNetworkIDs[doomedIndex]);
-                }
-            }
-
-            // remove the jumpgate from space anomalies
-            count = doomed.Count;
+            // Now clean up our anomalies and jumpgates list.
+            count = doomedAnomalies.Count;
             for (int index = 0; index < count; index++)
             {
-                if (spaceAnomalies.Contains(doomed[index]))
-                    spaceAnomalies.Remove(doomed[index]);
+                removeAnomalyAndJumpgate(doomedAnomalies[index]);
             }
         }
 
         private void removeSpaceAnomalies()
         {
-            int count = FlightGlobals.VesselsUnloaded.Count;
-            Dictionary<string, Vessel> unloadedVessels = new Dictionary<string, Vessel>();
+            if (spaceAnomalies == null)
+                return;
+            int count = spaceAnomalies.Count;
+            List<WBISpaceAnomaly> doomedAnomalies = new List<WBISpaceAnomaly>();
             WBISpaceAnomaly anomaly;
+            List<Vessel> doomedVessels = new List<Vessel>();
             Vessel vessel;
 
             for (int index = 0; index < count; index++)
             {
-                vessel = FlightGlobals.VesselsUnloaded[index];
-                unloadedVessels.Add(vessel.id.ToString().Replace("-", ""), vessel);
+                anomaly = spaceAnomalies[index];
+                vessel = GetVessel(anomaly.vesselId);
+                if (vessel != null)
+                    FlightGlobals.RemoveVessel(vessel);
+                doomedAnomalies.Add(anomaly);
             }
 
-            count = spaceAnomalies.Count;
+            // Now clean up our anomalies and jumpgates list.
+            count = doomedAnomalies.Count;
             for (int index = 0; index < count; index++)
             {
-                anomaly = spaceAnomalies[index];
-                if (unloadedVessels.ContainsKey(anomaly.vesselId))
-                {
-                    vessel = unloadedVessels[anomaly.vesselId];
-                    unloadedVessels.Remove(anomaly.vesselId);
-                    FlightGlobals.VesselsUnloaded.Remove(vessel);
-                }
+                removeAnomalyAndJumpgate(doomedAnomalies[index]);
             }
 
-            spaceAnomalies.Clear();
+            // Finally, find any orphaned anomalies and remove them.
+            count = FlightGlobals.Vessels.Count;
+            for (int index = 0; index < count; index++)
+            {
+                vessel = FlightGlobals.Vessels[index];
+                if (vessel.vesselName.Contains(WBISpaceAnomaly.kAnomalyPrefix))
+                    doomedVessels.Add(vessel);
+            }
+            count = doomedVessels.Count;
+            for (int index = 0; index < count; index++)
+            {
+                vessel = doomedVessels[index];
+                FlightGlobals.RemoveVessel(vessel);
+            }
         }
 
         private void checkForNewAnomalies()
@@ -784,13 +792,11 @@ namespace Blueshift
                 }
 
                 // If we've passed the expiration date then remove the anomaly.
-                else if (anomaly.expirationDate > 0 && anomaly.expirationDate > currentTime)
+                else if (anomaly.expirationDate > 0 && currentTime >= anomaly.expirationDate)
                 {
                     Vessel doomed = GetVessel(anomaly.vesselId);
-                    if (doomed != null && FlightGlobals.VesselsUnloaded.Contains(doomed))
-                    {
-                        FlightGlobals.VesselsUnloaded.Remove(doomed);
-                    }
+                    if (doomed != null)
+                        FlightGlobals.RemoveVessel(doomed);
 
                     doomedAnomalies.Add(anomaly);
                 }
@@ -800,23 +806,30 @@ namespace Blueshift
             count = doomedAnomalies.Count;
             for (int index = 0; index < count; index++)
             {
-                removeAnomaly(doomedAnomalies[index]);
+                removeAnomalyAndJumpgate(doomedAnomalies[index]);
             }
         }
 
-        private void removeAnomaly(WBISpaceAnomaly doomed)
+        private void removeAnomalyAndJumpgate(WBISpaceAnomaly doomed)
         {
             if (spaceAnomalies.Contains(doomed))
                 spaceAnomalies.Remove(doomed);
 
             string[] networkIDs = jumpgateNetwork.Keys.ToArray();
             List<string> jumpgates;
+            List<string> doomedNetworks = new List<string>();
             for (int index = 0; index < networkIDs.Length; index++)
             {
                 jumpgates = jumpgateNetwork[networkIDs[index]];
                 if (jumpgates.Contains(doomed.vesselId))
                     jumpgates.Remove(doomed.vesselId);
+                if (jumpgates.Count == 0)
+                    doomedNetworks.Add(networkIDs[index]);
             }
+
+            int count = doomedNetworks.Count;
+            for (int index = 0; index < count; index++)
+                jumpgateNetwork.Remove(doomedNetworks[index]);
         }
 
         private bool isOnBlackList(CelestialBody body)
@@ -842,9 +855,17 @@ namespace Blueshift
             jumpgateStartupIsDestructive = BlueshiftSettings.JumpgateStartupIsDestructive;
 
             if (!spawnSpaceAnomalies)
+            {
                 removeSpaceAnomalies();
+            }
             else if (!spawnJumpgates)
+            {
                 removeJumpgates();
+            }
+            else
+            {
+                anomalyTimer = 0;
+            }
         }
 
         private void loadSettings()

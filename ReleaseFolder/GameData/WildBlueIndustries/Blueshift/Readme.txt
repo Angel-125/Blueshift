@@ -8,25 +8,18 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-New Parts
-
-- Astria Porta Arbitrium: This is the control segment of an Astria Porta, a jumpgate that can be built.
-- Astria Porta Auxilium: This is a ring segment for an Astria Porta. You'll need 9 of these along with the control segment to complete a gate. The stock Clamp-O-Tron Sr is ideally suited for this part and the Astria Porta Arbitrium.
-- Astria Porta Accommodare: This is a small adapter part for putting ring segments in cargo bays.
+NOTE: After installing this update:
+1. Disable space anomalies from the Game Difficulty menu. Be sure to apply the changes.
+2. Exit the game back to the main menu.
+3. Re-load your save.
+4. Re-enable space anomalies and/or jumpgates.
 
 Changes
 
-- Added an alignment helper to the stock Clamp-O-Tron Sr. docking port to help with docking Astria Porta parts together.
-- Added new Jump Tech research node. The Astria Porta parts are located in the new node.
-- Added new Wormhole Space Anomaly. You can see it in use if you have Galaxies Unbound installed, but it can support other mods as well if config files are written for them.
-- fixedOrbit now accounts for planetary radius and, if it has one, atmospheric depth.
-- Removed pairedGateAddress and gateAddress from SPACE_ANOMALY. These fields proved unnecessary. To make a paired jumpgate, simply make sure that both gates use the same network ID and ensure that the network ID is unique.
-- Moved the GR series of graviolium tanks to the Advanced Science Tech node, where you also get the stock Drill-O-Matic' Mining Excavator.
-- Fixed issue where vessels are teleported to their destination gate during a jumpgate's startup sequence.
-- Fixed issue where anomalies weren't being removed after their expiration date.
-- Fixed missing lift on mk2 parts.
-- Fixed issue where the warp engine wasn't respecting the vessel's control point direction.
-- Fixed issue where several part modules were attempting to send controller value updates to Waterfall controllers that didn't exist.
+- Fixed issue where jumpgate anomalies would continually spawn at the last planet in the star system.
+- Fixed issue where newly created anomalies were immediately cleaned up.
+- Fixed issue where expired anomalies weren't being cleaned up properly.
+- Fixed issue where jumpgate anomalies would spawn even when the option to do so was turned off.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

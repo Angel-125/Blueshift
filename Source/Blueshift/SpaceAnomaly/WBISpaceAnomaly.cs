@@ -27,6 +27,7 @@ namespace Blueshift
     public class WBISpaceAnomaly
     {
         #region Constants
+        public const string kAnomalyPrefix = "UNK-";
         public const string kNodeName = "SPACE_ANOMALY";
         public const string kName = "name";
         public const string kPartName = "partName";
@@ -331,10 +332,6 @@ namespace Blueshift
         /// </summary>
         public virtual void CreateNewInstancesIfNeeded(List<WBISpaceAnomaly> spaceAnomalies)
         {
-            // Roll RNG to make sure we're allowed to spawn a new anomaly.
-            if (UnityEngine.Random.Range(1, 1000) < spawnTargetNumber)
-                return;
-
             // Make sure that we can create at least one new instance.
             if (!canCreateNewInstance(spaceAnomalies))
                 return;
@@ -421,7 +418,7 @@ namespace Blueshift
             string vesselName = DiscoverableObjectsUtil.GenerateAsteroidName();
             string prefix = Localizer.Format("#autoLOC_6001923");
             prefix = prefix.Replace(" <<1>>", "");
-            vesselName = vesselName.Replace(prefix, "UNK-");
+            vesselName = vesselName.Replace(prefix, kAnomalyPrefix);
             vesselName = vesselName.Replace("- ", "-");
 
             // Generate orbit
@@ -532,14 +529,32 @@ namespace Blueshift
 
         private bool canCreateNewInstance(List<WBISpaceAnomaly> existingAnomalies)
         {
-            // Filter the existing anomalies based on our parameters.
-            List<WBISpaceAnomaly> filteredAnomalies = existingAnomalies.FindAll(p => p.spawnMode == spawnMode && p.partName == partName);
+            // Only spawn jumpgates if the anomaly type is a jumpgate and jumpgates are enabled.
+            if (anomalyType == WBIAnomalyTypes.jumpGate && !BlueshiftSettings.JumpgatesEnabled)
+                return false;
 
-            // Check for fixed orbit.
+            // Roll RNG to make sure we're allowed to spawn a new anomaly.
+            if (UnityEngine.Random.Range(1, 1000) < spawnTargetNumber)
+                return false;
+
+            // Filter the existing anomalies based on our parameters.
+            List<WBISpaceAnomaly> filteredAnomalies = new List<WBISpaceAnomaly>();
+            int count = existingAnomalies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (existingAnomalies[index].partName == partName && existingAnomalies[index].spawnMode == spawnMode)
+                    filteredAnomalies.Add(existingAnomalies[index]);
+            }
+
+            // Check for existing fixed orbit.
             if (spawnMode == WBIAnomalySpawnModes.fixedOrbit)
             {
-                if (existingAnomalies.Find(p => p.fixedBody == fixedBody) != null)
-                    return false;
+                count = filteredAnomalies.Count;
+                for (int index = 0; index < count; index++)
+                {
+                    if (filteredAnomalies[index].fixedBody == fixedBody)
+                        return false;
+                }
             }
 
             // Check for everyLastPlanet.
@@ -550,7 +565,7 @@ namespace Blueshift
 
                 // Build the string containing the names of the bodies with anomalies.
                 StringBuilder stringBuilder = new StringBuilder();
-                int count = filteredAnomalies.Count;
+                count = filteredAnomalies.Count;
                 for (int index = 0; index < count; index++)
                     stringBuilder.Append(filteredAnomalies[index].fixedBody);
                 string bodiesWithAnomalies = stringBuilder.ToString();
@@ -562,6 +577,9 @@ namespace Blueshift
                     if (!bodiesWithAnomalies.Contains(lastPlanets[index].name))
                         return true;
                 }
+
+                // No need to spawn at every last planet, we've done that already.
+                return false;
             }
 
             // Check for max instances
