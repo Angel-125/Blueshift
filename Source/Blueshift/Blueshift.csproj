@@ -76,7 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HelpersAndManagers\BlueshiftSettings.cs" />
-    <Compile Include="JumpgateSelector.cs" />
+    <Compile Include="GUI\JumpgateSelector.cs" />
     <Compile Include="Utility\Dialog\Dialog.cs" />
     <Compile Include="Utility\Dialog\DialogManager.cs" />
     <Compile Include="Utility\Dialog\DialogUils.cs" />
@@ -95,10 +95,10 @@
     <Compile Include="SpaceAnomaly\WBISpaceAnomaly.cs" />
     <Compile Include="SpaceAnomaly\WBITechUnlock.cs" />
     <Compile Include="JumpTech\WBIJumpGate.cs" />
+    <Compile Include="Utility\WBIDockingAlignmentLock.cs" />
+    <Compile Include="JumpTech\WBIGateAssemblyChecker.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="GUI\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="MarkdownSeparator.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

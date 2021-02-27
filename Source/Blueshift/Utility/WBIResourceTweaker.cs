@@ -19,17 +19,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 namespace Blueshift
 {
+    /// <summary>
+    /// This helper class enables players to tweak resources in the editor.
+    /// </summary>
     public class WBIResourceTweaker: PartModule
     {
+        /// <summary>
+        /// Name of the resource to tweak.
+        /// </summary>
         [KSPField]
         public string resourceName = string.Empty;
 
+        /// <summary>
+        /// The text to use for the enable tweak button.
+        /// </summary>
         [KSPField]
         public string tweakEnabledName = "Enable Tweak";
 
+        /// <summary>
+        /// The text to use for the disable tweak button.
+        /// </summary>
         [KSPField]
         public string tweakDisabledName = "Disable Tweak";
 
+        /// <summary>
+        /// Flag to indicate whether or not the resource tweaker is enabled or not.
+        /// </summary>
         [KSPField]
         public bool isEnabled = false;
 
@@ -52,11 +67,15 @@ namespace Blueshift
 
                 if (HighLogic.LoadedSceneIsEditor)
                 {
-                    this.part.Resources[resourceName].isTweakable = resourceDefinition.isTweakable;
-                    updateUI();
-                    if (isEnabled)
-                        enableResourceTweak();
                     GameEvents.onPartResourceListChange.Add(onPartResourceListChange);
+
+                    if (part.Resources.Contains(resourceName))
+                    {
+                        this.part.Resources[resourceName].isTweakable = resourceDefinition.isTweakable;
+                        updateUI();
+                        if (isEnabled)
+                            enableResourceTweak();
+                    }
                 }
             }
         }

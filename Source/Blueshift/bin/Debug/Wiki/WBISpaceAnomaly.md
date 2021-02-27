@@ -31,6 +31,8 @@ Fixed inclination. Only used for fixedOrbit. If set to -1 then a random inclinat
 For undiscovered objects, the minimum number of seconds that the anomaly can exist. Default is 86400 (1 day). Set to -1 to use maximum possible value. When set to -1, maxLifetime is ignored.
 ### maxLifetime
 For undiscovered objects, the maximum number of seconds that the anomaly can exist. Default is 1728000 (20 days).
+### expirationDate
+Timestamp when the anomaly expires. If set to -1 then it never expires.
 ### spawnTargetNumber
 Spawn chance in a roll between 1 and 1000
 ### maxInstances
@@ -41,10 +43,8 @@ ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
 Flag to indicate whether or not the gate should automatically be added to the network's known gates. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
 ### networkID
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
-### gateAddress
-For paired gates, the address of the gate. Default is an empty address. Applies to anomalyType = jumpGate.
-### pairedGateAddress
-For paired gates, the address of the paired gate. Default is an empty address. Applies to anomalyType = jumpGate.
+### rendezvousDistance
+Overrides the jumpgate's rendezvous distance.
 ## Methods
 
 

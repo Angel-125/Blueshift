@@ -8,11 +8,25 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
+New Parts
+
+- Astria Porta Arbitrium: This is the control segment of an Astria Porta, a jumpgate that can be built.
+- Astria Porta Auxilium: This is a ring segment for an Astria Porta. You'll need 9 of these along with the control segment to complete a gate. The stock Clamp-O-Tron Sr is ideally suited for this part and the Astria Porta Arbitrium.
+- Astria Porta Accommodare: This is a small adapter part for putting ring segments in cargo bays.
+
 Changes
 
-- Added new jumpgate anomaly. Jumpgates can be enabled/disabled from the Game Difficulty menu. By default, they aren't enabled. When you discover a new jumpgate, it will be added to your network of known gates, and the more that you discover, the more destinations that you can reach. It does cost some Graviolium to traverse a gate, and be sure to make a vessel that isn't too tall or wide in order to fit.
-
-- Warp engines have a new engine sound.
+- Added an alignment helper to the stock Clamp-O-Tron Sr. docking port to help with docking Astria Porta parts together.
+- Added new Jump Tech research node. The Astria Porta parts are located in the new node.
+- Added new Wormhole Space Anomaly. You can see it in use if you have Galaxies Unbound installed, but it can support other mods as well if config files are written for them.
+- fixedOrbit now accounts for planetary radius and, if it has one, atmospheric depth.
+- Removed pairedGateAddress and gateAddress from SPACE_ANOMALY. These fields proved unnecessary. To make a paired jumpgate, simply make sure that both gates use the same network ID and ensure that the network ID is unique.
+- Moved the GR series of graviolium tanks to the Advanced Science Tech node, where you also get the stock Drill-O-Matic' Mining Excavator.
+- Fixed issue where vessels are teleported to their destination gate during a jumpgate's startup sequence.
+- Fixed issue where anomalies weren't being removed after their expiration date.
+- Fixed missing lift on mk2 parts.
+- Fixed issue where the warp engine wasn't respecting the vessel's control point direction.
+- Fixed issue where several part modules were attempting to send controller value updates to Waterfall controllers that didn't exist.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

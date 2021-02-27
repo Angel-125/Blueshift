@@ -641,7 +641,7 @@ namespace Blueshift
             if (bowShockTransform != null)
                 bowShockTransform.position = this.part.vessel.transform.position;
 
-            if (waterfallFXModule != null)
+            if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
             {
                 float targetValue = 0f;
                 if (throttleLevel > 0)
@@ -1209,14 +1209,14 @@ namespace Blueshift
 
             // Calculate offset position
             warpDistance = kLightSpeed * warpSpeed * TimeWarp.fixedDeltaTime;
-            Transform refTransform = this.part.vessel.transform;
+            Transform refTransform = part.vessel.ReferenceTransform;
             Vector3 warpVector = refTransform.up * warpDistance;
             Vector3d offsetPosition = refTransform.position + warpVector;
 
             // Make sure that we won't run into a celestial body.
-            if (previousBody != this.part.orbit.referenceBody)
+            if (previousBody != part.orbit.referenceBody)
             {
-                previousBody = this.part.orbit.referenceBody;
+                previousBody = part.orbit.referenceBody;
                 bodyBounds = previousBody.getBounds();
             }
             if (bodyBounds.Contains(offsetPosition))
@@ -1228,7 +1228,7 @@ namespace Blueshift
 
             // Apply translation.
             if (FlightGlobals.VesselsLoaded.Count > 1)
-                this.part.vessel.SetPosition(offsetPosition);
+                part.vessel.SetPosition(offsetPosition);
             else
                 FloatingOrigin.SetOutOfFrameOffset(offsetPosition);
         }

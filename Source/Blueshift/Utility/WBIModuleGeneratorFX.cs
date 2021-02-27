@@ -249,7 +249,7 @@ namespace Blueshift
             updateTextureModules();
 
             // Update Waterfall
-            if (waterfallFXModule != null)
+            if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
             {
                 waterfallFXModule.SetControllerValue(waterfallEffectController, animationThrottle);
             }

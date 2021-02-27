@@ -77,7 +77,7 @@ namespace Blueshift
         /// <param name="overriden">A bool indicating whether or not to override the controller.</param>
         public void SetControllerOverride(string controllerName, bool overriden = true)
         {
-            if (miSetControllerOverride == null)
+            if (miSetControllerOverride == null || string.IsNullOrEmpty(controllerName))
                 return;
 
             miSetControllerOverride.Invoke(partModule, new object[] { controllerName, overriden });
@@ -90,7 +90,7 @@ namespace Blueshift
         /// <param name="value">A float containing the override value.</param>
         public void SetControllerOverrideValue(string controllerName, float value)
         {
-            if (miSetControllerOverrideValue == null)
+            if (miSetControllerOverrideValue == null || string.IsNullOrEmpty(controllerName))
                 return;
 
             SetControllerOverride(controllerName);
@@ -104,7 +104,7 @@ namespace Blueshift
         /// <param name="value">A float containing the override value.</param>
         public void SetControllerValue(string controllerName, float value)
         {
-            if (miSetControllerValue == null)
+            if (miSetControllerValue == null || string.IsNullOrEmpty(controllerName))
                 return;
 
             miSetControllerValue.Invoke(partModule, new object[] { controllerName, value });

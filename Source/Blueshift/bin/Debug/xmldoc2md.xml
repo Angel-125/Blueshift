@@ -288,6 +288,31 @@
             <param name="textureName">The base name of the texture to search for. It should have the relative path such as WildBlueIndustries/Blueshift/Parts/Engine/WarpPlasma.</param>
             <returns>An array of string containing the numbered textures that comprise the animation.</returns>
         </member>
+        <member name="T:Blueshift.WBIResourceTweaker">
+            <summary>
+            This helper class enables players to tweak resources in the editor.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIResourceTweaker.resourceName">
+            <summary>
+            Name of the resource to tweak.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIResourceTweaker.tweakEnabledName">
+            <summary>
+            The text to use for the enable tweak button.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIResourceTweaker.tweakDisabledName">
+            <summary>
+            The text to use for the disable tweak button.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIResourceTweaker.isEnabled">
+            <summary>
+            Flag to indicate whether or not the resource tweaker is enabled or not.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIWarpCoil">
             <summary>
             Warp coils produce the warp capacity needed for vessels to go faster than light. Warp capacity is a fixed resource, but the resources needed to produce it are entirely optional.
@@ -846,9 +871,9 @@
             <param name="vesselID">A string containing the ID of the jumpgate vessel.</param>
             <param name="networkID">A string containing the ID of the jumpgate network.</param>
         </member>
-        <member name="M:Blueshift.BlueshiftScenario.GetJumpgates(System.String,Vector3d,System.Double)">
+        <member name="M:Blueshift.BlueshiftScenario.GetDestinationGates(System.String,Vector3d,System.Double)">
             <summary>
-            Returns the list of vesselIDs in the jumpgate network.
+            Returns the list of possible destination gates that are in range of the specified origin point.
             </summary>
             <param name="networkID">A string containing the network ID.</param>
             <param name="originPoint">A Vector3d containing the origin point to check for gates in range.</param>
@@ -861,13 +886,6 @@
             </summary>
             <param name="vesselID">A string containing the vessel ID.</param>
             <returns>A WBISpaceAnomaly if the anomaly can be found, or null if not.</returns>
-        </member>
-        <member name="M:Blueshift.BlueshiftScenario.GetDestinationVesselID(System.String)">
-            <summary>
-            Attempts to find the vessel ID that matches the desired paired gate address.
-            </summary>
-            <param name="pairedGateAddress">A string containing the paired gate address to search for.</param>
-            <returns>A string containing the vessel ID if found, or null if not found.</returns>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.GetVessel(System.String)">
             <summary>
@@ -1082,6 +1100,11 @@
             For undiscovered objects, the maximum number of seconds that the anomaly can exist. Default is 1728000 (20 days).
             </summary>
         </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.expirationDate">
+            <summary>
+            Timestamp when the anomaly expires. If set to -1 then it never expires.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBISpaceAnomaly.spawnTargetNumber">
             <summary>
             Spawn chance in a roll between 1 and 1000
@@ -1113,18 +1136,9 @@
             Applies to anomalyType = jumpGate.
             </summary>
         </member>
-        <member name="F:Blueshift.WBISpaceAnomaly.gateAddress">
+        <member name="F:Blueshift.WBISpaceAnomaly.rendezvousDistance">
             <summary>
-            For paired gates, the address of the gate.
-            Default is an empty address.
-            Applies to anomalyType = jumpGate.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBISpaceAnomaly.pairedGateAddress">
-            <summary>
-            For paired gates, the address of the paired gate.
-            Default is an empty address.
-            Applies to anomalyType = jumpGate.
+            Overrides the jumpgate's rendezvous distance.
             </summary>
         </member>
         <member name="M:Blueshift.WBISpaceAnomaly.CopyFrom(Blueshift.WBISpaceAnomaly)">
@@ -1271,6 +1285,11 @@
             by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIJumpGate.rendezvousDistance">
+            <summary>
+            Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module
@@ -1279,6 +1298,42 @@
         <member name="F:Blueshift.WBIJumpGate.vesselID">
             <summary>
             The ID of the vessel when it was first created.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIJumpGate.SetGateEnabled(System.Boolean)">
+            <summary>
+            Enables/disables the jumpgate.
+            </summary>
+            <param name="isEnabled">A flag that sets the gate enabled/disabled.</param>
+        </member>
+        <member name="T:Blueshift.WBIDockingAlignmentLock">
+            <summary>
+            A simple helper class to lock the docking alignment.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIDockingAlignmentLock.lockAlignment">
+            <summary>
+            Toggles docking alignment to locked/unlocked.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIGateAssemblyChecker">
+            <summary>
+            A handy class for making sure that a jumpgate is fully assembled.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssemblyChecker.totalSegments">
+            <summary>
+            Total number of segments to check.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssemblyChecker.primaryNodeName">
+            <summary>
+            Name of the node to check for other gate segments.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssemblyChecker.secondaryNodeName">
+            <summary>
+            Name of the node to check for other gate segments.
             </summary>
         </member>
     </members>

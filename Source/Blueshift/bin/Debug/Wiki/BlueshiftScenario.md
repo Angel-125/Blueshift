@@ -42,8 +42,8 @@ Adds the jumpgate to the network.
 > **networkID:** A string containing the ID of the jumpgate network.
 
 
-### GetJumpgates(System.String,Vector3d,System.Double)
-Returns the list of vesselIDs in the jumpgate network.
+### GetDestinationGates(System.String,Vector3d,System.Double)
+Returns the list of possible destination gates that are in range of the specified origin point.
 > #### Parameters
 > **networkID:** A string containing the network ID.
 
@@ -61,14 +61,6 @@ Returns the anomaly matching the desired vesselID.
 
 > #### Return value
 > A WBISpaceAnomaly if the anomaly can be found, or null if not.
-
-### GetDestinationVesselID(System.String)
-Attempts to find the vessel ID that matches the desired paired gate address.
-> #### Parameters
-> **pairedGateAddress:** A string containing the paired gate address to search for.
-
-> #### Return value
-> A string containing the vessel ID if found, or null if not found.
 
 ### GetVessel(System.String)
 Attempts to locate the destination vessel based on the ID supplied.

@@ -119,6 +119,12 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public FloatCurve triggerStartupScaleCurve;
+
+        /// <summary>
+        /// Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform.
+        /// </summary>
+        [KSPField]
+        public float rendezvousDistance = kRendezvousDistance;
         #endregion
 
         #region Housekeeping
@@ -195,12 +201,15 @@ namespace Blueshift
             Vessel vesselToTeleport = collidedPart.vessel;
 
             // Parts stuck in the startup wash go boom.
-            if (!isActivated && playEffects && BlueshiftSettings.JumpgateStartupIsDestructive && collidedPart != this.part)
+            if (!isActivated && playEffects && collidedPart != this.part)
             {
-                collidedPart.explosionPotential = 0.1f;
-                collidedPart.explode();
-                if (vesselToTeleport.parts.Count == 0)
-                    FlightGlobals.ForceSetActiveVessel(part.vessel);
+                if (BlueshiftSettings.JumpgateStartupIsDestructive)
+                {
+                    collidedPart.explosionPotential = 0.1f;
+                    collidedPart.explode();
+                    if (vesselToTeleport.parts.Count == 0)
+                        FlightGlobals.ForceSetActiveVessel(part.vessel);
+                }
                 return;
             }
 
@@ -264,7 +273,7 @@ namespace Blueshift
             // Good to go.
             dimensionsExceededMsgShown = false;
             insufficientResourcesMsgShown = false;
-            Vector3 position = destinationVessel.transform.up.normalized * (kRendezvousDistance + size.y);
+            Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + size.y);
             FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
         }
 
@@ -283,6 +292,23 @@ namespace Blueshift
             {
                 jumpgateSelector.jumpgates = jumpgates;
                 jumpgateSelector.SetVisible(true);
+            }
+        }
+
+        /// <summary>
+        /// Enables/disables the jumpgate.
+        /// </summary>
+        /// <param name="isEnabled">A flag that sets the gate enabled/disabled.</param>
+        public void SetGateEnabled(bool isEnabled)
+        {
+            if (isEnabled)
+            {
+                if (!isActivated && destinationVessel == null)
+                    updateJumpgatePAW();
+            }
+            else
+            {
+                Events["SelectGate"].active = false;
             }
         }
         #endregion
@@ -320,17 +346,19 @@ namespace Blueshift
         public override void OnUpdate()
         {
             base.OnUpdate();
+
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
             // Play running effect if needed.
-            this.part.Effect(runningEffect, effectsThrottle);
+            if (!string.IsNullOrEmpty(runningEffect))
+                this.part.Effect(runningEffect, effectsThrottle);
 
             // Update animated textures
             updateTextureModules();
 
             // Update Waterfall
-            if (waterfallFXModule != null)
+            if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
             {
                 waterfallFXModule.SetControllerValue(waterfallEffectController, effectsThrottle);
             }
@@ -393,59 +421,39 @@ namespace Blueshift
 
         private void setupJumpNetwork()
         {
-            if (string.IsNullOrEmpty(gateAddress) && string.IsNullOrEmpty(pairedGateAddress))
+            BlueshiftScenario.shared.AddJumpgateToNetwork(vessel.id.ToString(), networkID);
+
+            // Get list of possible destinations within our network.
+            jumpgates = BlueshiftScenario.shared.GetDestinationGates(networkID, vessel.GetWorldPos3D(), maxJumpRange);
+            if (jumpgates == null)
+                jumpgates = new List<Vessel>();
+
+            updateJumpgatePAW();
+        }
+
+        private void updateJumpgatePAW()
+        {
+            if (jumpgates.Count == 1)
             {
-                BlueshiftScenario.shared.AddJumpgateToNetwork(vessel.id.ToString(), networkID);
-
-                // Get list of jumpgates in the network
-                jumpgates = BlueshiftScenario.shared.GetJumpgates(networkID, vessel.GetWorldPos3D(), maxJumpRange);
-                if (jumpgates == null)
-                    jumpgates = new List<Vessel>();
-
-                // If there is only one gate in the network then we can treat it as a paired gate.
-                if (jumpgates.Count == 1)
-                {
-                    Events["SelectGate"].active = false;
-                    isActivated = false;
-                    effectsThrottle = 0;
-                    destinationVessel = null;
-
-                    effectsThrottle = 1.0f;
-                    isActivated = true;
-                    destinationVessel = jumpgates[0];
-                }
-
-                // Enable the gate selector if we have more than one gate.
-                else if (jumpgates.Count > 1)
-                {
-                    Events["SelectGate"].active = true;
-                    Events["SelectGate"].unfocusedRange = interactionRange;
-                    isActivated = false;
-                    effectsThrottle = 0;
-                    destinationVessel = null;
-                }
-
-                // No other gates in the network.
-                else
-                {
-                    Events["SelectGate"].active = false;
-                    Events["SelectGate"].unfocusedRange = interactionRange;
-                    isActivated = false;
-                    effectsThrottle = 0;
-                    destinationVessel = null;
-                }
-            }
-
-            // For a paired gate, turn on the effects.
-            else if (!string.IsNullOrEmpty(gateAddress) && !string.IsNullOrEmpty(pairedGateAddress))
-            {
+                Events["SelectGate"].active = false;
                 effectsThrottle = 1.0f;
                 isActivated = true;
-                string destinationVesselID = BlueshiftScenario.shared.GetDestinationVesselID(pairedGateAddress);
+                destinationVessel = jumpgates[0];
+            }
 
-                if (!string.IsNullOrEmpty(destinationVesselID))
-                    destinationVessel = BlueshiftScenario.shared.GetVessel(destinationVesselID);
+            // Enable the gate selector if we have more than one gate.
+            else if (jumpgates.Count > 1)
+            {
+                Events["SelectGate"].active = true;
+                Events["SelectGate"].unfocusedRange = interactionRange;
+                isActivated = false;
+                effectsThrottle = 0;
+                destinationVessel = null;
+            }
 
+            // No other gates in the network.
+            else
+            {
                 Events["SelectGate"].active = false;
                 isActivated = false;
                 effectsThrottle = 0;
@@ -460,8 +468,9 @@ namespace Blueshift
             if (anomaly != null)
             {
                 networkID = anomaly.networkID;
-                gateAddress = anomaly.gateAddress;
-                pairedGateAddress = anomaly.pairedGateAddress;
+
+                if (anomaly.rendezvousDistance > 0)
+                    rendezvousDistance = anomaly.rendezvousDistance;
             }
         }
 

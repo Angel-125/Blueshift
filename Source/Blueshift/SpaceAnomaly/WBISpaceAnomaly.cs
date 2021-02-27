@@ -46,9 +46,9 @@ namespace Blueshift
         public const string kMaxDaysToClosestApproach = "maxDaysToClosestApproach";
         public const string kIsKnown = "isKnown";
         public const string kNetworkID = "networkID";
-        public const string kGateAddress = "gateAddress";
-        public const string kPairedGateAddress = "pairedGateAddress";
         public const string kAnomalyType = "anomalyType";
+        public const string kExpirationDate = "expirationDate";
+        public const string kRendezvousDistance = "rendezvousDistance";
         #endregion
 
         #region Fields
@@ -125,6 +125,11 @@ namespace Blueshift
         public double maxLifetime = 1728000;
 
         /// <summary>
+        /// Timestamp when the anomaly expires. If set to -1 then it never expires.
+        /// </summary>
+        public double expirationDate = 0;
+
+        /// <summary>
         /// Spawn chance in a roll between 1 and 1000
         /// </summary>
         public int spawnTargetNumber = 995;
@@ -153,24 +158,12 @@ namespace Blueshift
         /// You can add additional networks by adding a semicolon character in between network IDs.
         /// Applies to anomalyType = jumpGate.
         /// </summary>
-        [KSPField(isPersistant = true)]
         public string networkID = string.Empty;
 
         /// <summary>
-        /// For paired gates, the address of the gate.
-        /// Default is an empty address.
-        /// Applies to anomalyType = jumpGate.
+        /// Overrides the jumpgate's rendezvous distance.
         /// </summary>
-        [KSPField(isPersistant = true)]
-        public string gateAddress = string.Empty;
-
-        /// <summary>
-        /// For paired gates, the address of the paired gate.
-        /// Default is an empty address.
-        /// Applies to anomalyType = jumpGate.
-        /// </summary>
-        [KSPField(isPersistant = true)]
-        public string pairedGateAddress = string.Empty;
+        public float rendezvousDistance = 0;
         #endregion
 
         #region Housekeeping
@@ -220,8 +213,8 @@ namespace Blueshift
             vesselId = copyFrom.vesselId;
             isKnown = copyFrom.isKnown;
             networkID = copyFrom.networkID;
-            gateAddress = copyFrom.gateAddress;
-            pairedGateAddress = copyFrom.pairedGateAddress;
+            rendezvousDistance = copyFrom.rendezvousDistance;
+            expirationDate = copyFrom.expirationDate;
 
             lastSeed = UnityEngine.Random.Range(0, int.MaxValue);
             UnityEngine.Random.InitState(lastSeed);
@@ -291,12 +284,11 @@ namespace Blueshift
             if (node.HasValue(kNetworkID))
                 anomaly.networkID = node.GetValue(kNetworkID);
 
-            if (node.HasValue(kGateAddress))
-                anomaly.gateAddress = node.GetValue(kGateAddress);
+            if (node.HasValue(kExpirationDate))
+                double.TryParse(node.GetValue(kExpirationDate), out anomaly.expirationDate);
 
-            if (node.HasValue(kPairedGateAddress))
-                anomaly.pairedGateAddress = node.GetValue(kPairedGateAddress);
-
+            if (node.HasValue(kRendezvousDistance))
+                float.TryParse(node.GetValue(kRendezvousDistance), out anomaly.rendezvousDistance);
         }
 
         /// <summary>
@@ -326,8 +318,8 @@ namespace Blueshift
             node.AddValue(kMaxInstances, maxInstances.ToString());
             node.AddValue(kVesselId, vesselId);
             node.AddValue(kNetworkID, networkID);
-            node.AddValue(kGateAddress, gateAddress);
-            node.AddValue(kPairedGateAddress, pairedGateAddress);
+            node.AddValue(kExpirationDate, expirationDate.ToString());
+            node.AddValue(kRendezvousDistance, rendezvousDistance.ToString());
 
             return node;
         }
@@ -481,10 +473,13 @@ namespace Blueshift
                     body = FlightGlobals.GetBodyByName(anomaly.fixedBody);
                     if (body != null)
                     {
+                        double sma = anomaly.fixedSMA + body.Radius;
+                        if (body.atmosphere)
+                            sma += body.atmosphereDepth;
                         double inclination = anomaly.fixedInclination;
                         if (inclination < 0)
                             inclination = UnityEngine.Random.Range(0, 90);
-                        return new Orbit(inclination, anomaly.fixedEccentricity, anomaly.fixedSMA, 0, 0, 0, Planetarium.GetUniversalTime(), body);
+                        return new Orbit(inclination, anomaly.fixedEccentricity, sma, 0, 0, 0, Planetarium.GetUniversalTime(), body);
                     }
                     break;
 

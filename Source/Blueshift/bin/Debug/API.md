@@ -184,6 +184,21 @@ Retrieves all the textures for the specified name. If the name is "WarpPlasma" f
 > #### Return value
 > An array of string containing the numbered textures that comprise the animation.
 
+# WBIResourceTweaker
+            
+This helper class enables players to tweak resources in the editor.
+        
+## Fields
+
+### resourceName
+Name of the resource to tweak.
+### tweakEnabledName
+The text to use for the enable tweak button.
+### tweakDisabledName
+The text to use for the disable tweak button.
+### isEnabled
+Flag to indicate whether or not the resource tweaker is enabled or not.
+
 # WBIWarpCoil
             
 Warp coils produce the warp capacity needed for vessels to go faster than light. Warp capacity is a fixed resource, but the resources needed to produce it are entirely optional. ` MODULE { name = WBIWarpCoil textureModuleID = WarpCoil warpCapacity = 10 RESOURCE { name = GravityWaves rate = 200 FlowMode = STAGE_PRIORITY_FLOW } } `
@@ -433,8 +448,8 @@ Adds the jumpgate to the network.
 > **networkID:** A string containing the ID of the jumpgate network.
 
 
-### GetJumpgates(System.String,Vector3d,System.Double)
-Returns the list of vesselIDs in the jumpgate network.
+### GetDestinationGates(System.String,Vector3d,System.Double)
+Returns the list of possible destination gates that are in range of the specified origin point.
 > #### Parameters
 > **networkID:** A string containing the network ID.
 
@@ -452,14 +467,6 @@ Returns the anomaly matching the desired vesselID.
 
 > #### Return value
 > A WBISpaceAnomaly if the anomaly can be found, or null if not.
-
-### GetDestinationVesselID(System.String)
-Attempts to find the vessel ID that matches the desired paired gate address.
-> #### Parameters
-> **pairedGateAddress:** A string containing the paired gate address to search for.
-
-> #### Return value
-> A string containing the vessel ID if found, or null if not found.
 
 ### GetVessel(System.String)
 Attempts to locate the destination vessel based on the ID supplied.
@@ -607,6 +614,8 @@ Fixed inclination. Only used for fixedOrbit. If set to -1 then a random inclinat
 For undiscovered objects, the minimum number of seconds that the anomaly can exist. Default is 86400 (1 day). Set to -1 to use maximum possible value. When set to -1, maxLifetime is ignored.
 ### maxLifetime
 For undiscovered objects, the maximum number of seconds that the anomaly can exist. Default is 1728000 (20 days).
+### expirationDate
+Timestamp when the anomaly expires. If set to -1 then it never expires.
 ### spawnTargetNumber
 Spawn chance in a roll between 1 and 1000
 ### maxInstances
@@ -617,10 +626,8 @@ ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
 Flag to indicate whether or not the gate should automatically be added to the network's known gates. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
 ### networkID
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
-### gateAddress
-For paired gates, the address of the gate. Default is an empty address. Applies to anomalyType = jumpGate.
-### pairedGateAddress
-For paired gates, the address of the paired gate. Default is an empty address. Applies to anomalyType = jumpGate.
+### rendezvousDistance
+Overrides the jumpgate's rendezvous distance.
 ## Methods
 
 
@@ -669,3 +676,25 @@ A control to vary the animation speed between minFramesPerSecond and maxFramesPe
 Flag to indicate whether or not the part has been visited.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
+
+# WBIDockingAlignmentLock
+            
+A simple helper class to lock the docking alignment.
+        
+## Fields
+
+### lockAlignment
+Toggles docking alignment to locked/unlocked.
+
+# WBIGateAssemblyChecker
+            
+A handy class for making sure that a jumpgate is fully assembled.
+        
+## Fields
+
+### totalSegments
+Total number of segments to check.
+### primaryNodeName
+Name of the node to check for other gate segments.
+### secondaryNodeName
+Name of the node to check for other gate segments.

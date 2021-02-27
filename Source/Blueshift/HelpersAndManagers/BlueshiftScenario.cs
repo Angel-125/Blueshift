@@ -116,6 +116,7 @@ namespace Blueshift
             {
                 anomalyTimer = currentTime;
                 checkForNewAnomalies();
+                removeExpiredAnomalies();
             }
         }
 
@@ -285,13 +286,13 @@ namespace Blueshift
         }
 
         /// <summary>
-        /// Returns the list of vesselIDs in the jumpgate network.
+        /// Returns the list of possible destination gates that are in range of the specified origin point.
         /// </summary>
         /// <param name="networkID">A string containing the network ID.</param>
         /// <param name="originPoint">A Vector3d containing the origin point to check for gates in range.</param>
         /// <param name="maxJumpRange">A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.</param>
         /// <returns>A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.</returns>
-        public List<Vessel> GetJumpgates(string networkID, Vector3d originPoint, double maxJumpRange = -1)
+        public List<Vessel> GetDestinationGates(string networkID, Vector3d originPoint, double maxJumpRange = -1)
         {
             string gateNetwork = networkID;
             if (string.IsNullOrEmpty(gateNetwork))
@@ -301,6 +302,7 @@ namespace Blueshift
                 return null;
             List<string> jumpgateIDs = jumpgateNetwork[gateNetwork];
             List<Vessel> jumpgates = new List<Vessel>();
+            List<string> doomed = new List<string>();
             int count = jumpgateIDs.Count;
             string vesselID = string.Empty;
             Vessel vessel;
@@ -313,11 +315,24 @@ namespace Blueshift
                 {
                     jumpRange = Math.Abs((originPoint - vessel.GetWorldPos3D()).magnitude);
 
-                    if (maxJumpRange < 0)
+                    if (maxJumpRange < 0 && jumpRange > 0)
                         jumpgates.Add(vessel);
                     else if (jumpRange > 0 && jumpRange <= (maxJumpRange * kLightYear))
                         jumpgates.Add(vessel);
                 }
+
+                // Invalid jumpgate
+                else
+                {
+                    doomed.Add(jumpgateIDs[index]);
+                }
+            }
+
+            // Clean invalid gates
+            count = doomed.Count;
+            for (int index = 0; index < count; index++)
+            {
+                jumpgateIDs.Remove(doomed[index]);
             }
 
             return jumpgates.Count > 0 ? jumpgates : null;
@@ -344,29 +359,6 @@ namespace Blueshift
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Attempts to find the vessel ID that matches the desired paired gate address.
-        /// </summary>
-        /// <param name="pairedGateAddress">A string containing the paired gate address to search for.</param>
-        /// <returns>A string containing the vessel ID if found, or null if not found.</returns>
-        public string GetDestinationVesselID(string pairedGateAddress)
-        {
-            int count = spaceAnomalies.Count;
-            WBISpaceAnomaly anomaly = null;
-            for (int index = 0; index < count; index++)
-            {
-                anomaly = spaceAnomalies[index];
-                if (anomaly.pairedGateAddress == pairedGateAddress)
-                    break;
-                else
-                    anomaly = null;
-            }
-            if (anomaly == null)
-                return null;
-
-            return anomaly.vesselId;
         }
 
         /// <summary>
@@ -754,6 +746,76 @@ namespace Blueshift
             {
                 anomalyTemplate = anomalyTemplates[index];
                 anomalyTemplate.CreateNewInstancesIfNeeded(spaceAnomalies);
+            }
+        }
+
+        private void removeExpiredAnomalies()
+        {
+            WBISpaceAnomaly anomaly;
+            int count = spaceAnomalies.Count;
+            double currentTime = Planetarium.GetUniversalTime();
+            List<WBISpaceAnomaly> doomedAnomalies = new List<WBISpaceAnomaly>();
+
+            for (int index = 0; index < count; index++)
+            {
+                anomaly = spaceAnomalies[index];
+
+                // If expiration date hasn't been set then set it now.
+                if (anomaly.expirationDate == 0)
+                {
+                    // Check for range between minimum and maximum lifetime.
+                    if (anomaly.minLifetime > 0 && anomaly.maxLifetime > 0)
+                    {
+                        if (anomaly.minLifetime > 0)
+                            anomaly.expirationDate = currentTime + UnityEngine.Random.Range((float)anomaly.minLifetime, (float)anomaly.maxLifetime);
+                    }
+
+                    // Check for max lifetime
+                    else if (anomaly.maxLifetime > 0)
+                    {
+                        anomaly.expirationDate = currentTime + anomaly.maxLifetime;
+                    }
+
+                    // Infinite lifetime
+                    else
+                    {
+                        anomaly.expirationDate = -1;
+                    }
+                }
+
+                // If we've passed the expiration date then remove the anomaly.
+                else if (anomaly.expirationDate > 0 && anomaly.expirationDate > currentTime)
+                {
+                    Vessel doomed = GetVessel(anomaly.vesselId);
+                    if (doomed != null && FlightGlobals.VesselsUnloaded.Contains(doomed))
+                    {
+                        FlightGlobals.VesselsUnloaded.Remove(doomed);
+                    }
+
+                    doomedAnomalies.Add(anomaly);
+                }
+            }
+
+            // Now clean up our anomalies and jumpgates list.
+            count = doomedAnomalies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                removeAnomaly(doomedAnomalies[index]);
+            }
+        }
+
+        private void removeAnomaly(WBISpaceAnomaly doomed)
+        {
+            if (spaceAnomalies.Contains(doomed))
+                spaceAnomalies.Remove(doomed);
+
+            string[] networkIDs = jumpgateNetwork.Keys.ToArray();
+            List<string> jumpgates;
+            for (int index = 0; index < networkIDs.Length; index++)
+            {
+                jumpgates = jumpgateNetwork[networkIDs[index]];
+                if (jumpgates.Contains(doomed.vesselId))
+                    jumpgates.Remove(doomed.vesselId);
             }
         }
 
