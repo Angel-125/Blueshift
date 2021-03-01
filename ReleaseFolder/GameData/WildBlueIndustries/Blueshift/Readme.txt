@@ -8,18 +8,12 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-NOTE: After installing this update:
-1. Disable space anomalies from the Game Difficulty menu. Be sure to apply the changes.
-2. Exit the game back to the main menu.
-3. Re-load your save.
-4. Re-enable space anomalies and/or jumpgates.
-
 Changes
 
-- Fixed issue where jumpgate anomalies would continually spawn at the last planet in the star system.
-- Fixed issue where newly created anomalies were immediately cleaned up.
-- Fixed issue where expired anomalies weren't being cleaned up properly.
-- Fixed issue where jumpgate anomalies would spawn even when the option to do so was turned off.
+- Added Max Warp Speed display field to the warp engine PAW. It is available both in flight and in the editor.
+- Added Effective Warp Capacity field to the warp engine PAW. It is available in the editor.
+- Added new FTL Check field to the warp engine PAW. It is available both in flight and in the editor. It will let you know if the warp engine lacks sufficient effective warp capacity to achieve FTL.
+- Removed vessel size restriction on jumpgates; the stock vessel size calculations are too inaccurate.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

@@ -98,6 +98,8 @@ namespace Blueshift
         string kNeedsSpaceflight = "Needs to be in space";
         string kNeedsAltitude = "Needs higher altitude";
         string kNeedsWarpCapacity = "Needs more warp capacity";
+        string kAddWarpCapacity = "Add warp capacity: {0:n2}/{1:n2}";
+        string kCanGoFTL = "Can exceed light speed";
         string kFlameOutGeneric = "Something went wrong";
         string kWarpReady = "Ready";
         string kTerrainWarning = "Warp halted to avoid collision with celestial body. Reduce speed to approach minimum warp altitude.";
@@ -133,6 +135,18 @@ namespace Blueshift
         /// </summary>
         [KSPField(guiActive = true, guiName = "Warp Speed", guiFormat = "n3", guiUnits = "C")]
         public float warpSpeed = 0;
+
+        /// <summary>
+        /// (Debug visible) Maximum possible warp speed.
+        /// </summary>
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Max Warp Speed", guiFormat = "n3", guiUnits = "C")]
+        protected float maxWarpSpeed = 0;
+
+        /// <summary>
+        /// Pre-flight status check.
+        /// </summary>
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "FTL Check")]
+        public string preflightCheck = string.Empty;
 
         /// <summary>
         /// Where we are in space.
@@ -283,14 +297,8 @@ namespace Blueshift
         /// <summary>
         /// (Debug visible) Effective warp capacity after accounting for vessel mass
         /// </summary>
-        [KSPField]
+        [KSPField(guiName = "Effective Warp Capacity")]
         protected float effectiveWarpCapacity = 0;
-
-        /// <summary>
-        /// (Debug visible) Maximum possible warp speed.
-        /// </summary>
-        [KSPField(guiName = "Max Warp Speed", guiFormat = "n3", guiUnits = "C")]
-        protected float maxWarpSpeed = 0;
 
         /// <summary>
         /// (Debug visible) Distance per physics update that the vessel will move.
@@ -451,6 +459,8 @@ namespace Blueshift
         #region Overrides
         public void OnDestroy()
         {
+            if (HighLogic.LoadedSceneIsEditor)
+                GameEvents.onEditorShipModified.Remove(onEditorShipModified);
         }
 
         public override void OnFixedUpdate()
@@ -475,6 +485,9 @@ namespace Blueshift
             updateWarpPowerGenerators();
             getTotalWarpCapacity();
 
+            // Calculate the best warp curve to get maximum FTL speed.
+            calculateBestWarpSpeed();
+
             // Update our precondition states
             updatePreconditionStates();
 
@@ -484,9 +497,6 @@ namespace Blueshift
                 resetWarpParameters();
                 return;
             }
-
-            // Calculate the best warp curve to get maximum FTL speed.
-            calculateBestWarpSpeed();
 
             // Reset warp speed exceeded flag.
             if (warpSpeed < 1f)
@@ -502,6 +512,7 @@ namespace Blueshift
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
             getCoilsAndGenerators();
+            updateFTLPreflightStatus();
             if (!isOperational && !EngineIgnited)
             {
                 fadeOutEffects();
@@ -558,9 +569,15 @@ namespace Blueshift
             Fields["totalWarpCapacity"].guiActive = debugEnabled;
             Fields["minPlanetaryRadius"].guiActive = debugEnabled;
             Fields["effectiveWarpCapacity"].guiActive = debugEnabled;
-            Fields["maxWarpSpeed"].guiActive = debugEnabled;
             Fields["warpDistance"].guiActive = debugEnabled;
             Fields["effectsThrottle"].guiActive = debugEnabled;
+
+            // Editor events
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                Fields["effectiveWarpCapacity"].guiActiveEditor = true;
+                GameEvents.onEditorShipModified.Add(onEditorShipModified);
+            }
         }
 
         public override void Flameout(string message, bool statusOnly = false, bool showFX = true)
@@ -809,6 +826,30 @@ namespace Blueshift
         }
         */
 
+        protected void updateFTLPreflightStatus()
+        {
+            // Update preflight check
+            if (maxWarpSpeed < 1)
+            {
+                // Determinine minimum capacity to reach light speed or better.
+                float FTLSpeed = 0;
+                float warpCapacity = 0;
+                for (int index = 0; index < warpCurve.Curve.keys.Length; index++)
+                {
+                    warpCapacity = warpCurve.Curve.keys[index].time;
+                    FTLSpeed = warpCurve.Evaluate(warpCapacity);
+                    if (FTLSpeed >= 1)
+                        break;
+                }
+
+                preflightCheck = string.Format(kAddWarpCapacity, effectiveWarpCapacity, warpCapacity);
+            }
+            else
+            {
+                preflightCheck = kCanGoFTL;
+            }
+        }
+
         /// <summary>
         /// Fades out the warp effects
         /// </summary>
@@ -843,6 +884,58 @@ namespace Blueshift
             {
                 if (animatedTextures[index].moduleID == textureModuleID)
                     warpEngineTextures.Add(animatedTextures[index]);
+            }
+        }
+
+        protected void onEditorShipModified(ShipConstruct ship)
+        {
+            // Get warp capacity and total displacement impulse
+            int count = ship.parts.Count;
+            WBIWarpCoil warpCoil;
+            WBIWarpEngine engine;
+            float coilCapacity;
+            float vesselMass = ship.GetTotalMass();
+            float warpDisplacementImpulse = 0;
+            float warpCapacity = 0;
+            for (int index = 0; index < count; index++)
+            {
+                warpCoil = ship.parts[index].FindModuleImplementing<WBIWarpCoil>();
+                if (warpCoil != null)
+                {
+                    coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
+                    warpCapacity += coilCapacity;
+                }
+
+                engine = ship.parts[index].FindModuleImplementing<WBIWarpEngine>();
+                if (engine != null)
+                    warpDisplacementImpulse += engine.displacementImpulse;
+            }
+
+            // Get effective warp capacity
+            effectiveWarpCapacity = warpCapacity * (warpDisplacementImpulse / vesselMass);
+
+            // Now calculate max speed
+            maxWarpSpeed = warpCurve.Evaluate(effectiveWarpCapacity);
+
+            // FTL pre-flight status check.
+            if (maxWarpSpeed < 1)
+            {
+                // Determinine minimum capacity to reach light speed or better.
+                float FTLSpeed = 0;
+                for (int index = 0; index < warpCurve.Curve.keys.Length; index++)
+                {
+                    warpCapacity = warpCurve.Curve.keys[index].time;
+                    FTLSpeed = warpCurve.Evaluate(warpCapacity);
+                    if (FTLSpeed >= 1)
+                        break;
+                }
+
+                // Update status
+                preflightCheck = string.Format(kAddWarpCapacity, effectiveWarpCapacity, warpCapacity);
+            }
+            else
+            {
+                preflightCheck = kCanGoFTL;
             }
         }
 
@@ -890,13 +983,11 @@ namespace Blueshift
             if (throttleLevel <= 0)
             {
                 warpSpeed = 0;
-                maxWarpSpeed = 0;
                 prevInterstellarAcceleration = 0;
                 if (spatialLocation == WBISpatialLocations.Interstellar)
                     speedStartTime = Planetarium.GetUniversalTime();
                 return;
             }
-            maxWarpSpeed *= throttleLevel;
 
             // If we've transitioned from interplanetary to interstellar or vice-versa, then transition to the appropriate speed.
             if (prevSpatialLocation != spatialLocation)
@@ -924,7 +1015,7 @@ namespace Blueshift
                 if (curveSpeed > prevInterstellarAcceleration)
                 {
                     prevInterstellarAcceleration = curveSpeed;
-                    warpSpeed = maxWarpSpeed * curveSpeed;
+                    warpSpeed = maxWarpSpeed * curveSpeed * throttleLevel;
                 }
 
                 // Stop accelerating if we've hit our end time.
@@ -935,7 +1026,7 @@ namespace Blueshift
             // No acceleration, just cruising...
             else
             {
-                warpSpeed = maxWarpSpeed;
+                warpSpeed = maxWarpSpeed * throttleLevel;
             }
         }
 

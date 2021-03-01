@@ -467,6 +467,16 @@
             The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpEngine.maxWarpSpeed">
+            <summary>
+            (Debug visible) Maximum possible warp speed.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.preflightCheck">
+            <summary>
+            Pre-flight status check.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.spatialLocation">
             <summary>
             Where we are in space.
@@ -593,11 +603,6 @@
         <member name="F:Blueshift.WBIWarpEngine.effectiveWarpCapacity">
             <summary>
             (Debug visible) Effective warp capacity after accounting for vessel mass
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.maxWarpSpeed">
-            <summary>
-            (Debug visible) Maximum possible warp speed.
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.warpDistance">

@@ -216,6 +216,7 @@ namespace Blueshift
             // Make sure that the vessel can fit.
             vesselToTeleport.UpdateVesselSize();
             Vector3 size = vesselToTeleport.vesselSize;
+            /*
             if (jumpDimensions.magnitude > 0 && (size.x > jumpDimensions.x || size.z > jumpDimensions.y))
             {
                 if (!dimensionsExceededMsgShown)
@@ -225,6 +226,7 @@ namespace Blueshift
                 }
                 return;
             }
+            */
 
             // Pay the toll if needed. Cost per resources is rate * vessel mass.
             if (resHandler.inputResources.Count > 0 && !CheatOptions.InfinitePropellant)
