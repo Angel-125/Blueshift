@@ -10,10 +10,10 @@ GameData
 
 Changes
 
-- Added Max Warp Speed display field to the warp engine PAW. It is available both in flight and in the editor.
-- Added Effective Warp Capacity field to the warp engine PAW. It is available in the editor.
-- Added new FTL Check field to the warp engine PAW. It is available both in flight and in the editor. It will let you know if the warp engine lacks sufficient effective warp capacity to achieve FTL.
-- Removed vessel size restriction on jumpgates; the stock vessel size calculations are too inaccurate.
+NOTE: Be sure to delete your Module Manager cache before applying this update.
+NOTE: After this update, be sure to scout new asteroids for Graviolium; existing asteroids might not have any.
+- Adjusted Module Manager patches for adding Graviolium to asteroids and comets; in some circumstances the patches wouldn't be applied.
+- Added new Asteroid & Comet Scanner to the stock surface scanner. This new UI will let you know what resources the asteroid or comet has.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

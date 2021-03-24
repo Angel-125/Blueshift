@@ -77,10 +77,12 @@
   <ItemGroup>
     <Compile Include="HelpersAndManagers\BlueshiftSettings.cs" />
     <Compile Include="GUI\JumpgateSelector.cs" />
+    <Compile Include="GUI\PotatoScannerInfo.cs" />
     <Compile Include="Utility\Dialog\Dialog.cs" />
     <Compile Include="Utility\Dialog\DialogManager.cs" />
     <Compile Include="Utility\Dialog\DialogUils.cs" />
     <Compile Include="Utility\Enumerators.cs" />
+    <Compile Include="Utility\WBIPotatoScanner.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
     <Compile Include="Utility\WBIPartModule.cs" />
