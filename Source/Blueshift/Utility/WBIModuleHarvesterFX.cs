@@ -91,6 +91,51 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string waterfallEffectController = string.Empty;
+
+        #region Maintenance
+        /// <summary>
+        /// Flag to indicate that the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public bool needsMaintenance = false;
+
+        /// <summary>
+        /// In hours, how long until the part needs maintenance in order to function. Default is 600.
+        /// </summary>
+        [KSPField]
+        public double mtbf = 600;
+
+        /// <summary>
+        /// In seconds, the current time remaining until the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public double currentMTBF = 600 * 3600;
+
+        /// <summary>
+        /// The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
+        /// </summary>
+        [KSPField]
+        public string repairSkill = "RepairSkill";
+
+        /// <summary>
+        /// The minimum skill level required to perform repairs. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int minimumSkillLevel = 1;
+
+        /// <summary>
+        /// The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
+        /// </summary>
+        [KSPField]
+        public string repairKitName = "evaRepairKit";
+
+        /// <summary>
+        /// The number of repair kits required to repair the part. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int repairKitsRequired = 1;
+        #endregion
+
         #endregion
 
         #region Housekeeping
@@ -126,9 +171,46 @@ namespace Blueshift
         {
             string info = base.GetInfo();
 
+            StringBuilder builder = new StringBuilder();
+
             info = info.Replace(ConverterName, moduleDescription);
+            builder.AppendLine(info);
+            builder.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoMaintenance"));
+            builder.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoMTB", new string[1] { string.Format("{0:n1}", mtbf) }));
+            builder.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairSkill", new string[1] { repairSkill }));
+            builder.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairRating", new string[1] { minimumSkillLevel.ToString() }));
+            builder.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoKitsRequired", new string[1] { repairKitsRequired.ToString() }));
 
             return info;
+        }
+        #endregion
+
+        #region API
+        /// <summary>
+        /// Performs maintenance on the part.
+        /// </summary>
+        [KSPEvent(guiName = "#LOC_BLUESHIFT_repairPart", guiActiveUnfocused = true, unfocusedRange = 5)]
+        public void RepairPart()
+        {
+            if (BlueshiftScenario.shared.CanRepairPart(repairSkill, minimumSkillLevel, repairKitName, repairKitsRequired))
+            {
+                BlueshiftScenario.shared.ConsumeRepairKits(FlightGlobals.ActiveVessel, repairKitName, repairKitsRequired);
+                needsMaintenance = false;
+                currentMTBF = mtbf * 3600;
+                string message = Localizer.Format("#LOC_BLUESHIFT_partRepaired", new string[1] { part.partInfo.title });
+                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_CENTER);
+                Events["RepairPart"].active = false;
+            }
+        }
+
+        /// <summary>
+        /// Debug event to break the part.
+        /// </summary>
+        [KSPEvent(guiName = "(Debug) break part", guiActive = true)]
+        public void DebugBreakPart()
+        {
+            needsMaintenance = false;
+            currentMTBF = 1f;
         }
         #endregion
 
@@ -148,6 +230,12 @@ namespace Blueshift
             // Setup GUI
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
+            Events["DebugBreakPart"].active = debugMode;
+            Events["DebugBreakPart"].guiName = "Break " + ClassName;
+            Events["RepairPart"].active = needsMaintenance;
+            Events["RepairPart"].guiName = Localizer.Format("#LOC_BLUESHIFT_repairPart", new string[1] { moduleTitle });
+            if (needsMaintenance)
+                status = Localizer.Format("#LOC_BLUESHIFT_needsMaintenance");
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();
@@ -225,6 +313,29 @@ namespace Blueshift
             //No abundance summary? Then we're done.
             if (resourceRatios.Count == 0)
                 return;
+
+            // Check maintenance
+            if (BlueshiftScenario.maintenanceEnabled)
+            {
+                if (needsMaintenance)
+                {
+                    return;
+                }
+                else
+                {
+                    currentMTBF -= TimeWarp.fixedDeltaTime;
+
+                    if (currentMTBF <= 0)
+                    {
+                        status = Localizer.Format("#LOC_BLUESHIFT_needsMaintenance");
+                        Events["RepairPart"].active = true;
+                        needsMaintenance = true;
+                        string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
+                        ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
+                        return;
+                    }
+                }
+            }
 
             //Set dump excess flag
             ResourceRatio ratio;

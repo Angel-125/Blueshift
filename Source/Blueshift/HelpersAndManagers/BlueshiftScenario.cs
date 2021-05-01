@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using KSP.Localization;
 
 namespace Blueshift
 {
@@ -28,6 +29,11 @@ namespace Blueshift
         /// Megameter unit of measurement. Abbreviated "Mm."
         /// </summary>
         public double kMegaMeter = 1000000;
+
+        /// <summary>
+        /// How long to display a screen message.
+        /// </summary>
+        public static float messageDuration = 3f;
 
         private static string kBlueshiftSettings = "BLUESHIFT_SETTINGS";
         private static string kInterstellarWarpSpeedMultiplier = "interstellarWarpSpeedMultiplier";
@@ -89,6 +95,11 @@ namespace Blueshift
         /// </summary>
         public static bool jumpgateStartupIsDestructive = false;
 
+        /// <summary>
+        /// Flag to indicate if parts require maintenance.
+        /// </summary>
+        public static bool maintenanceEnabled = false;
+
         private double soiMultiplier = 1.1;
         private double soiNoPlanetsMultiplier = 100;
         private List<WBISpaceAnomaly> spaceAnomalies;
@@ -105,14 +116,16 @@ namespace Blueshift
         private Dictionary<string, string> lastPlanetOverrides;
         private Dictionary<CelestialBody, double> solarSOIs;
         Dictionary<string, List<string>> jumpgateNetwork;
+        private bool firstTimeStart = true;
         #endregion
 
         #region Overrides
         public void FixedUpdate()
         {
             double currentTime = Planetarium.GetUniversalTime();
-            if (anomalyTimer == 0)
+            if (anomalyTimer == 0 || firstTimeStart)
             {
+                firstTimeStart = false;
                 anomalyTimer = currentTime + anomalyCheckSeconds;
                 StartCoroutine(handleAnomalyChecks());
             }
@@ -156,6 +169,7 @@ namespace Blueshift
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
+            maintenanceEnabled = BlueshiftSettings.MaintenanceEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
 
             if (!spawnSpaceAnomalies)
@@ -269,6 +283,101 @@ namespace Blueshift
         #endregion
 
         #region API
+
+        /// <summary>
+        /// Determines whether or not the part can be repaired.
+        /// </summary>
+        /// <param name="maintenanceSkill">A string containing the required repair skill.</param>
+        /// <param name="minimumSkillLevel">An int containing the minimum skill level required.</param>
+        /// <param name="repairKitName">A string containing the name of the repair kit part.</param>
+        /// <param name="repairKitsRequired">An int containing the number of repair kits required.</param>
+        /// <returns></returns>
+        public bool CanRepairPart(string maintenanceSkill = "RepairSkill", int minimumSkillLevel = 1, string repairKitName = "evaRepairKit", int repairKitsRequired = 1)
+        {
+            // Make sure that we have sufficient skill
+            if (!hasSufficientSkill(FlightGlobals.ActiveVessel, maintenanceSkill, minimumSkillLevel))
+            {
+                string message = Localizer.Format("#LOC_BLUESHIFT_insufficientSkill", new string[1] { minimumSkillLevel.ToString() } );
+                ScreenMessages.PostScreenMessage(message, messageDuration, ScreenMessageStyle.UPPER_CENTER);
+                return false;
+            }
+
+            // Make sure that we have sufficient repair kits.
+            if (!hasEnoughRepairKits(FlightGlobals.ActiveVessel, repairKitsRequired, repairKitName))
+            {
+                string message = Localizer.Format("#LOC_BLUESHIFT_insufficientKits", new string[1] { repairKitsRequired.ToString() });
+                ScreenMessages.PostScreenMessage(message, messageDuration, ScreenMessageStyle.UPPER_CENTER);
+                return false;
+            }
+
+            // A-OK
+            return true;
+        }
+
+        /// <summary>
+        /// Returns the highest ranking astronaut in the vessel that has the required skill.
+        /// </summary>
+        /// <param name="vessel">The vessel to check for the highest ranking kerbal.</param>
+        /// <param name="skillName">The name of the skill to look for. Examples include RepairSkill and ScienceSkill.</param>
+        /// <param name="astronaut">The astronaut that has the highest ranking skill.</param>
+        /// <returns>The skill rank rating of the highest ranking astronaut (if any)</returns>
+        public int GetHighestRank(Vessel vessel, string skillName, out ProtoCrewMember astronaut)
+        {
+            astronaut = null;
+            if (string.IsNullOrEmpty(skillName))
+                return 0;
+            try
+            {
+                if (vessel.GetCrewCount() == 0)
+                    return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+
+            string[] skillsToCheck = skillName.Split(new char[] { ';' });
+            string checkSkill;
+            int highestRank = 0;
+            int crewRank = 0;
+            bool hasABadass = false;
+            bool hasAVeteran = false;
+            bool hasAHero = false;
+            for (int skillIndex = 0; skillIndex < skillsToCheck.Length; skillIndex++)
+            {
+                checkSkill = skillsToCheck[skillIndex];
+
+                //Find the highest racking kerbal with the desired skill (if any)
+                ProtoCrewMember[] vesselCrew = vessel.GetVesselCrew().ToArray();
+                for (int index = 0; index < vesselCrew.Length; index++)
+                {
+                    if (vesselCrew[index].HasEffect(checkSkill))
+                    {
+                        if (vesselCrew[index].isBadass)
+                            hasABadass = true;
+                        if (vesselCrew[index].veteran)
+                            hasAVeteran = true;
+                        if (vesselCrew[index].isHero)
+                            hasAHero = true;
+                        crewRank = vesselCrew[index].experienceTrait.CrewMemberExperienceLevel();
+                        if (crewRank > highestRank)
+                        {
+                            highestRank = crewRank;
+                            astronaut = vesselCrew[index];
+                        }
+                    }
+                }
+            }
+
+            if (hasABadass)
+                highestRank += 1;
+            if (hasAVeteran)
+                highestRank += 1;
+            if (hasAHero)
+                highestRank += 1;
+
+            return highestRank;
+        }
 
         #region Jumpgates
         /// <summary>
@@ -676,6 +785,80 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        /// <summary>
+        /// Consumes repair kits.
+        /// </summary>
+        /// <param name="vessel">The Vessel to consume the kits from</param>
+        /// <param name="repairKitName">A string containing the name of the repair part.</param>
+        /// <param name="amount">An int containing the number of kits to consume.</param>
+        public void ConsumeRepairKits(Vessel vessel, string repairKitName = "evaRepairKit", int amount = 1)
+        {
+            List<ModuleInventoryPart> inventories = vessel.FindPartModulesImplementing<ModuleInventoryPart>();
+            ModuleInventoryPart inventory;
+            int count = inventories.Count;
+            int repairPartsFound = 0;
+            int repairPartsRemaining = amount;
+
+            for (int index = 0; index < count; index++)
+            {
+                inventory = inventories[index];
+
+                if (inventory.ContainsPart(repairKitName))
+                {
+                    repairPartsFound += inventory.TotalAmountOfPartStored(repairKitName);
+
+                    if (repairPartsFound >= repairPartsRemaining)
+                    {
+                        inventory.RemoveNPartsFromInventory(repairKitName, repairPartsRemaining, true);
+                        break;
+                    }
+                    else
+                    {
+                        repairPartsRemaining -= repairPartsFound;
+                        inventory.RemoveNPartsFromInventory(repairKitName, repairPartsFound, true);
+                    }
+                }
+            }
+        }
+
+        private bool hasEnoughRepairKits(Vessel vessel, int repairKitsRequired, string repairKitName = "evaRepairKit")
+        {
+            List<ModuleInventoryPart> inventories = vessel.FindPartModulesImplementing<ModuleInventoryPart>();
+            int count = inventories.Count;
+            int repairPartsFound = 0;
+
+            for (int index = 0; index < count; index++)
+            {
+                if (inventories[index].ContainsPart(repairKitName))
+                {
+                    repairPartsFound += inventories[index].TotalAmountOfPartStored(repairKitName);
+                    if (repairPartsFound >= repairKitsRequired)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool hasSufficientSkill(Vessel vessel, string maintenanceSkill, int minimumSkillLevel)
+        {
+            ProtoCrewMember astronaut;
+            int highestSkill = 0;
+
+            // Make sure that we have sufficient skill.
+            if (vessel.FindPartModuleImplementing<WBIRepairBot>())
+                return true;
+            else if (vessel.isEVA)
+                highestSkill = GetHighestRank(vessel, maintenanceSkill, out astronaut);
+            else
+                highestSkill = GetHighestRank(vessel, maintenanceSkill, out astronaut);
+
+            if (highestSkill < minimumSkillLevel)
+                return false;
+
+            return true;
+        }
+
         private void removeJumpgates()
         {
             int count = spaceAnomalies.Count;
@@ -853,6 +1036,7 @@ namespace Blueshift
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
             jumpgateStartupIsDestructive = BlueshiftSettings.JumpgateStartupIsDestructive;
+            maintenanceEnabled = BlueshiftSettings.MaintenanceEnabled;
 
             if (!spawnSpaceAnomalies)
             {

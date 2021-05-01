@@ -78,6 +78,12 @@ namespace Blueshift
         public bool isActivated = true;
 
         /// <summary>
+        /// Display string for the warp coil status.
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpCoilStatus")]
+        public string statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
+
+        /// <summary>
         /// A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
         /// </summary>
         [KSPField(isPersistant = true, guiName = "Animation Throttle")]
@@ -92,6 +98,49 @@ namespace Blueshift
         [KSPField]
         public float displacementImpulse = 10;
 
+        #region Maintenance
+        /// <summary>
+        /// Flag to indicate that the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public bool needsMaintenance = false;
+
+        /// <summary>
+        /// In hours, how long until the part needs maintenance in order to function. Default is 600.
+        /// </summary>
+        [KSPField]
+        public double mtbf = 600;
+
+        /// <summary>
+        /// In seconds, the current time remaining until the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public double currentMTBF = 600 * 3600;
+
+        /// <summary>
+        /// The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
+        /// </summary>
+        [KSPField]
+        public string repairSkill = "RepairSkill";
+
+        /// <summary>
+        /// The minimum skill level required to perform repairs. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int minimumSkillLevel = 1;
+
+        /// <summary>
+        /// The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
+        /// </summary>
+        [KSPField]
+        public string repairKitName = "evaRepairKit";
+
+        /// <summary>
+        /// The number of repair kits required to repair the part. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int repairKitsRequired = 1;
+        #endregion
         #endregion
 
         #region Housekeeping
@@ -106,7 +155,7 @@ namespace Blueshift
         #region IModuleInfo
         public string GetModuleTitle()
         {
-            return "Warp Coil";
+            return Localizer.Format("#LOC_BLUESHIFT_warpCoilTitle");
         }
 
         public Callback<Rect> GetDrawModulePanelCallback()
@@ -116,7 +165,9 @@ namespace Blueshift
 
         public string GetPrimaryField()
         {
-            return string.Format("<b>Warp Capacity:</b> {0:n1}", warpCapacity);
+            StringBuilder info = new StringBuilder();
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpCapacity", new string[1] { string.Format("{0:n1}", warpCapacity) }));
+            return info.ToString();
         }
 
         public override string GetModuleDisplayName()
@@ -128,12 +179,90 @@ namespace Blueshift
         {
             StringBuilder info = new StringBuilder();
 
-            info.AppendLine("<color=white>Generates warp capacity for faster than light travel.</color>");
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpCoilInfoDesc"));
             info.AppendLine(" ");
-            info.AppendLine(string.Format("<color=white><b>Warp Capacity:</b> {0:n1}</color>", warpCapacity));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoMaintenance"));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpCapacity", new string[1] { string.Format("{0:n1}", warpCapacity) }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairSkill", new string[1] { repairSkill }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairRating", new string[1] { minimumSkillLevel.ToString() }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoKitsRequired", new string[1] { repairKitsRequired.ToString() }));
             info.AppendLine(resHandler.PrintModuleResources());
 
             return info.ToString();
+        }
+        #endregion
+
+        #region Events
+        /// <summary>
+        /// Performs maintenance on the part.
+        /// </summary>
+        [KSPEvent(guiName = "#LOC_BLUESHIFT_repairPart", guiActiveUnfocused = true, unfocusedRange = 5)]
+        public void RepairPart()
+        {
+            if (BlueshiftScenario.shared.CanRepairPart(repairSkill, minimumSkillLevel, repairKitName, repairKitsRequired))
+            {
+                BlueshiftScenario.shared.ConsumeRepairKits(FlightGlobals.ActiveVessel, repairKitName, repairKitsRequired);
+                needsMaintenance = false;
+                currentMTBF = mtbf * 3600;
+                string message = Localizer.Format("#LOC_BLUESHIFT_partRepaired", new string[1] { part.partInfo.title });
+                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_CENTER);
+                statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
+                Events["RepairPart"].active = false;
+            }
+        }
+
+        /// <summary>
+        /// Debug event to break the part.
+        /// </summary>
+        [KSPEvent(guiName = "(Debug) break part", guiActive = true)]
+        public void DebugBreakPart()
+        {
+            needsMaintenance = false;
+            currentMTBF = 1f;
+        }
+
+        #endregion
+
+        #region API
+        /// <summary>
+        /// Determines whether or not the warp coil has enough resources to operate.
+        /// </summary>
+        /// <param name="rateMultiplier">The resource consumption rate multiplier</param>
+        /// <returns>True if the vessel has enough resources to power the warp coil, false if not.</returns>
+        public bool HasEnoughResources(double rateMultiplier)
+        {
+            int count = resHandler.inputResources.Count;
+            double amount, maxAmount = 0;
+
+            for (int index = 0; index < count; index++)
+            {
+                vessel.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
+
+                if (amount < resHandler.inputResources[index].rate * rateMultiplier * TimeWarp.fixedDeltaTime)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Updates the mean time between failures
+        /// </summary>
+        /// <param name="rateMultiplier">The rate multiplier to reduce the current MTBF by.</param>
+        public void UpdateMTBF(double rateMultiplier)
+        {
+            if (!BlueshiftScenario.maintenanceEnabled)
+                return;
+
+            currentMTBF -= (rateMultiplier * TimeWarp.fixedDeltaTime);
+            if (currentMTBF <= 0)
+            {
+                needsMaintenance = true;
+                statusDisplay = Localizer.Format("#LOC_BLUESHIFT_needsMaintenance");
+                Events["RepairPart"].active = true;
+                string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
+                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
+            }
         }
         #endregion
 
@@ -164,6 +293,11 @@ namespace Blueshift
             // Setup GUI
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
+            statusDisplay = needsMaintenance ? Localizer.Format("#LOC_BLUESHIFT_needsMaintenance") : Localizer.Format("#LOC_BLUESHIFT_statusOK");
+            Events["DebugBreakPart"].active = debugMode;
+            Events["DebugBreakPart"].guiName = "Break " + ClassName;
+            Events["RepairPart"].active = needsMaintenance;
+            Events["RepairPart"].guiName = Localizer.Format("#LOC_BLUESHIFT_repairPart", new string[1] { Localizer.Format("#LOC_BLUESHIFT_warpCoilTitle") });
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();

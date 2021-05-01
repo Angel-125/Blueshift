@@ -27,6 +27,10 @@ namespace Blueshift
     public class WBISpaceAnomaly
     {
         #region Constants
+        // Used when trying to create a fly-by orbit around a celestial body that has infinite sphere of influence. I'm looking at you, Sun!
+        const float kMinFlyByEccentricity = 1.01f;
+        const float kMaxFlyByEccentricity = 2.0f;
+
         public const string kAnomalyPrefix = "UNK-";
         public const string kNodeName = "SPACE_ANOMALY";
         public const string kName = "name";
@@ -50,6 +54,7 @@ namespace Blueshift
         public const string kAnomalyType = "anomalyType";
         public const string kExpirationDate = "expirationDate";
         public const string kRendezvousDistance = "rendezvousDistance";
+        public const string kVesselName = "vesselName";
         #endregion
 
         #region Fields
@@ -62,6 +67,12 @@ namespace Blueshift
         /// Name of the part to spawn
         /// </summary>
         public string partName = string.Empty;
+
+        /// <summary>
+        /// Anomalies are typically named "UNK-" and a sequence of letters and numbers, but you can override the name of the vessel if desired.
+        /// This field should be used with unique anomalies (maxInstances = 1).
+        /// </summary>
+        public string vesselName = string.Empty;
 
         /// <summary>
         /// Type of anomaly. Default is generic.
@@ -147,7 +158,7 @@ namespace Blueshift
         public string vesselId = string.Empty;
 
         /// <summary>
-        /// Flag to indicate whether or not the gate should automatically be added to the network's known gates.
+        /// Flag to indicate whether or not the gate should automatically be added to the network's known gates and/or is automatically tracked by the Tracking Station.
         /// If set to false (the default), then players must visit the gate in order for it to be added to the network.
         /// Applies to anomalyType = jumpGate.
         /// </summary>
@@ -197,6 +208,7 @@ namespace Blueshift
         {
             name = copyFrom.name;
             partName = copyFrom.partName;
+            vesselName = copyFrom.vesselName;
             anomalyType = copyFrom.anomalyType;
             sizeClass = copyFrom.sizeClass;
             spawnMode = copyFrom.spawnMode;
@@ -233,6 +245,9 @@ namespace Blueshift
 
             if (node.HasValue(kPartName))
                 anomaly.partName = node.GetValue(kPartName);
+
+            if (node.HasValue(kVesselName))
+                anomaly.vesselName = node.GetValue(kVesselName);
 
             if (node.HasValue(kAnomalyType))
                 anomaly.anomalyType = (WBIAnomalyTypes)Enum.Parse(typeof(WBIAnomalyTypes), node.GetValue(kAnomalyType));
@@ -303,6 +318,7 @@ namespace Blueshift
 
             node.AddValue(kName, name);
             node.AddValue(kPartName, partName);
+            node.AddValue(kVesselName, vesselName);
             node.AddValue(kAnomalyType, anomalyType.ToString());
             node.AddValue(kSizeClass, sizeClass);
             node.AddValue(kSpawnMode, spawnMode.ToString());
@@ -415,11 +431,14 @@ namespace Blueshift
         private ConfigNode createAnomalyVessel(WBISpaceAnomaly anomaly)
         {
             // Generate vessel name
-            string vesselName = DiscoverableObjectsUtil.GenerateAsteroidName();
-            string prefix = Localizer.Format("#autoLOC_6001923");
-            prefix = prefix.Replace(" <<1>>", "");
-            vesselName = vesselName.Replace(prefix, kAnomalyPrefix);
-            vesselName = vesselName.Replace("- ", "-");
+            if (string.IsNullOrEmpty(vesselName))
+            {
+                vesselName = DiscoverableObjectsUtil.GenerateAsteroidName();
+                string prefix = Localizer.Format("#autoLOC_6001923");
+                prefix = prefix.Replace(" <<1>>", "");
+                vesselName = vesselName.Replace(prefix, kAnomalyPrefix);
+                vesselName = vesselName.Replace("- ", "-");
+            }
 
             // Generate orbit
             Orbit orbit = generateOrbit(anomaly);
@@ -441,7 +460,8 @@ namespace Blueshift
             Enum.TryParse(anomaly.sizeClass, out objectClass);
 
             // Create discovery and additional nodes.
-            ConfigNode discoveryNode = ProtoVessel.CreateDiscoveryNode(DiscoveryLevels.Presence, objectClass, minLifetime, maxLifetime);
+            DiscoveryLevels discoveryLevels = !isKnown ? DiscoveryLevels.Presence : DiscoveryLevels.StateVectors;
+            ConfigNode discoveryNode = ProtoVessel.CreateDiscoveryNode(discoveryLevels, objectClass, minLifetime, maxLifetime);
             ConfigNode[] additionalNodes = new ConfigNode[] { new ConfigNode("ACTIONGROUPS"), discoveryNode };
 
             // Create vessel node
@@ -449,7 +469,7 @@ namespace Blueshift
             Debug.Log("[WBISpaceAnomaly] - vesselNode: " + vesselNode.ToString());
 
             // Add vessel node to the game.
-            HighLogic.CurrentGame.AddVessel(vesselNode);
+            ProtoVessel protoVessel = HighLogic.CurrentGame.AddVessel(vesselNode);
 
             // Get vessel ID
             if (vesselNode.HasValue("pid"))
@@ -512,12 +532,12 @@ namespace Blueshift
                         break;
 
                     case WBIAnomalyOrbitTypes.flyBy:
-                        orbit = Orbit.CreateRandomOrbitFlyBy(body, UnityEngine.Random.Range(0, anomaly.maxDaysToClosestApproach));
+                        orbit = createRandomFlybyOrbit(body, UnityEngine.Random.Range(anomaly.maxDaysToClosestApproach/2, anomaly.maxDaysToClosestApproach));
                         break;
 
                     case WBIAnomalyOrbitTypes.random:
                         if (UnityEngine.Random.Range(1, 100) >= anomaly.flyByOrbitChance)
-                            orbit = Orbit.CreateRandomOrbitFlyBy(body, UnityEngine.Random.Range(0, anomaly.maxDaysToClosestApproach));
+                            orbit = createRandomFlybyOrbit(body, UnityEngine.Random.Range(anomaly.maxDaysToClosestApproach / 2, anomaly.maxDaysToClosestApproach));
                         else
                             orbit = Orbit.CreateRandomOrbitAround(body);
                         break;
@@ -525,6 +545,22 @@ namespace Blueshift
             }
 
             return orbit;
+        }
+
+        private Orbit createRandomFlybyOrbit(CelestialBody body, double daysToClosestApproach)
+        {
+            // The Sun has an infinite sphere of influence and a null orbit field, so we can't use Orbit.CreateRandomOrbitFlyBy.
+            // Instead, we have to create an orbit around the Sun and the adjust its eccentricity.
+            if (double.IsInfinity(body.sphereOfInfluence) || body.orbit == null)
+            {
+                Orbit orbit = Orbit.CreateRandomOrbitAround(body);
+                orbit.eccentricity = UnityEngine.Random.Range(kMinFlyByEccentricity, kMaxFlyByEccentricity);
+                return orbit;
+            }
+            else
+            {
+                return Orbit.CreateRandomOrbitFlyBy(body, daysToClosestApproach);
+            }
         }
 
         private bool canCreateNewInstance(List<WBISpaceAnomaly> existingAnomalies)

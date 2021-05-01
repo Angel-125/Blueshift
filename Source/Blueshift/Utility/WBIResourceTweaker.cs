@@ -76,6 +76,11 @@ namespace Blueshift
                         if (isEnabled)
                             enableResourceTweak();
                     }
+                    else
+                    {
+                        Events["enableResourceTweak"].active = false;
+                        Events["disableResourceTweak"].active = false;
+                    }
                 }
             }
         }

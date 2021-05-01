@@ -5,23 +5,26 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using KSP.IO;
+using KSP.Localization;
 
 namespace Blueshift
 {
     public class BlueshiftSettings : GameParameters.CustomParameterNode
     {
-        [GameParameters.CustomParameterUI("Enable circularization helper", toolTip = "Adds a button to the warp engine PAW to Auto-circularize your orbit- no gravity braking needed.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsCircularizeDesc", toolTip = "#LOC_BLUESHIFT_settingsCircularizeTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool autoCircularize = false;
 
-        [GameParameters.CustomParameterUI("Allow Space Anomalies", toolTip = "Allows Space Anomalies to spawn in game.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsSpaceAnomaliesDesc", toolTip = "#LOC_BLUESHIFT_settingsSpaceAnomaliesTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableSpaceAnomalies = true;
 
-        [GameParameters.CustomParameterUI("Allow Jumpgates", toolTip = "Allows Jumpgate Anomalies to spawn in game. Player-built gates are unaffected.", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsJumpgatesDesc", toolTip = "#LOC_BLUESHIFT_settingsJumpgatesTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableJumpGates = false;
 
-        [GameParameters.CustomParameterUI("Jumpgates: desctructive startup", toolTip = "Stay clear of a jumpgate starting up!", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsDestructiveJumpgatesDesc", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableDestructiveGateStartup = false;
 
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsMaintenanceDesc", toolTip = "#LOC_BLUESHIFT_settingsMaintenanceTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool maintenanceEnabled = false;
         #region CustomParameterNode
 
         public override string DisplaySection
@@ -88,6 +91,15 @@ namespace Blueshift
             return true;
         }
         #endregion
+
+        public static bool MaintenanceEnabled
+        {
+            get
+            {
+                BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
+                return settings.maintenanceEnabled;
+            }
+        }
 
         public static bool JumpgateStartupIsDestructive
         {

@@ -99,6 +99,8 @@
     <Compile Include="JumpTech\WBIJumpGate.cs" />
     <Compile Include="Utility\WBIDockingAlignmentLock.cs" />
     <Compile Include="JumpTech\WBIGateAssemblyChecker.cs" />
+    <Compile Include="SpaceAnomaly\WBICustomAsteroid.cs" />
+    <Compile Include="Utility\WBIRepairBot.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

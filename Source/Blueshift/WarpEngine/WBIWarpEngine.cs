@@ -85,26 +85,16 @@ namespace Blueshift
     /// `
     /// </summary>
     #endregion
-    [KSPModule("Warp Engine")]
+    [KSPModule("#LOC_BLUESHIFT_warpEngineTitle")]
     public class WBIWarpEngine : ModuleEnginesFX
     {
         #region constants
         float kLightSpeed = 299792458;
         // How close do you have to be to a targeted vessel before you can rendezvous with it during auto-circularization.
-        float kMinRendezvousDistance = 10000;
+        float kMinRendezvousDistance = 100000;
         // How close to the targed vessel should you end up at when you rendezvous with it during auto-circularization.
         float kRendezvousDistance = 100;
         float kMessageDuration = 3f;
-        string kNeedsSpaceflight = "Needs to be in space";
-        string kNeedsAltitude = "Needs higher altitude";
-        string kNeedsWarpCapacity = "Needs more warp capacity";
-        string kAddWarpCapacity = "Add warp capacity: {0:n2}/{1:n2}";
-        string kCanGoFTL = "Can exceed light speed";
-        string kFlameOutGeneric = "Something went wrong";
-        string kWarpReady = "Ready";
-        string kTerrainWarning = "Warp halted to avoid collision with celestial body. Reduce speed to approach minimum warp altitude.";
-        string kOrbitCircularized = "Orbit circularized";
-        string kRendezvousComplete = "Rendezvous completed";
         string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
         #endregion
 
@@ -125,45 +115,52 @@ namespace Blueshift
         public double minPlanetaryRadius = 3.0;
 
         /// <summary>
+        /// Flag to indicate whether or not to supercharge warp coils to gain more Warp Capacity. Supercharging the coils increases their resource consumption and reduces MTBF.
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_superchargeCoils")]
+        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_enabled", disabledText = "#LOC_BLUESHIFT_disabled")]
+        public bool superchargeWarpCoils = true;
+
+        /// <summary>
         /// Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "Minimum Warp altitude", guiUnits = "m", guiFormat = "n1")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_minWarpAltitude", guiUnits = "m", guiFormat = "n1")]
         public double minWarpAltitudeDisplay = 500000.0f;
 
         /// <summary>
         /// The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "Warp Speed", guiFormat = "n3", guiUnits = "C")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpSpeed", guiFormat = "n3", guiUnits = "C")]
         public float warpSpeed = 0;
 
         /// <summary>
         /// (Debug visible) Maximum possible warp speed.
         /// </summary>
-        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Max Warp Speed", guiFormat = "n3", guiUnits = "C")]
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_maxWarpSpeed", guiFormat = "n3", guiUnits = "C")]
         protected float maxWarpSpeed = 0;
 
         /// <summary>
         /// Pre-flight status check.
         /// </summary>
-        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "FTL Check")]
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_preflightCheck")]
         public string preflightCheck = string.Empty;
 
         /// <summary>
         /// Where we are in space.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "Spatial Location")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_spatialLocation")]
         public WBISpatialLocations spatialLocation = WBISpatialLocations.Unknown;
 
         /// <summary>
         /// The vessel's course- which is really just the selected target.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "Course")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_vesselCourse")]
         public string vesselCourse = string.Empty;
 
         /// <summary>
         /// Distance to the vessel's target
         /// </summary>
-        [KSPField(guiActive = true, guiName = "Distance", guiFormat = "n3")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_targetDistance", guiFormat = "n3")]
         public double targetDistance = 0f;
 
         /// <summary>
@@ -249,6 +246,71 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string photonicBoomEffectName = string.Empty;
+
+        #region Maintenance
+        /// <summary>
+        /// Flag to indicate that the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public bool needsMaintenance = false;
+
+        /// <summary>
+        /// In hours, how long until the part needs maintenance in order to function. Default is 600.
+        /// </summary>
+        [KSPField]
+        public double mtbf = 600;
+
+        /// <summary>
+        /// In seconds, the current time remaining until the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public double currentMTBF = 600 * 3600;
+
+        /// <summary>
+        /// The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
+        /// </summary>
+        [KSPField]
+        public string repairSkill = "RepairSkill";
+
+        /// <summary>
+        /// The minimum skill level required to perform repairs. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int minimumSkillLevel = 1;
+
+        /// <summary>
+        /// The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
+        /// </summary>
+        [KSPField]
+        public string repairKitName = "evaRepairKit";
+
+        /// <summary>
+        /// The number of repair kits required to repair the part. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int repairKitsRequired = 1;
+        #endregion
+
+        #region SkillBoost
+        /// <summary>
+        /// The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
+        /// </summary>
+        [KSPField]
+        public string warpEngineerSkill = "ConverterSkill";
+
+        /// <summary>
+        /// The skill rank required to improve warp speed.
+        /// </summary>
+        [KSPField]
+        public int warpSpeedBoostRank = 5;
+
+        /// <summary>
+        /// Per skill rank, the multiplier to multiply warp speed by.
+        /// </summary>
+        [KSPField]
+        public float warpSpeedSkillMultiplier = 0.01f;
+        #endregion
+
         #endregion
 
         #region Housekeeping
@@ -375,13 +437,43 @@ namespace Blueshift
         private WBISpatialLocations prevSpatialLocation = WBISpatialLocations.Unknown;
         private double speedStartTime = 0f;
         private float prevInterstellarAcceleration = 0;
+
+        /// Multiplier used for consumption of resources and MTBF/heat.
+        double consumptionRateMultiplier = 1.0;
         #endregion
 
         #region Actions And Events
         /// <summary>
+        /// Performs maintenance on the part.
+        /// </summary>
+        [KSPEvent(guiName = "#LOC_BLUESHIFT_repairPart", guiActiveUnfocused = true, unfocusedRange = 5)]
+        public void RepairPart()
+        {
+            if (BlueshiftScenario.shared.CanRepairPart(repairSkill, minimumSkillLevel, repairKitName, repairKitsRequired))
+            {
+                BlueshiftScenario.shared.ConsumeRepairKits(FlightGlobals.ActiveVessel, repairKitName, repairKitsRequired);
+                needsMaintenance = false;
+                currentMTBF = mtbf * 3600;
+                string message = Localizer.Format("#LOC_BLUESHIFT_partRepaired", new string[1] { part.partInfo.title });
+                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_CENTER);
+                Events["RepairPart"].active = false;
+            }
+        }
+
+        /// <summary>
+        /// Debug event to break the part.
+        /// </summary>
+        [KSPEvent(guiName = "(Debug) break part", guiActive = true)]
+        public void DebugBreakPart()
+        {
+            needsMaintenance = false;
+            currentMTBF = 1f;
+        }
+
+        /// <summary>
         /// Circularizes the ship's orbit
         /// </summary>
-        [KSPEvent(guiActive = true, guiName = "Auto-circularize orbit")]
+        [KSPEvent(guiActive = true, guiName = "#LOC_BLUESHIFT_circularizeOrbit")]
         public void CircularizeOrbit()
         {
             if ( FlightInputHandler.state.mainThrottle <= 0)
@@ -420,7 +512,7 @@ namespace Blueshift
                 {
                     Vector3 position = UnityEngine.Random.onUnitSphere * kRendezvousDistance;
                     FlightGlobals.fetch.SetShipOrbitRendezvous(vessel.targetObject.GetVessel(), position, Vector3d.zero);
-                    ScreenMessages.PostScreenMessage(kRendezvousComplete, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_rendezvousComplete"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                     circularizationState = WBICircularizationStates.hasBeenCircularized;
                     return;
                 }
@@ -440,7 +532,7 @@ namespace Blueshift
                 circlularOrbit.UpdateFromFixedVectors(orbit.pos, state.vel, this.part.vessel.mainBody.referenceBody, currentTime + 0.02);
                 FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, circlularOrbit.inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
 
-                ScreenMessages.PostScreenMessage(kOrbitCircularized, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_orbitCircularized"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                 circularizationState = WBICircularizationStates.hasBeenCircularized;
             }
         }
@@ -449,7 +541,7 @@ namespace Blueshift
         /// Action menu item to circularize the ship's orbit.
         /// </summary>
         /// <param name="param"></param>
-        [KSPAction("Auto-circularize orbit")]
+        [KSPAction("#LOC_BLUESHIFT_circularizeOrbit")]
         public void CircularizeOrbitAction(KSPActionParam param)
         {
             CircularizeOrbit();
@@ -472,12 +564,42 @@ namespace Blueshift
             // Update spatial location.
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
 
+            // Calcuate consumption multiplier
+            consumptionRateMultiplier = spatialLocation != WBISpatialLocations.Interstellar ? 1.0 : interstellarPowerMultiplier;
+
             // Vessel course - just the selected target.
             updateVesselCourse();
 
-            // Make sure the engine is running and we should apply warp.
+            // Make sure the engine is running
             if (!EngineIgnited)
                 return;
+
+            // Check maintenance
+            if (BlueshiftScenario.maintenanceEnabled)
+            {
+                if (needsMaintenance)
+                {
+                    return;
+                }
+                else
+                {
+                    currentMTBF -= TimeWarp.fixedDeltaTime;
+
+                    if (currentMTBF <= 0)
+                    {
+                        Flameout(Localizer.Format("#LOC_BLUESHIFT_needsMaintenance"));
+                        status = Localizer.Format("#LOC_BLUESHIFT_statusBroken");
+                        Events["RepairPart"].active = true;
+                        needsMaintenance = true;
+                        resetWarpParameters();
+                        string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
+                        ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
+                        return;
+                    }
+                }
+            }
+
+            // Make sure that we should apply warp.
             if (!shouldApplyWarp())
                 return;
 
@@ -535,7 +657,13 @@ namespace Blueshift
         {
             StringBuilder info = new StringBuilder();
             info.Append(base.GetInfo());
-            info.AppendLine(string.Format("<b>Displacement Impulse:</b> {0:n1} t", displacementImpulse));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpEngineDesc"));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_displacementImpulse", new string[1] { string.Format("{0:n2}", displacementImpulse) }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoMaintenance"));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoMTB", new string[1] { string.Format("{0:n1}", mtbf) }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairSkill", new string[1] { repairSkill }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairRating", new string[1] { minimumSkillLevel.ToString() }));
+            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoKitsRequired", new string[1] { repairKitsRequired.ToString() }));
             return info.ToString();
 
         }
@@ -559,6 +687,12 @@ namespace Blueshift
             Fields["realIsp"].guiActive = false;
             Fields["finalThrust"].guiActive = false;
             Fields["fuelFlowGui"].guiActive = false;
+            Events["DebugBreakPart"].active = debugEnabled;
+            Events["DebugBreakPart"].guiName = "Break " + ClassName;
+            Events["RepairPart"].active = needsMaintenance;
+            Events["RepairPart"].guiName = Localizer.Format("#LOC_BLUESHIFT_repairPart", new string[1] { Localizer.Format("#LOC_BLUESHIFT_warpEngineTitle") });
+            if (needsMaintenance)
+                Flameout(Localizer.Format("#LOC_BLUESHIFT_needsMaintenance"));
 
             // Debug fields
             Fields["isInSpace"].guiActive = debugEnabled;
@@ -701,17 +835,19 @@ namespace Blueshift
         public bool IsFlamedOut()
         {
             // Must be in space, at or above orbital altitude, have a running engine, and not be flamed out.
-            if (!isInSpace || !meetsWarpAltitude || !hasWarpCapacity && EngineIgnited && isOperational && !warpFlameout)
+            if (needsMaintenance || !isInSpace || !meetsWarpAltitude || !hasWarpCapacity && EngineIgnited && isOperational && !warpFlameout)
             {
                 warpFlameout = true;
+                if (needsMaintenance)
+                    Flameout(Localizer.Format("#LOC_BLUESHIFT_needsMaintenance"));
                 if (!isInSpace)
-                    Flameout(kNeedsSpaceflight);
+                    Flameout(Localizer.Format("#LOC_BLUESHIFT_needsSpaceflight"));
                 else if (!meetsWarpAltitude)
-                    Flameout(kNeedsAltitude);
+                    Flameout(Localizer.Format("#LOC_BLUESHIFT_needsAltitude"));
                 else if (!hasWarpCapacity)
-                    Flameout(kNeedsWarpCapacity);
+                    Flameout(Localizer.Format("#LOC_BLUESHIFT_needsWarpCapacity"));
                 else
-                    Flameout(kFlameOutGeneric);
+                    Flameout(Localizer.Format("#LOC_BLUESHIFT_flameoutGeneric"));
                 return true;
             }
             else if (isInSpace && meetsWarpAltitude && hasWarpCapacity && warpFlameout)
@@ -842,11 +978,15 @@ namespace Blueshift
                         break;
                 }
 
-                preflightCheck = string.Format(kAddWarpCapacity, effectiveWarpCapacity, warpCapacity);
+                // If effective warp capacity > calculated warp capaciy, then we actually can go faster than light but we just don't want to.
+                if (effectiveWarpCapacity > warpCapacity)
+                    preflightCheck = Localizer.Format("#LOC_BLUESHIFT_canGoFTL");
+                else
+                    preflightCheck = Localizer.Format("#LOC_BLUESHIFT_addWarpCapacity", new string[2] { string.Format("{0:n2}", effectiveWarpCapacity), string.Format("{0:n2}", warpCapacity) });
             }
             else
             {
-                preflightCheck = kCanGoFTL;
+                preflightCheck = Localizer.Format("#LOC_BLUESHIFT_canGoFTL");
             }
         }
 
@@ -931,11 +1071,11 @@ namespace Blueshift
                 }
 
                 // Update status
-                preflightCheck = string.Format(kAddWarpCapacity, effectiveWarpCapacity, warpCapacity);
+                preflightCheck = Localizer.Format("#LOC_BLUESHIFT_addWarpCapacity", new string[2] { string.Format("{0:n2}", effectiveWarpCapacity), string.Format("{0:n2}", warpCapacity) });
             }
             else
             {
-                preflightCheck = kCanGoFTL;
+                preflightCheck = Localizer.Format("#LOC_BLUESHIFT_canGoFTL");
             }
         }
 
@@ -1028,6 +1168,14 @@ namespace Blueshift
             {
                 warpSpeed = maxWarpSpeed * throttleLevel;
             }
+
+            // Account for miracle workers
+            ProtoCrewMember astronaut;
+            int highestRank = BlueshiftScenario.shared.GetHighestRank(vessel, warpEngineerSkill, out astronaut);
+            if (highestRank >= warpSpeedBoostRank)
+            {
+                warpSpeed *= (1.0f + warpSpeedSkillMultiplier) * highestRank;
+            }
         }
 
         /// <summary>
@@ -1039,15 +1187,35 @@ namespace Blueshift
             WBIWarpCoil warpCoil;
             float coilCapacity;
             float vesselMass = part.vessel.GetTotalMass();
+            int warpCapacityIterations = 1000;
+            int totalPoweredCoils = 0;
 
             totalWarpCapacity = 0;
-            for (int index = 0; index < count; index++)
+            while (warpCapacityIterations > 0)
             {
-                warpCoil = warpCoils[index];
-                if (warpCoil.isActivated && consumeCoilResources(warpCoil))
+                warpCapacityIterations -= 1;
+                totalPoweredCoils = 0;
+
+                // Go through the warp coils at least once and get their supplied warp capacity.
+                for (int index = 0; index < count; index++)
                 {
-                    coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
-                    totalWarpCapacity += coilCapacity;
+                    warpCoil = warpCoils[index];
+                    if (!warpCoil.isActivated || warpCoil.needsMaintenance)
+                        continue;
+
+                    if (warpCoil.HasEnoughResources(consumptionRateMultiplier) && consumeCoilResources(warpCoil))
+                    {
+                        coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
+                        totalWarpCapacity += coilCapacity;
+                        totalPoweredCoils += 1;
+                    }
+                }
+
+                // If we aren't supercharging warp coils or we have no more powered coils then we're done.
+                if (!superchargeWarpCoils || totalPoweredCoils <= 0)
+                {
+                    warpCapacityIterations = -1;
+                    break;
                 }
             }
         }
@@ -1088,12 +1256,16 @@ namespace Blueshift
             string errorStatus = string.Empty;
             int count = warpCoil.resHandler.inputResources.Count;
 
-            if (!warpCoil.isActivated)
+            if (!warpCoil.isActivated || warpCoil.needsMaintenance)
                 return false;
             if (count == 0)
                 return true;
 
-            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, spatialLocation != WBISpatialLocations.Interstellar ? 1.0 : interstellarPowerMultiplier, 0.1, true, true);
+            // Update MTBF
+            warpCoil.UpdateMTBF(consumptionRateMultiplier);
+            
+            // Consume resource
+            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, consumptionRateMultiplier, 0.1, true, true);
             for (int index = 0; index < count; index++)
             {
                 if (!warpCoil.resHandler.inputResources[index].available)
@@ -1312,7 +1484,7 @@ namespace Blueshift
             }
             if (bodyBounds.Contains(offsetPosition))
             {
-                ScreenMessages.PostScreenMessage(kTerrainWarning, 3.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_terrainWarning"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
                 FlightInputHandler.state.mainThrottle = 0;
                 return;
             }

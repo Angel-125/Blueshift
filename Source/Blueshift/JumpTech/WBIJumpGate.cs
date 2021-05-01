@@ -22,8 +22,6 @@ namespace Blueshift
         #region Constants
         const float kRendezvousDistance = 50f;
         const float kMessageDuration = 3f;
-        string kJumpDimensionsExceeded = "Cannot jump. Vessel's dimensions exceed the JUMPMAX dimensions.";
-        string kInsufficientResources = "Cannot jump. Vessel needs more ";
         #endregion
 
         #region Fields
@@ -125,6 +123,55 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public float rendezvousDistance = kRendezvousDistance;
+
+        #region Maintenance
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_jumpGateStatus")]
+        public string statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
+
+        /// <summary>
+        /// Flag to indicate that the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public bool needsMaintenance = false;
+
+        /// <summary>
+        /// In hours, how long until the part needs maintenance in order to function. Default is 600.
+        /// </summary>
+        [KSPField]
+        public double mtbf = -1f;
+
+        /// <summary>
+        /// In seconds, the current time remaining until the part needs maintenance in order to function.
+        /// </summary>
+        [KSPField(isPersistant = true)]
+        public double currentMTBF = 600 * 3600;
+
+        /// <summary>
+        /// The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
+        /// </summary>
+        [KSPField]
+        public string repairSkill = "RepairSkill";
+
+        /// <summary>
+        /// The minimum skill level required to perform repairs. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int minimumSkillLevel = 1;
+
+        /// <summary>
+        /// The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
+        /// </summary>
+        [KSPField]
+        public string repairKitName = "evaRepairKit";
+
+        /// <summary>
+        /// The number of repair kits required to repair the part. Default is 1.
+        /// </summary>
+        [KSPField]
+        public int repairKitsRequired = 1;
+        #endregion
+
         #endregion
 
         #region Housekeeping
@@ -155,7 +202,7 @@ namespace Blueshift
         #region IModuleInfo
         public string GetModuleTitle()
         {
-            return "Jump Gate";
+            return Localizer.Format("#LOC_BLUESHIFT_jumpGateStatus");
         }
 
         public Callback<Rect> GetDrawModulePanelCallback()
@@ -177,11 +224,11 @@ namespace Blueshift
         {
             StringBuilder info = new StringBuilder();
 
-            info.AppendLine("<color=white>Provides instantaneous travel between jump gates.</color>");
+            info.AppendLine("");
             if (resHandler.inputResources.Count > 0)
             {
-                info.AppendLine("Use of the gate costs resources.");
-                info.AppendLine("Resource costs per tonne of mass:");
+                info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_jumpGateDesc1"));
+                info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_jumpGateDesc2"));
                 info.AppendLine(resHandler.PrintModuleResources());
             }
             return info.ToString();
@@ -254,7 +301,7 @@ namespace Blueshift
                         if (!insufficientResourcesMsgShown)
                         {
                             insufficientResourcesMsgShown = true;
-                            ScreenMessages.PostScreenMessage(kInsufficientResources + definition.displayName, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateInsufficentResources") + definition.displayName, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
                         }
                         return;
                     }
@@ -287,9 +334,43 @@ namespace Blueshift
         #endregion
 
         #region Events
-        [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "Select Destination Gate")]
+        /// <summary>
+        /// Performs maintenance on the part.
+        /// </summary>
+        [KSPEvent(guiName = "#LOC_BLUESHIFT_repairPart", guiActiveUnfocused = true, unfocusedRange = 5)]
+        public void RepairPart()
+        {
+            if (BlueshiftScenario.shared.CanRepairPart(repairSkill, minimumSkillLevel, repairKitName, repairKitsRequired))
+            {
+                BlueshiftScenario.shared.ConsumeRepairKits(FlightGlobals.ActiveVessel, repairKitName, repairKitsRequired);
+                needsMaintenance = false;
+                currentMTBF = mtbf * 3600;
+                string message = Localizer.Format("#LOC_BLUESHIFT_partRepaired", new string[1] { part.partInfo.title });
+                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_CENTER);
+                statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
+                Events["RepairPart"].active = false;
+            }
+        }
+
+        /// <summary>
+        /// Debug event to break the part.
+        /// </summary>
+        [KSPEvent(guiName = "(Debug) break part", guiActive = true)]
+        public void DebugBreakPart()
+        {
+            needsMaintenance = false;
+            currentMTBF = 1f;
+        }
+
+        [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "LOC_BLUESHIFT_jumpGateSelectGate")]
         public void SelectGate()
         {
+            if (needsMaintenance)
+            {
+                Localizer.Format("#LOC_BLUESHIFT_jumpGateCannotSelectDestination");
+                return;
+            }
+
             if (jumpgates.Count > 1)
             {
                 jumpgateSelector.jumpgates = jumpgates;
@@ -343,6 +424,22 @@ namespace Blueshift
                         portalTrigger.localScale = Vector3.one;
                 }
             }
+
+            // Check maintenance
+            if (BlueshiftScenario.maintenanceEnabled && !needsMaintenance)
+            {
+                currentMTBF -= TimeWarp.fixedDeltaTime;
+
+                if (currentMTBF <= 0)
+                {
+                    statusDisplay = Localizer.Format("#LOC_BLUESHIFT_needsMaintenance");
+                    Events["RepairPart"].active = true;
+                    needsMaintenance = true;
+                    string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
+                    ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
+                    return;
+                }
+            }
         }
 
         public override void OnUpdate()
@@ -373,6 +470,11 @@ namespace Blueshift
             // Setup GUI
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
+            statusDisplay = needsMaintenance ? Localizer.Format("#LOC_BLUESHIFT_needsMaintenance") : Localizer.Format("#LOC_BLUESHIFT_statusOK");
+            Events["DebugBreakPart"].active = debugMode;
+            Events["DebugBreakPart"].guiName = "Break " + ClassName;
+            Events["RepairPart"].active = needsMaintenance;
+            Events["RepairPart"].guiName = Localizer.Format("#LOC_BLUESHIFT_repairPart", new string[1] { Localizer.Format("#LOC_BLUESHIFT_warpCoilTitle") });
 
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
