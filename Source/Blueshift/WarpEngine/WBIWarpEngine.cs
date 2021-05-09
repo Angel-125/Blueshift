@@ -640,14 +640,6 @@ namespace Blueshift
             // Update our precondition states
             updatePreconditionStates();
 
-            Debug.Log(string.Format("[WBIWarpEngine] - totalWarpCapacity: {0:n2}", totalWarpCapacity));
-            Debug.Log(string.Format("[WBIWarpEngine] - skipFrames: {0:n0}", skipFrames));
-            Debug.Log(string.Format("[WBIWarpEngine] - mainThrottle: {0:n2}", FlightInputHandler.state.mainThrottle));
-            if (flameout)
-                Debug.Log("[WBIWarpEngine] - engine flamout");
-            else if (warpFlameout)
-                Debug.Log("[WBIWarpEngine] - warp flamout");
-
             // Now check for flameout
             if (IsFlamedOut())
             {
