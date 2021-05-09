@@ -225,6 +225,11 @@
             The number of repair kits required to repair the part. Default is 1.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.isMissingResources">
+            <summary>
+            Flag indicating whether or not we're missing resources needed to produce outputs.
+            </summary>
+        </member>
         <member name="M:Blueshift.WBIModuleGeneratorFX.RepairPart">
             <summary>
             Performs maintenance on the part.
@@ -234,6 +239,13 @@
             <summary>
             Debug event to break the part.
             </summary>
+        </member>
+        <member name="M:Blueshift.WBIModuleGeneratorFX.GetAmountProduced(System.String)">
+            <summary>
+            Returns the amount of the supplied resource that is produced per second.
+            </summary>
+            <param name="resourceName">A string containing the name of the resource to look for.</param>
+            <returns>A double containing the amount of the resource produced, or 0 if the resource can't be found.</returns>
         </member>
         <member name="T:Blueshift.WBIPartModule">
             <summary>
@@ -488,6 +500,13 @@
             </summary>
             <param name="rateMultiplier">The rate multiplier to reduce the current MTBF by.</param>
         </member>
+        <member name="M:Blueshift.WBIWarpCoil.GetAmountRequired(System.String)">
+            <summary>
+            Returns the amount of resource required per second.
+            </summary>
+            <param name="resourceName">A string containing the name of the resource.</param>
+            <returns>A double containing the amount of required resource if it can be found, or 0 if not.</returns>
+        </member>
         <member name="T:Blueshift.WBICircularizationStates">
             <summary>
             Circularization states for auto-circularization.
@@ -565,22 +584,17 @@
             Minimum planetary radius needed to go to warp. This is used to calculate the user-friendly minimum warp altitude display.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.superchargeWarpCoils">
-            <summary>
-            Flag to indicate whether or not to supercharge warp coils to gain more Warp Capacity. Supercharging the coils increases their resource consumption and reduces MTBF.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpEngine.minWarpAltitudeDisplay">
             <summary>
             Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.warpSpeed">
+        <member name="F:Blueshift.WBIWarpEngine.warpSpeedDisplay">
             <summary>
-            The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+            The FTL display velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.maxWarpSpeed">
+        <member name="F:Blueshift.WBIWarpEngine.maxWarpSpeedDisplay">
             <summary>
             (Debug visible) Maximum possible warp speed.
             </summary>
@@ -676,6 +690,27 @@
         <member name="F:Blueshift.WBIWarpEngine.photonicBoomEffectName">
             <summary>
             Optional effect to play when the vessel exceeds the speed of light.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpSimulationResource">
+            <summary>
+            Used when calculating the max warp speed in the editor, this is the resource that is common between the warp engine, gravitic generator, and warp coil.
+            This resource should be the limiting resource in the trio (the one that runs out the fastest).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.powerMultiplier">
+            <summary>
+            The ratio between the amount of power produced for the warp coils to the amount of power consumed by the warp coils.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.displacementMultiplier">
+            <summary>
+            The ratio between the total mass displaced by the warp coils to the vessel's total mass.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpIgnitionThreshold">
+            <summary>
+            When the powerMultiplier drops below this value, the engine will flame out.
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.needsMaintenance">
@@ -778,6 +813,16 @@
             (Debug visible) Current throttle level for the warp effects.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpEngine.resourceProduced">
+            <summary>
+            (Debug visible) amount of simulation resource produced.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.resourceConsumed">
+            <summary>
+            (Debug visible) amount of simulation resource consumed.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.terrainHit">
             <summary>
             Hit test stuff to make sure we don't run into planets.
@@ -796,6 +841,11 @@
         <member name="F:Blueshift.WBIWarpEngine.warpCoils">
             <summary>
             List of enabled warp coils
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.warpGenerators">
+            <summary>
+            List of warp generators
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.warpEngineTextures">
@@ -921,13 +971,6 @@
             <summary>
             Updates the generators that provide warp power.
             </summary>
-        </member>
-        <member name="M:Blueshift.WBIWarpEngine.consumeCoilResources(Blueshift.WBIWarpCoil)">
-            <summary>
-            Consumes the warp coil's required resources.
-            </summary>
-            <param name="warpCoil">The WBIWarpCoil to check for required resources.</param>
-            <returns>true if the coil successfully consumed its required resources, false if not.</returns>
         </member>
         <member name="M:Blueshift.WBIWarpEngine.shouldApplyWarp">
             <summary>

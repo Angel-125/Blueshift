@@ -232,13 +232,14 @@ namespace Blueshift
         public bool HasEnoughResources(double rateMultiplier)
         {
             int count = resHandler.inputResources.Count;
-            double amount, maxAmount = 0;
+            double amount, maxAmount, consumptionRate = 0;
 
             for (int index = 0; index < count; index++)
             {
                 vessel.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
+                consumptionRate = resHandler.inputResources[index].rate * rateMultiplier * TimeWarp.fixedDeltaTime;
 
-                if (amount < resHandler.inputResources[index].rate * rateMultiplier * TimeWarp.fixedDeltaTime)
+                if (amount < consumptionRate)
                     return false;
             }
 
@@ -263,6 +264,23 @@ namespace Blueshift
                 string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
                 ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
             }
+        }
+
+        /// <summary>
+        /// Returns the amount of resource required per second.
+        /// </summary>
+        /// <param name="resourceName">A string containing the name of the resource.</param>
+        /// <returns>A double containing the amount of required resource if it can be found, or 0 if not.</returns>
+        public double GetAmountRequired(string resourceName)
+        {
+            int count = resHandler.inputResources.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (resHandler.inputResources[index].name == resourceName)
+                    return resHandler.inputResources[index].rate;
+            }
+
+            return 0;
         }
         #endregion
 

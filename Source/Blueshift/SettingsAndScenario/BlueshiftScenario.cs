@@ -974,11 +974,11 @@ namespace Blueshift
                     }
                 }
 
-                // If we've passed the expiration date then remove the anomaly.
+                // If we've passed the expiration date and the anomaly hasn't been discovered then remove the anomaly.
                 else if (anomaly.expirationDate > 0 && currentTime >= anomaly.expirationDate)
                 {
                     Vessel doomed = GetVessel(anomaly.vesselId);
-                    if (doomed != null)
+                    if (doomed != null && doomed.DiscoveryInfo.Level == DiscoveryLevels.Presence)
                         FlightGlobals.RemoveVessel(doomed);
 
                     doomedAnomalies.Add(anomaly);

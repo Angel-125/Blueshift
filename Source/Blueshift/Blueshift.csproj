@@ -75,7 +75,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HelpersAndManagers\BlueshiftSettings.cs" />
+    <Compile Include="SettingsAndScenario\BlueshiftSettings.cs" />
     <Compile Include="GUI\JumpgateSelector.cs" />
     <Compile Include="GUI\PotatoScannerInfo.cs" />
     <Compile Include="Utility\Dialog\Dialog.cs" />
@@ -92,7 +92,7 @@
     <Compile Include="WarpEngine\WBIWarpCoil.cs" />
     <Compile Include="WarpEngine\WBIWarpEngine.cs" />
     <Compile Include="Waterfall\WFModuleWaterfallFX.cs" />
-    <Compile Include="HelpersAndManagers\BlueshiftScenario.cs" />
+    <Compile Include="SettingsAndScenario\BlueshiftScenario.cs" />
     <Compile Include="Utility\WBIModuleHarvesterFX.cs" />
     <Compile Include="SpaceAnomaly\WBISpaceAnomaly.cs" />
     <Compile Include="SpaceAnomaly\WBITechUnlock.cs" />

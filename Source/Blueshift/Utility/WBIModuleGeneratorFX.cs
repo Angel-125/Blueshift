@@ -140,9 +140,13 @@ namespace Blueshift
         #endregion
 
         #region Housekeeping
+        /// <summary>
+        /// Flag indicating whether or not we're missing resources needed to produce outputs.
+        /// </summary>
+        public bool isMissingResources = false;
+
         WBIAnimatedTexture[] animatedTextures = null;
-        public List<ResourceRatio> drainedResources = new List<ResourceRatio>();
-        bool isMissingResources = false;
+        List<ResourceRatio> drainedResources = new List<ResourceRatio>();
         WFModuleWaterfallFX waterfallFXModule = null;
         #endregion
 
@@ -396,6 +400,26 @@ namespace Blueshift
             isMissingResources = false;
             status = "Nominal";
             return base.PrepareRecipe(deltatime);
+        }
+        #endregion
+
+        #region API
+        /// <summary>
+        /// Returns the amount of the supplied resource that is produced per second.
+        /// </summary>
+        /// <param name="resourceName">A string containing the name of the resource to look for.</param>
+        /// <returns>A double containing the amount of the resource produced, or 0 if the resource can't be found.</returns>
+        public double GetAmountProduced(string resourceName)
+        {
+            int count = outputList.Count;
+
+            for (int index = 0; index < count; index++)
+            {
+                if (outputList[index].ResourceName == resourceName)
+                    return outputList[index].Ratio;
+            }
+
+            return 0;
         }
         #endregion
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using KSP.Localization;
+using KSP.UI.Screens;
 
 /*
 Source code copyright 2021, by Michael Billard (Angel-125)
@@ -96,6 +97,7 @@ namespace Blueshift
         float kRendezvousDistance = 100;
         float kMessageDuration = 3f;
         string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
+        int kFrameSkipCount = 3;
         #endregion
 
         #region Fields
@@ -115,29 +117,22 @@ namespace Blueshift
         public double minPlanetaryRadius = 3.0;
 
         /// <summary>
-        /// Flag to indicate whether or not to supercharge warp coils to gain more Warp Capacity. Supercharging the coils increases their resource consumption and reduces MTBF.
-        /// </summary>
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_superchargeCoils")]
-        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_enabled", disabledText = "#LOC_BLUESHIFT_disabled")]
-        public bool superchargeWarpCoils = true;
-
-        /// <summary>
         /// Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
         /// </summary>
         [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_minWarpAltitude", guiUnits = "m", guiFormat = "n1")]
         public double minWarpAltitudeDisplay = 500000.0f;
 
         /// <summary>
-        /// The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+        /// The FTL display velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
         /// </summary>
         [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpSpeed", guiFormat = "n3", guiUnits = "C")]
-        public float warpSpeed = 0;
+        protected float warpSpeedDisplay = 0;
 
         /// <summary>
         /// (Debug visible) Maximum possible warp speed.
         /// </summary>
         [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_maxWarpSpeed", guiFormat = "n3", guiUnits = "C")]
-        protected float maxWarpSpeed = 0;
+        protected float maxWarpSpeedDisplay = 0;
 
         /// <summary>
         /// Pre-flight status check.
@@ -162,6 +157,10 @@ namespace Blueshift
         /// </summary>
         [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_targetDistance", guiFormat = "n3")]
         public double targetDistance = 0f;
+
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_orbitInclination", guiFormat = "n0", guiUnits = "deg")]
+        [UI_FloatRange(affectSymCounterparts = UI_Scene.All, maxValue = 180f, minValue = 0f, stepIncrement = 5f)]
+        float autoCircularizeInclination = 0f;
 
         /// <summary>
         /// Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body.
@@ -246,6 +245,31 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string photonicBoomEffectName = string.Empty;
+
+        /// <summary>
+        /// Used when calculating the max warp speed in the editor, this is the resource that is common between the warp engine, gravitic generator, and warp coil.
+        /// This resource should be the limiting resource in the trio (the one that runs out the fastest).
+        /// </summary>
+        [KSPField]
+        public string warpSimulationResource = "GravityWaves";
+
+        /// <summary>
+        /// The ratio between the amount of power produced for the warp coils to the amount of power consumed by the warp coils.
+        /// </summary>
+        [KSPField(guiActive = false, guiActiveEditor = true, guiFormat = "n3", guiName = "#LOC_BLUESHIFT_powerMultiplier")]
+        public float powerMultiplier = 0;
+
+        /// <summary>
+        /// The ratio between the total mass displaced by the warp coils to the vessel's total mass.
+        /// </summary>
+        [KSPField(guiActive = false, guiActiveEditor = true, guiFormat = "n3", guiName = "#LOC_BLUESHIFT_displacementMultiplier")]
+        public float displacementMultiplier = 0;
+
+        /// <summary>
+        /// When the powerMultiplier drops below this value, the engine will flame out.
+        /// </summary>
+        [KSPField]
+        public float warpIgnitionThreshold = 0.25f;
 
         #region Maintenance
         /// <summary>
@@ -375,6 +399,21 @@ namespace Blueshift
         protected float effectsThrottle = 0;
 
         /// <summary>
+        /// (Debug visible) amount of simulation resource produced.
+        /// </summary>
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
+        double resourceProduced = 0;
+
+        /// <summary>
+        /// (Debug visible) amount of simulation resource consumed.
+        /// </summary>
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
+        double resourceConsumed = 0;
+
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
+        double resourceAmount = 0;
+
+        /// <summary>
         /// Hit test stuff to make sure we don't run into planets.
         /// </summary>
         protected RaycastHit terrainHit;
@@ -391,6 +430,9 @@ namespace Blueshift
         /// List of enabled warp coils
         /// </summary>
         protected List<WBIWarpCoil> warpCoils = null;
+        /// <summary>
+        /// List of warp generators
+        /// </summary>
         protected List<WBIModuleGeneratorFX> warpGenerators = null;
         /// <summary>
         /// List of animated textures driven by the warp engine
@@ -440,6 +482,14 @@ namespace Blueshift
 
         /// Multiplier used for consumption of resources and MTBF/heat.
         double consumptionRateMultiplier = 1.0;
+
+        int skipFrames = 0;
+        float prevThrottle = -1f;
+        float warpSpeed = 0;
+        float maxWarpSpeed = 0;
+        float prevWarpSpeed = 0;
+        float prevMaxWarpSpeed = 0;
+        bool wentInterstellar = false;
         #endregion
 
         #region Actions And Events
@@ -519,7 +569,7 @@ namespace Blueshift
 
                 // Get current orbit.
                 Orbit orbit = this.part.vessel.orbitDriver.orbit;
-                double inclination = orbit.inclination;
+                double inclination = autoCircularizeInclination; // orbit.inclination;
                 double altitude = this.part.vessel.altitude;
                 double planetRadius = this.part.vessel.mainBody.Radius;
                 int planetIndex = this.part.vessel.mainBody.flightGlobalsIndex;
@@ -552,7 +602,9 @@ namespace Blueshift
         public void OnDestroy()
         {
             if (HighLogic.LoadedSceneIsEditor)
+            {
                 GameEvents.onEditorShipModified.Remove(onEditorShipModified);
+            }
         }
 
         public override void OnFixedUpdate()
@@ -563,55 +615,38 @@ namespace Blueshift
 
             // Update spatial location.
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
+            if (prevSpatialLocation == WBISpatialLocations.Unknown)
+                prevSpatialLocation = spatialLocation;
 
             // Calcuate consumption multiplier
-            consumptionRateMultiplier = spatialLocation != WBISpatialLocations.Interstellar ? 1.0 : interstellarPowerMultiplier;
+            throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
+            consumptionRateMultiplier = spatialLocation != WBISpatialLocations.Interstellar ? 1.0 : Mathf.Clamp(interstellarPowerMultiplier * throttleLevel, 1, interstellarPowerMultiplier);
 
             // Vessel course - just the selected target.
             updateVesselCourse();
 
             // Make sure the engine is running
-            if (!EngineIgnited)
-                return;
-
             // Check maintenance
-            if (BlueshiftScenario.maintenanceEnabled)
-            {
-                if (needsMaintenance)
-                {
-                    return;
-                }
-                else
-                {
-                    currentMTBF -= TimeWarp.fixedDeltaTime;
-
-                    if (currentMTBF <= 0)
-                    {
-                        Flameout(Localizer.Format("#LOC_BLUESHIFT_needsMaintenance"));
-                        status = Localizer.Format("#LOC_BLUESHIFT_statusBroken");
-                        Events["RepairPart"].active = true;
-                        needsMaintenance = true;
-                        resetWarpParameters();
-                        string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
-                        ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
-                        return;
-                    }
-                }
-            }
-
             // Make sure that we should apply warp.
-            if (!shouldApplyWarp())
+            if (!EngineIgnited || checkNeedsMaintenance() || !shouldApplyWarp())
                 return;
 
-            // Drive warp coil resource consumption and get total available warp capacity.
+            // Drive warp coil resource consumption.
             updateWarpPowerGenerators();
-            getTotalWarpCapacity();
 
-            // Calculate the best warp curve to get maximum FTL speed.
-            calculateBestWarpSpeed();
+            // Update our total warp capacity and warp speed.
+            updateWarpCapacityAndSpeed();
 
             // Update our precondition states
             updatePreconditionStates();
+
+            Debug.Log(string.Format("[WBIWarpEngine] - totalWarpCapacity: {0:n2}", totalWarpCapacity));
+            Debug.Log(string.Format("[WBIWarpEngine] - skipFrames: {0:n0}", skipFrames));
+            Debug.Log(string.Format("[WBIWarpEngine] - mainThrottle: {0:n2}", FlightInputHandler.state.mainThrottle));
+            if (flameout)
+                Debug.Log("[WBIWarpEngine] - engine flamout");
+            else if (warpFlameout)
+                Debug.Log("[WBIWarpEngine] - warp flamout");
 
             // Now check for flameout
             if (IsFlamedOut())
@@ -619,6 +654,9 @@ namespace Blueshift
                 resetWarpParameters();
                 return;
             }
+
+            // Update warp spedometer
+            updateWarpSpedometer();
 
             // Reset warp speed exceeded flag.
             if (warpSpeed < 1f)
@@ -650,6 +688,7 @@ namespace Blueshift
             bool enableCircularizeOrbit = BlueshiftScenario.autoCircularize && (spatialLocation == WBISpatialLocations.Planetary || 
                 (BlueshiftScenario.shared.IsAStar(vessel.mainBody) && BlueshiftScenario.shared.GetLastPlanet(vessel.mainBody) == null));
             Events["CircularizeOrbit"].active = enableCircularizeOrbit;
+            Fields["autoCircularizeInclination"].guiActive = enableCircularizeOrbit;
             Actions["CircularizeOrbitAction"].active = BlueshiftScenario.autoCircularize;
         }
 
@@ -705,12 +744,17 @@ namespace Blueshift
             Fields["effectiveWarpCapacity"].guiActive = debugEnabled;
             Fields["warpDistance"].guiActive = debugEnabled;
             Fields["effectsThrottle"].guiActive = debugEnabled;
+            Fields["resourceProduced"].guiActive = debugEnabled;
+            Fields["resourceConsumed"].guiActive = debugEnabled;
+            Fields["resourceAmount"].guiActive = debugEnabled;
 
             // Editor events
             if (HighLogic.LoadedSceneIsEditor)
             {
                 Fields["effectiveWarpCapacity"].guiActiveEditor = true;
                 GameEvents.onEditorShipModified.Add(onEditorShipModified);
+                if (EditorLogic.fetch != null && EditorLogic.fetch.ship != null)
+                    onEditorShipModified(EditorLogic.fetch.ship);
             }
         }
 
@@ -735,8 +779,9 @@ namespace Blueshift
             if (!staged)
                 this.part.force_activate(true);
 
-            Fields["warpSpeed"].guiActive = true;
-            
+            Fields["warpSpeedDisplay"].guiActive = true;
+            Fields["maxWarpSpeedDisplay"].guiActive = true;
+
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
             {
@@ -750,7 +795,8 @@ namespace Blueshift
             hasExceededLightSpeed = false;
             spatialLocation = WBISpatialLocations.Unknown;
 
-            Fields["warpSpeed"].guiActive = false;
+            Fields["warpSpeedDisplay"].guiActive = false;
+            Fields["maxWarpSpeedDisplay"].guiActive = true;
 
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
@@ -834,8 +880,16 @@ namespace Blueshift
         /// <returns>true if the engine is flamed out, false if not.</returns>
         public bool IsFlamedOut()
         {
+            // If our power multiplier is below the ignition threshold then we are flamed out.
+            if (powerMultiplier < warpIgnitionThreshold)
+            {
+                warpFlameout = true;
+                Flameout(Localizer.Format("#LOC_BLUESHIFT_needsMorePower"));
+                return true;
+            }
+
             // Must be in space, at or above orbital altitude, have a running engine, and not be flamed out.
-            if (needsMaintenance || !isInSpace || !meetsWarpAltitude || !hasWarpCapacity && EngineIgnited && isOperational && !warpFlameout)
+            else if (needsMaintenance || !isInSpace || !meetsWarpAltitude || !hasWarpCapacity && EngineIgnited && isOperational && !warpFlameout)
             {
                 warpFlameout = true;
                 if (needsMaintenance)
@@ -850,7 +904,8 @@ namespace Blueshift
                     Flameout(Localizer.Format("#LOC_BLUESHIFT_flameoutGeneric"));
                 return true;
             }
-            else if (isInSpace && meetsWarpAltitude && hasWarpCapacity && warpFlameout)
+
+            else if (warpFlameout && isInSpace && meetsWarpAltitude && hasWarpCapacity && powerMultiplier >= warpIgnitionThreshold)
             {
                 warpFlameout = false;
                 UnFlameout();
@@ -866,6 +921,9 @@ namespace Blueshift
         /// <returns>true if the ship has sufficient warp capacity, false if not.</returns>
         public bool HasWarpCapacity()
         {
+            if (EngineIgnited && throttleLevel <= 0)
+                return true;
+
             return totalWarpCapacity > 0;
         }
 
@@ -964,6 +1022,12 @@ namespace Blueshift
 
         protected void updateFTLPreflightStatus()
         {
+            if (powerMultiplier < warpIgnitionThreshold)
+            {
+                preflightCheck = Localizer.Format("#LOC_BLUESHIFT_needsMorePower");
+                return;
+            }
+
             // Update preflight check
             if (maxWarpSpeed < 1)
             {
@@ -1027,38 +1091,61 @@ namespace Blueshift
             }
         }
 
-        protected void onEditorShipModified(ShipConstruct ship)
+        void onEditorShipModified(ShipConstruct ship)
         {
             // Get warp capacity and total displacement impulse
             int count = ship.parts.Count;
             WBIWarpCoil warpCoil;
-            WBIWarpEngine engine;
-            float coilCapacity;
+            WBIModuleGeneratorFX generator;
             float vesselMass = ship.GetTotalMass();
             float warpDisplacementImpulse = 0;
             float warpCapacity = 0;
+            double resourceRequired = 0;
+            double resourceProduced = 0;
+
+            if (vesselPartCount == count)
+                return;
+            else
+                vesselPartCount = count;
+
+            displacementMultiplier = 0;
+            powerMultiplier = 0;
+
             for (int index = 0; index < count; index++)
             {
+                // Get coil stats
                 warpCoil = ship.parts[index].FindModuleImplementing<WBIWarpCoil>();
                 if (warpCoil != null)
                 {
-                    coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
-                    warpCapacity += coilCapacity;
+                    resourceRequired += warpCoil.GetAmountRequired(warpSimulationResource);
+                    warpCapacity += warpCoil.warpCapacity;
+                    warpDisplacementImpulse += warpCoil.displacementImpulse;
                 }
 
-                engine = ship.parts[index].FindModuleImplementing<WBIWarpEngine>();
-                if (engine != null)
-                    warpDisplacementImpulse += engine.displacementImpulse;
+                // Get generator stats
+                generator = ship.parts[index].FindModuleImplementing<WBIModuleGeneratorFX>();
+                if (generator != null)
+                    resourceProduced += generator.GetAmountProduced(warpSimulationResource);
             }
 
+            // Calculate multipliers
+            displacementMultiplier = warpDisplacementImpulse / vesselMass;
+            powerMultiplier = (float)(resourceProduced / resourceRequired);
+
             // Get effective warp capacity
-            effectiveWarpCapacity = warpCapacity * (warpDisplacementImpulse / vesselMass);
+            effectiveWarpCapacity = warpCapacity * displacementMultiplier * powerMultiplier;
 
             // Now calculate max speed
-            maxWarpSpeed = warpCurve.Evaluate(effectiveWarpCapacity);
+            maxWarpSpeedDisplay = warpCurve.Evaluate(effectiveWarpCapacity);
+
+            if (powerMultiplier < warpIgnitionThreshold)
+            {
+                preflightCheck = Localizer.Format("#LOC_BLUESHIFT_needsMorePower");
+                return;
+            }
 
             // FTL pre-flight status check.
-            if (maxWarpSpeed < 1)
+            if (maxWarpSpeedDisplay < 1)
             {
                 // Determinine minimum capacity to reach light speed or better.
                 float FTLSpeed = 0;
@@ -1079,14 +1166,69 @@ namespace Blueshift
             }
         }
 
+        void updateWarpSpedometer()
+        {
+            warpSpeedDisplay = (warpSpeed + prevWarpSpeed) / 2f;
+            maxWarpSpeedDisplay = (maxWarpSpeed + prevMaxWarpSpeed) / 2f;
+
+            prevMaxWarpSpeed = maxWarpSpeed;
+            prevWarpSpeed = warpSpeed;
+        }
+
+        void updateWarpCapacityAndSpeed()
+        {
+            // Give generators a chance to build up a charge whenever we change the throttle or cross a spatial boundary.
+            float diff = Mathf.Abs(prevThrottle * 0.0001f);
+            bool throttlesEqual = Mathf.Abs(prevThrottle - throttleLevel) <= diff;
+            bool crossedSpatialBoundary = prevSpatialLocation != spatialLocation;
+
+            // If we crossed a spatial boundary then skip frames.
+            if (crossedSpatialBoundary)
+            {
+                if (spatialLocation == WBISpatialLocations.Interstellar)
+                    wentInterstellar = true;
+
+                prevSpatialLocation = spatialLocation;
+                skipFrames = kFrameSkipCount;
+            }
+
+            // If throttle changed then skip frames.
+            else if (!throttlesEqual)
+            {
+                skipFrames = kFrameSkipCount;
+
+                // If we were throttled down and we had no warp capacity, then set a small amount of warp capacity to prevent flameout.
+                if (prevThrottle <= 0 && totalWarpCapacity <= 0)
+                    totalWarpCapacity = 0.0001f;
+
+                prevThrottle = throttleLevel;
+            }
+
+            // Decrement skipped frames. If we hit 0 then calculate warp capacity and best speed.
+            else if (skipFrames > 0)
+            {
+                skipFrames -= 1;
+                if (skipFrames <= 0)
+                {
+                    skipFrames = 0;
+                    getTotalWarpCapacity();
+                    calculateBestWarpSpeed();
+                }
+            }
+
+            // Calculate the best warp curve to get maximum FTL speed.
+            else
+            {
+                getTotalWarpCapacity();
+                calculateBestWarpSpeed();
+            }
+        }
+
         /// <summary>
         /// Calculates the best possible warp speed from the vessel's active warp engines.
         /// </summary>
         protected void calculateBestWarpSpeed()
         {
-            // First, calculate the effective warp capacity.
-            effectiveWarpCapacity = totalWarpCapacity * (totalDisplacementImpulse / this.part.vessel.GetTotalMass());
-
             int count = warpEngines.Count;
             float bestWarpSpeed = -1f;
             float warpCurveSpeed = 0;
@@ -1118,8 +1260,15 @@ namespace Blueshift
                     break;
             }
 
+            // Account for miracle workers
+            ProtoCrewMember astronaut;
+            int highestRank = BlueshiftScenario.shared.GetHighestRank(vessel, warpEngineerSkill, out astronaut);
+            if (highestRank >= warpSpeedBoostRank)
+            {
+                maxWarpSpeed *= (1.0f + warpSpeedSkillMultiplier) * highestRank;
+            }
+
             // Account for throttle setting and thrust limiter.
-            throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
             if (throttleLevel <= 0)
             {
                 warpSpeed = 0;
@@ -1129,24 +1278,16 @@ namespace Blueshift
                 return;
             }
 
-            // If we've transitioned from interplanetary to interstellar or vice-versa, then transition to the appropriate speed.
-            if (prevSpatialLocation != spatialLocation)
+            // If we've transitioned from interplanetary to interstellar, then transition to the appropriate speed.
+            else if (wentInterstellar)
             {
-                if (prevSpatialLocation == WBISpatialLocations.Interplanetary && spatialLocation == WBISpatialLocations.Interstellar)
-                {
-                    speedStartTime = Planetarium.GetUniversalTime();
-                }
-
-                else
-                {
-                    speedStartTime = 0;
-                }
-
-                prevSpatialLocation = spatialLocation;
+                wentInterstellar = false;
+                prevInterstellarAcceleration = 0;
+                speedStartTime = Planetarium.GetUniversalTime();
             }
 
             // Still in same spatial location, but we may need to accelerate
-            else if (speedStartTime > 0)
+            if (speedStartTime > 0)
             {
                 float elapsedTime = (float)(Planetarium.GetUniversalTime() - speedStartTime);
                 float curveSpeed = Mathf.Abs(interstellarAccelerationCurve.Evaluate(elapsedTime));
@@ -1168,14 +1309,6 @@ namespace Blueshift
             {
                 warpSpeed = maxWarpSpeed * throttleLevel;
             }
-
-            // Account for miracle workers
-            ProtoCrewMember astronaut;
-            int highestRank = BlueshiftScenario.shared.GetHighestRank(vessel, warpEngineerSkill, out astronaut);
-            if (highestRank >= warpSpeedBoostRank)
-            {
-                warpSpeed *= (1.0f + warpSpeedSkillMultiplier) * highestRank;
-            }
         }
 
         /// <summary>
@@ -1185,39 +1318,107 @@ namespace Blueshift
         {
             int count = warpCoils.Count;
             WBIWarpCoil warpCoil;
-            float coilCapacity;
+            WBIModuleGeneratorFX generator;
             float vesselMass = part.vessel.GetTotalMass();
-            int warpCapacityIterations = 1000;
-            int totalPoweredCoils = 0;
+            double totalResourceRequired = 0;
+            double totalResourceProduced = 0;
+            float totalDisplacement = 0;
 
             totalWarpCapacity = 0;
-            while (warpCapacityIterations > 0)
+            totalDisplacementImpulse = 0;
+
+            // Get the ideal amount of resource produced by the generators.
+            count = warpGenerators.Count;
+            for (int index = 0; index < count; index++)
             {
-                warpCapacityIterations -= 1;
-                totalPoweredCoils = 0;
+                generator = warpGenerators[index];
+                if (!generator.IsActivated || generator.isMissingResources || generator.needsMaintenance)
+                    continue;
+                totalResourceProduced += generator.GetAmountProduced(warpSimulationResource);
+            }
 
-                // Go through the warp coils at least once and get their supplied warp capacity.
-                for (int index = 0; index < count; index++)
+            // Get the ideal amount of resource required by the coils
+            count = warpCoils.Count;
+            for (int index = 0; index < count; index++)
+            {
+                warpCoil = warpCoils[index];
+                if (!warpCoil.isActivated || warpCoil.needsMaintenance)
+                    continue;
+                totalResourceRequired += warpCoil.GetAmountRequired(warpSimulationResource);
+            }
+
+            // Calculate the power multiplier
+            powerMultiplier = (float)(totalResourceProduced / totalResourceRequired);
+
+            // Debug info
+            if (debugEnabled)
+            {
+                double maxAmount = 0;
+                PartResourceDefinition resourceDef = null;
+                PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
+                resourceDef = definitions[warpSimulationResource];
+
+                vessel.GetConnectedResourceTotals(resourceDef.id, out resourceAmount, out maxAmount);
+                resourceProduced = totalResourceProduced;
+                resourceConsumed = totalResourceRequired;
+            }
+
+            // Check for flamout
+            if (powerMultiplier < warpIgnitionThreshold)
+            {
+                warpFlameout = true;
+                return;
+            }
+
+            // Calculate displacement impulse and warp capacity for the active coils that are powered up.
+            double consumptionMultiplier = powerMultiplier * consumptionRateMultiplier;
+            count = warpCoils.Count;
+            for (int index = 0; index < count; index++)
+            {
+                warpCoil = warpCoils[index];
+                if (!warpCoil.isActivated || warpCoil.needsMaintenance)
+                    continue;
+
+                if (consumeCoilResources(warpCoil, consumptionMultiplier))
                 {
-                    warpCoil = warpCoils[index];
-                    if (!warpCoil.isActivated || warpCoil.needsMaintenance)
-                        continue;
-
-                    if (warpCoil.HasEnoughResources(consumptionRateMultiplier) && consumeCoilResources(warpCoil))
-                    {
-                        coilCapacity = warpCoil.warpCapacity * (warpCoil.displacementImpulse / vesselMass);
-                        totalWarpCapacity += coilCapacity;
-                        totalPoweredCoils += 1;
-                    }
-                }
-
-                // If we aren't supercharging warp coils or we have no more powered coils then we're done.
-                if (!superchargeWarpCoils || totalPoweredCoils <= 0)
-                {
-                    warpCapacityIterations = -1;
-                    break;
+                    totalWarpCapacity += warpCoil.warpCapacity;
+                    totalDisplacement += warpCoil.displacementImpulse;
                 }
             }
+
+            if (throttleLevel > 0)
+                Debug.Log(string.Format("[WBIWarpEngine] - throttleLevel: {0:n2}", throttleLevel));
+            // Calculate displacement multiplier
+            totalDisplacement *= throttleLevel;
+            displacementMultiplier = totalDisplacement / vesselMass;
+
+            // Get effective warp capacity
+            totalWarpCapacity *= throttleLevel;
+            effectiveWarpCapacity = totalWarpCapacity * displacementMultiplier * powerMultiplier;
+        }
+
+        bool consumeCoilResources(WBIWarpCoil warpCoil, double rateMultiplier)
+        {
+            string errorStatus = string.Empty;
+            int count = warpCoil.resHandler.inputResources.Count;
+
+            if (!warpCoil.isActivated || warpCoil.needsMaintenance)
+                return false;
+            if (count == 0)
+                return true;
+
+            // Update MTBF
+            warpCoil.UpdateMTBF(rateMultiplier);
+
+            // Consume resource
+            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, rateMultiplier, 0.1, true, true);
+            for (int index = 0; index < count; index++)
+            {
+                if (!warpCoil.resHandler.inputResources[index].available)
+                    return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -1247,35 +1448,6 @@ namespace Blueshift
         }
 
         /// <summary>
-        /// Consumes the warp coil's required resources.
-        /// </summary>
-        /// <param name="warpCoil">The WBIWarpCoil to check for required resources.</param>
-        /// <returns>true if the coil successfully consumed its required resources, false if not.</returns>
-        protected bool consumeCoilResources(WBIWarpCoil warpCoil)
-        {
-            string errorStatus = string.Empty;
-            int count = warpCoil.resHandler.inputResources.Count;
-
-            if (!warpCoil.isActivated || warpCoil.needsMaintenance)
-                return false;
-            if (count == 0)
-                return true;
-
-            // Update MTBF
-            warpCoil.UpdateMTBF(consumptionRateMultiplier);
-            
-            // Consume resource
-            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, consumptionRateMultiplier, 0.1, true, true);
-            for (int index = 0; index < count; index++)
-            {
-                if (!warpCoil.resHandler.inputResources[index].available)
-                    return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Looks for all the active warp engines in the vessel. From the list, only the top-most engine in the list of active engines should apply warp translation. All others
         /// simply provide support.
         /// </summary>
@@ -1288,14 +1460,12 @@ namespace Blueshift
             int count = engines.Count;
 
             warpEngines.Clear();
-            totalDisplacementImpulse = 0;
             for (int index = 0; index < count; index++)
             {
                 engine = engines[index];
                 if (engine.EngineIgnited && engine.isOperational)
                 {
                     warpEngines.Add(engine);
-                    totalDisplacementImpulse += engine.displacementImpulse;
 
                     //If the index is at the top of the list and we're the topmost engine then we should apply acceleartion.
                     if (engine == this && index == 0)
@@ -1427,6 +1597,35 @@ namespace Blueshift
             }
         }
 
+        private bool checkNeedsMaintenance()
+        {
+            if (BlueshiftScenario.maintenanceEnabled)
+            {
+                if (needsMaintenance)
+                {
+                    return true;
+                }
+                else
+                {
+                    currentMTBF -= TimeWarp.fixedDeltaTime;
+
+                    if (currentMTBF <= 0)
+                    {
+                        Flameout(Localizer.Format("#LOC_BLUESHIFT_needsMaintenance"));
+                        status = Localizer.Format("#LOC_BLUESHIFT_statusBroken");
+                        Events["RepairPart"].active = true;
+                        needsMaintenance = true;
+                        resetWarpParameters();
+                        string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
+                        ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private void updatePreconditionStates()
         {
             isInSpace = IsInSpace();
@@ -1456,6 +1655,10 @@ namespace Blueshift
         {
             maxWarpSpeed = 0;
             warpSpeed = 0;
+            prevMaxWarpSpeed = 0;
+            prevWarpSpeed = 0;
+            warpSpeedDisplay = 0;
+            maxWarpSpeedDisplay = 0;
             speedStartTime = 0;
             warpDistance = 0;
             speedStartTime = 0f;
