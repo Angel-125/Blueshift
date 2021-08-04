@@ -349,8 +349,17 @@ namespace Blueshift
 
             //Add our resource ratios to the output list
             ratioCount = resourceRatios.Count;
+            double amount;
+            double maxAmount;
+            PartResourceDefinition resourceDef = null;
             for (int index = 0; index < ratioCount; index++)
+            {
+                resourceDef = definitionForResource(resourceRatios[index].ResourceName);
+                part.vessel.GetConnectedResourceTotals(resourceDef.id, out amount, out maxAmount);
+                if (amount + resourceRatios[index].Ratio > maxAmount)
+                    continue;
                 this.recipe.Outputs.Add(resourceRatios[index]);
+            }
         }
         #endregion
 

@@ -75,3 +75,4 @@ C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\xmldoc2m
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\RunMDSeparator.bat
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\RunPowershell.bat
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\xmldoc2md.ps1
+C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\UnityEngine.SubsystemsModule.dll

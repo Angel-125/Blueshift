@@ -112,30 +112,56 @@ namespace Blueshift
                 return;
             }
 
-            int unlockRoll = UnityEngine.Random.Range(1, dieRoll);
-            if (unlockRoll < unlockTargetNumber)
-                return;
+            // Get our config node
+            ConfigNode partNode = getPartConfigNode();
+            string[] unlockedNodes = new string[0];
+
+            // Get the list of unlocked tech nodes (if any).
+            if (partNode != null && partNode.HasValue("unlockedTechNode"))
+            {
+                unlockedNodes = partNode.GetValues("unlockedTechNode");
+            }
+            else
+            {
+                // No tech nodes to specifically unlock. Make a random roll to see if we should unlock a random tech node.
+                int unlockRoll = UnityEngine.Random.Range(1, dieRoll);
+                if (unlockRoll < unlockTargetNumber)
+                    return;
+            }
 
             //Get the list of unavailable nodes and their tech IDs
             List<ProtoTechNode> unavailableNodes = AssetBase.RnDTechTree.GetNextUnavailableNodes();
             if (unavailableNodes.Count <= 0)
                 return;
-            ProtoTechNode node;
-            int index = 0;
-            Dictionary<string, int> techNodes = new Dictionary<string, int>();
-            for (index = 0; index < unavailableNodes.Count; index++)
-            {
-                if (techNodes.ContainsKey(unavailableNodes[index].techID) == false)
-                    techNodes.Add(unavailableNodes[index].techID, index);
-            }
 
-            index = UnityEngine.Random.Range(0, unavailableNodes.Count);
-            node = unavailableNodes[index];
+            ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+
+            // If we have a specific list of nodes to unlock, then do so now.
+            ProtoTechNode node;
+            if (unlockedNodes.Length > 0)
+            {
+                int count = unavailableNodes.Count;
+                for (int nodeIndex = 0; nodeIndex < count; nodeIndex++)
+                {
+                    if (unlockedNodes.Contains(unavailableNodes[nodeIndex].techID))
+                        unlockTechNode(unavailableNodes[nodeIndex]);
+                }
+            }
+            else
+            {
+                // Unlock a random node.
+                int index = UnityEngine.Random.Range(0, unavailableNodes.Count);
+                node = unavailableNodes[index];
+                unlockTechNode(node);
+            }
+        }
+
+        protected void unlockTechNode(ProtoTechNode node)
+        {
             ResearchAndDevelopment.Instance.UnlockProtoTechNode(node);
             ResearchAndDevelopment.RefreshTechTreeUI();
 
-            ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
-            ScreenMessages.PostScreenMessage(ResearchAndDevelopment.GetTechnologyTitle(node.techID) + kUnlockTechNodeMsg, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage(ResearchAndDevelopment.GetTechnologyTitle(node.techID) + kUnlockTechNodeMsg, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
         }
         #endregion
     }

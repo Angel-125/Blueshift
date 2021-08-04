@@ -134,6 +134,8 @@ namespace Blueshift
                 {
                     resource = resources[index];
                     resourceDef = definitions[resource.resourceName];
+                    if (resourceDef == null)
+                        continue;
                     if (resource.abundance > 0)
                     {
                         resourceDisplay = string.Format("{0:f2}%", resource.displayAbundance * 100f);
