@@ -10,8 +10,11 @@ GameData
 
 Changes
 
-- WBITechUnlock now supports one or more "unlockedTechNode" entries that will unlock specific tech nodes instead of randomly unlocking a tech node.
-- Recompiled for KSP 1.12.2.
+- Added new GR-50S Spherical Graviolium Tank. This is a 5m-diameter tank that holds Graviolium.
+- Added support for EVA Repairs, if installed. You can find the mini-mod here.
+- Removed built-in part failure functionality in favor of EVA Repairs.
+- Fixed issue where drills were not harvesting graviolium on planetary surfaces that had the resource.
+- Fixed issue where blue glowing sections weren't animating.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

@@ -124,54 +124,6 @@ namespace Blueshift
         [KSPField]
         public float rendezvousDistance = kRendezvousDistance;
 
-        #region Maintenance
-        /// </summary>
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_jumpGateStatus")]
-        public string statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
-
-        /// <summary>
-        /// Flag to indicate that the part needs maintenance in order to function.
-        /// </summary>
-        [KSPField(isPersistant = true)]
-        public bool needsMaintenance = false;
-
-        /// <summary>
-        /// In hours, how long until the part needs maintenance in order to function. Default is 600.
-        /// </summary>
-        [KSPField]
-        public double mtbf = -1f;
-
-        /// <summary>
-        /// In seconds, the current time remaining until the part needs maintenance in order to function.
-        /// </summary>
-        [KSPField(isPersistant = true)]
-        public double currentMTBF = 600 * 3600;
-
-        /// <summary>
-        /// The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-        /// </summary>
-        [KSPField]
-        public string repairSkill = "RepairSkill";
-
-        /// <summary>
-        /// The minimum skill level required to perform repairs. Default is 1.
-        /// </summary>
-        [KSPField]
-        public int minimumSkillLevel = 1;
-
-        /// <summary>
-        /// The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-        /// </summary>
-        [KSPField]
-        public string repairKitName = "evaRepairKit";
-
-        /// <summary>
-        /// The number of repair kits required to repair the part. Default is 1.
-        /// </summary>
-        [KSPField]
-        public int repairKitsRequired = 1;
-        #endregion
-
         #endregion
 
         #region Housekeeping
@@ -334,43 +286,9 @@ namespace Blueshift
         #endregion
 
         #region Events
-        /// <summary>
-        /// Performs maintenance on the part.
-        /// </summary>
-        [KSPEvent(guiName = "#LOC_BLUESHIFT_repairPart", guiActiveUnfocused = true, unfocusedRange = 5)]
-        public void RepairPart()
-        {
-            if (BlueshiftScenario.shared.CanRepairPart(repairSkill, minimumSkillLevel, repairKitName, repairKitsRequired))
-            {
-                BlueshiftScenario.shared.ConsumeRepairKits(FlightGlobals.ActiveVessel, repairKitName, repairKitsRequired);
-                needsMaintenance = false;
-                currentMTBF = mtbf * 3600;
-                string message = Localizer.Format("#LOC_BLUESHIFT_partRepaired", new string[1] { part.partInfo.title });
-                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_CENTER);
-                statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
-                Events["RepairPart"].active = false;
-            }
-        }
-
-        /// <summary>
-        /// Debug event to break the part.
-        /// </summary>
-        [KSPEvent(guiName = "(Debug) break part", guiActive = true)]
-        public void DebugBreakPart()
-        {
-            needsMaintenance = false;
-            currentMTBF = 1f;
-        }
-
         [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "LOC_BLUESHIFT_jumpGateSelectGate")]
         public void SelectGate()
         {
-            if (needsMaintenance)
-            {
-                Localizer.Format("#LOC_BLUESHIFT_jumpGateCannotSelectDestination");
-                return;
-            }
-
             if (jumpgates.Count > 1)
             {
                 jumpgateSelector.jumpgates = jumpgates;
@@ -397,6 +315,15 @@ namespace Blueshift
         #endregion
 
         #region Overrides
+        public void OnDestroy()
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                GameEvents.onPartRepaired.Remove(onPartRepaired);
+                GameEvents.onPartFailure.Remove(onPartFailure);
+            }
+        }
+
         public void FixedUpdate()
         {
             if (!HighLogic.LoadedSceneIsFlight)
@@ -422,22 +349,6 @@ namespace Blueshift
                     effectsThrottle = 1;
                     if (portalTrigger != null)
                         portalTrigger.localScale = Vector3.one;
-                }
-            }
-
-            // Check maintenance
-            if (BlueshiftScenario.maintenanceEnabled && !needsMaintenance)
-            {
-                currentMTBF -= TimeWarp.fixedDeltaTime;
-
-                if (currentMTBF <= 0)
-                {
-                    statusDisplay = Localizer.Format("#LOC_BLUESHIFT_needsMaintenance");
-                    Events["RepairPart"].active = true;
-                    needsMaintenance = true;
-                    string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
-                    ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
-                    return;
                 }
             }
         }
@@ -470,11 +381,6 @@ namespace Blueshift
             // Setup GUI
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
-            statusDisplay = needsMaintenance ? Localizer.Format("#LOC_BLUESHIFT_needsMaintenance") : Localizer.Format("#LOC_BLUESHIFT_statusOK");
-            Events["DebugBreakPart"].active = debugMode;
-            Events["DebugBreakPart"].guiName = "Break " + ClassName;
-            Events["RepairPart"].active = needsMaintenance;
-            Events["RepairPart"].guiName = Localizer.Format("#LOC_BLUESHIFT_repairPart", new string[1] { Localizer.Format("#LOC_BLUESHIFT_warpCoilTitle") });
 
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
@@ -509,10 +415,32 @@ namespace Blueshift
 
             // Setup network
             setupJumpNetwork();
+
+            // Game events
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                GameEvents.onPartRepaired.Add(onPartRepaired);
+                GameEvents.onPartFailure.Add(onPartFailure);
+            }
         }
         #endregion
 
         #region Helpers
+        void onPartFailure(Part failedPart)
+        {
+            if (failedPart != part)
+                return;
+
+            isActivated = false;
+            effectsThrottle = 0;
+
+            OnUpdate();
+        }
+
+        void onPartRepaired(Part repairedPart)
+        {
+        }
+
         private void jumpgateSelected(Vessel destinationGate)
         {
             destinationVessel = destinationGate;

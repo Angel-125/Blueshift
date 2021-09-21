@@ -75,6 +75,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
     <Compile Include="SettingsAndScenario\BlueshiftSettings.cs" />
     <Compile Include="GUI\JumpgateSelector.cs" />
     <Compile Include="GUI\PotatoScannerInfo.cs" />
@@ -100,9 +101,7 @@
     <Compile Include="Utility\WBIDockingAlignmentLock.cs" />
     <Compile Include="JumpTech\WBIGateAssemblyChecker.cs" />
     <Compile Include="SpaceAnomaly\WBICustomAsteroid.cs" />
-    <Compile Include="Utility\WBIRepairBot.cs" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Content Include="MarkdownSeparator.exe">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

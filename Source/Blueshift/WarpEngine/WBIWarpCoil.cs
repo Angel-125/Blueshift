@@ -5,6 +5,7 @@ using System.Text;
 using UnityEngine;
 using KSP.IO;
 using KSP.Localization;
+using Blueshift.EVARepairs;
 
 /*
 Source code copyright 2021, by Michael Billard (Angel-125)
@@ -98,49 +99,11 @@ namespace Blueshift
         [KSPField]
         public float displacementImpulse = 10;
 
-        #region Maintenance
         /// <summary>
         /// Flag to indicate that the part needs maintenance in order to function.
         /// </summary>
         [KSPField(isPersistant = true)]
         public bool needsMaintenance = false;
-
-        /// <summary>
-        /// In hours, how long until the part needs maintenance in order to function. Default is 600.
-        /// </summary>
-        [KSPField]
-        public double mtbf = 600;
-
-        /// <summary>
-        /// In seconds, the current time remaining until the part needs maintenance in order to function.
-        /// </summary>
-        [KSPField(isPersistant = true)]
-        public double currentMTBF = 600 * 3600;
-
-        /// <summary>
-        /// The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-        /// </summary>
-        [KSPField]
-        public string repairSkill = "RepairSkill";
-
-        /// <summary>
-        /// The minimum skill level required to perform repairs. Default is 1.
-        /// </summary>
-        [KSPField]
-        public int minimumSkillLevel = 1;
-
-        /// <summary>
-        /// The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-        /// </summary>
-        [KSPField]
-        public string repairKitName = "evaRepairKit";
-
-        /// <summary>
-        /// The number of repair kits required to repair the part. Default is 1.
-        /// </summary>
-        [KSPField]
-        public int repairKitsRequired = 1;
-        #endregion
         #endregion
 
         #region Housekeeping
@@ -150,6 +113,7 @@ namespace Blueshift
         /// Optional (but highly recommended) Waterfall effects module
         /// </summary>
         protected WFModuleWaterfallFX waterfallFXModule = null;
+        BSModuleEVARepairs evaRepairs = null;
         #endregion
 
         #region IModuleInfo
@@ -180,50 +144,36 @@ namespace Blueshift
             StringBuilder info = new StringBuilder();
 
             info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpCoilInfoDesc"));
-            info.AppendLine(" ");
-            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoMaintenance"));
-            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpCapacity", new string[1] { string.Format("{0:n1}", warpCapacity) }));
-            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairSkill", new string[1] { repairSkill }));
-            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoRepairRating", new string[1] { minimumSkillLevel.ToString() }));
-            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_infoKitsRequired", new string[1] { repairKitsRequired.ToString() }));
             info.AppendLine(resHandler.PrintModuleResources());
 
             return info.ToString();
         }
         #endregion
 
-        #region Events
-        /// <summary>
-        /// Performs maintenance on the part.
-        /// </summary>
-        [KSPEvent(guiName = "#LOC_BLUESHIFT_repairPart", guiActiveUnfocused = true, unfocusedRange = 5)]
-        public void RepairPart()
-        {
-            if (BlueshiftScenario.shared.CanRepairPart(repairSkill, minimumSkillLevel, repairKitName, repairKitsRequired))
-            {
-                BlueshiftScenario.shared.ConsumeRepairKits(FlightGlobals.ActiveVessel, repairKitName, repairKitsRequired);
-                needsMaintenance = false;
-                currentMTBF = mtbf * 3600;
-                string message = Localizer.Format("#LOC_BLUESHIFT_partRepaired", new string[1] { part.partInfo.title });
-                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_CENTER);
-                statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
-                Events["RepairPart"].active = false;
-            }
-        }
-
-        /// <summary>
-        /// Debug event to break the part.
-        /// </summary>
-        [KSPEvent(guiName = "(Debug) break part", guiActive = true)]
-        public void DebugBreakPart()
-        {
-            needsMaintenance = false;
-            currentMTBF = 1f;
-        }
-
-        #endregion
-
         #region API
+        /// <summary>
+        /// Updates the MTBF rate multiplier with the new rate.
+        /// </summary>
+        /// <param name="rateMultiplier">A double containing the new multiplier.</param>
+        public void UpdateMTBFRateMultiplier(double rateMultiplier)
+        {
+            if (evaRepairs == null)
+                return;
+
+            evaRepairs.SetRateMultiplier(rateMultiplier);
+        }
+
+        /// <summary>
+        /// Updates the warp core's EVA Repairs' MTBF, if any.
+        /// </summary>
+        public void UpdateMTBF(double elapsedTime)
+        {
+            if (evaRepairs == null)
+                return;
+
+            evaRepairs.UpdateMTBF(elapsedTime);
+        }
+
         /// <summary>
         /// Determines whether or not the warp coil has enough resources to operate.
         /// </summary>
@@ -244,26 +194,6 @@ namespace Blueshift
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Updates the mean time between failures
-        /// </summary>
-        /// <param name="rateMultiplier">The rate multiplier to reduce the current MTBF by.</param>
-        public void UpdateMTBF(double rateMultiplier)
-        {
-            if (!BlueshiftScenario.maintenanceEnabled)
-                return;
-
-            currentMTBF -= (rateMultiplier * TimeWarp.fixedDeltaTime);
-            if (currentMTBF <= 0)
-            {
-                needsMaintenance = true;
-                statusDisplay = Localizer.Format("#LOC_BLUESHIFT_needsMaintenance");
-                Events["RepairPart"].active = true;
-                string message = Localizer.Format("#LOC_BLUESHIFT_partNeedsMaintenance", new string[1] { part.partInfo.title });
-                ScreenMessages.PostScreenMessage(message, BlueshiftScenario.messageDuration, ScreenMessageStyle.UPPER_LEFT);
-            }
         }
 
         /// <summary>
@@ -312,20 +242,50 @@ namespace Blueshift
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
             statusDisplay = needsMaintenance ? Localizer.Format("#LOC_BLUESHIFT_needsMaintenance") : Localizer.Format("#LOC_BLUESHIFT_statusOK");
-            Events["DebugBreakPart"].active = debugMode;
-            Events["DebugBreakPart"].guiName = "Break " + ClassName;
-            Events["RepairPart"].active = needsMaintenance;
-            Events["RepairPart"].guiName = Localizer.Format("#LOC_BLUESHIFT_repairPart", new string[1] { Localizer.Format("#LOC_BLUESHIFT_warpCoilTitle") });
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();
 
             // Get Waterfall module (if any)
             waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
+
+            // Get EVA Repairs module (if any)
+            evaRepairs = BSModuleEVARepairs.GetPartModule(part);
+
+            // Game events
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                GameEvents.onPartRepaired.Add(onPartRepaired);
+                GameEvents.onPartFailure.Add(onPartFailure);
+            }
+        }
+
+        public void OnDestroy()
+        {
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                GameEvents.onPartRepaired.Remove(onPartRepaired);
+                GameEvents.onPartFailure.Remove(onPartFailure);
+            }
         }
         #endregion
 
         #region Helpers
+        void onPartFailure(Part failedPart)
+        {
+            if (failedPart != part)
+                return;
+
+            isActivated = false;
+            animationThrottle = 0;
+
+            OnUpdate();
+        }
+
+        void onPartRepaired(Part repairedPart)
+        {
+        }
+
         protected void updateTextureModules()
         {
             if (animatedTextures == null)

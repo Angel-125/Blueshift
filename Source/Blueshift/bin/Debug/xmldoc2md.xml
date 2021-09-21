@@ -190,54 +190,9 @@
             Name of the Waterfall effects controller that controls the warp effects (if any).
             </summary>
         </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.needsMaintenance">
-            <summary>
-            Flag to indicate that the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.mtbf">
-            <summary>
-            In hours, how long until the part needs maintenance in order to function. Default is 600.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.currentMTBF">
-            <summary>
-            In seconds, the current time remaining until the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.repairSkill">
-            <summary>
-            The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.minimumSkillLevel">
-            <summary>
-            The minimum skill level required to perform repairs. Default is 1.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.repairKitName">
-            <summary>
-            The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleGeneratorFX.repairKitsRequired">
-            <summary>
-            The number of repair kits required to repair the part. Default is 1.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIModuleGeneratorFX.isMissingResources">
             <summary>
             Flag indicating whether or not we're missing resources needed to produce outputs.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIModuleGeneratorFX.RepairPart">
-            <summary>
-            Performs maintenance on the part.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIModuleGeneratorFX.DebugBreakPart">
-            <summary>
-            Debug event to break the part.
             </summary>
         </member>
         <member name="M:Blueshift.WBIModuleGeneratorFX.GetAmountProduced(System.String)">
@@ -442,49 +397,20 @@
             Flag to indicate that the part needs maintenance in order to function.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpCoil.mtbf">
-            <summary>
-            In hours, how long until the part needs maintenance in order to function. Default is 600.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpCoil.currentMTBF">
-            <summary>
-            In seconds, the current time remaining until the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpCoil.repairSkill">
-            <summary>
-            The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpCoil.minimumSkillLevel">
-            <summary>
-            The minimum skill level required to perform repairs. Default is 1.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpCoil.repairKitName">
-            <summary>
-            The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpCoil.repairKitsRequired">
-            <summary>
-            The number of repair kits required to repair the part. Default is 1.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpCoil.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module
             </summary>
         </member>
-        <member name="M:Blueshift.WBIWarpCoil.RepairPart">
+        <member name="M:Blueshift.WBIWarpCoil.UpdateMTBFRateMultiplier(System.Double)">
             <summary>
-            Performs maintenance on the part.
+            Updates the MTBF rate multiplier with the new rate.
             </summary>
+            <param name="rateMultiplier">A double containing the new multiplier.</param>
         </member>
-        <member name="M:Blueshift.WBIWarpCoil.DebugBreakPart">
+        <member name="M:Blueshift.WBIWarpCoil.UpdateMTBF(System.Double)">
             <summary>
-            Debug event to break the part.
+            Updates the warp core's EVA Repairs' MTBF, if any.
             </summary>
         </member>
         <member name="M:Blueshift.WBIWarpCoil.HasEnoughResources(System.Double)">
@@ -493,12 +419,6 @@
             </summary>
             <param name="rateMultiplier">The resource consumption rate multiplier</param>
             <returns>True if the vessel has enough resources to power the warp coil, false if not.</returns>
-        </member>
-        <member name="M:Blueshift.WBIWarpCoil.UpdateMTBF(System.Double)">
-            <summary>
-            Updates the mean time between failures
-            </summary>
-            <param name="rateMultiplier">The rate multiplier to reduce the current MTBF by.</param>
         </member>
         <member name="M:Blueshift.WBIWarpCoil.GetAmountRequired(System.String)">
             <summary>
@@ -713,41 +633,6 @@
             When the powerMultiplier drops below this value, the engine will flame out.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.needsMaintenance">
-            <summary>
-            Flag to indicate that the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.mtbf">
-            <summary>
-            In hours, how long until the part needs maintenance in order to function. Default is 600.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.currentMTBF">
-            <summary>
-            In seconds, the current time remaining until the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.repairSkill">
-            <summary>
-            The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.minimumSkillLevel">
-            <summary>
-            The minimum skill level required to perform repairs. Default is 1.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.repairKitName">
-            <summary>
-            The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIWarpEngine.repairKitsRequired">
-            <summary>
-            The number of repair kits required to repair the part. Default is 1.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpEngineerSkill">
             <summary>
             The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -890,16 +775,6 @@
         </member>
         <member name="F:Blueshift.WBIWarpEngine.consumptionRateMultiplier">
             Multiplier used for consumption of resources and MTBF/heat.
-        </member>
-        <member name="M:Blueshift.WBIWarpEngine.RepairPart">
-            <summary>
-            Performs maintenance on the part.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIWarpEngine.DebugBreakPart">
-            <summary>
-            Debug event to break the part.
-            </summary>
         </member>
         <member name="M:Blueshift.WBIWarpEngine.CircularizeOrbit">
             <summary>
@@ -1092,16 +967,6 @@
             Flag to indicate if parts require maintenance.
             </summary>
         </member>
-        <member name="M:Blueshift.BlueshiftScenario.CanRepairPart(System.String,System.Int32,System.String,System.Int32)">
-            <summary>
-            Determines whether or not the part can be repaired.
-            </summary>
-            <param name="maintenanceSkill">A string containing the required repair skill.</param>
-            <param name="minimumSkillLevel">An int containing the minimum skill level required.</param>
-            <param name="repairKitName">A string containing the name of the repair kit part.</param>
-            <param name="repairKitsRequired">An int containing the number of repair kits required.</param>
-            <returns></returns>
-        </member>
         <member name="M:Blueshift.BlueshiftScenario.GetHighestRank(Vessel,System.String,ProtoCrewMember@)">
             <summary>
             Returns the highest ranking astronaut in the vessel that has the required skill.
@@ -1216,14 +1081,6 @@
             <param name="targetName">A string representing the name of the vessel's target.</param>
             <returns>A double containing the distance. If there is no target then the distance is 0.</returns>
         </member>
-        <member name="M:Blueshift.BlueshiftScenario.ConsumeRepairKits(Vessel,System.String,System.Int32)">
-            <summary>
-            Consumes repair kits.
-            </summary>
-            <param name="vessel">The Vessel to consume the kits from</param>
-            <param name="repairKitName">A string containing the name of the repair part.</param>
-            <param name="amount">An int containing the number of kits to consume.</param>
-        </member>
         <member name="T:Blueshift.WBIModuleHarvesterFX">
             <summary>
             This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
@@ -1282,51 +1139,6 @@
         <member name="F:Blueshift.WBIModuleHarvesterFX.waterfallEffectController">
             <summary>
             Name of the Waterfall effects controller that controls the warp effects (if any).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.needsMaintenance">
-            <summary>
-            Flag to indicate that the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.mtbf">
-            <summary>
-            In hours, how long until the part needs maintenance in order to function. Default is 600.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.currentMTBF">
-            <summary>
-            In seconds, the current time remaining until the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.repairSkill">
-            <summary>
-            The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.minimumSkillLevel">
-            <summary>
-            The minimum skill level required to perform repairs. Default is 1.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.repairKitName">
-            <summary>
-            The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIModuleHarvesterFX.repairKitsRequired">
-            <summary>
-            The number of repair kits required to repair the part. Default is 1.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIModuleHarvesterFX.RepairPart">
-            <summary>
-            Performs maintenance on the part.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIModuleHarvesterFX.DebugBreakPart">
-            <summary>
-            Debug event to break the part.
             </summary>
         </member>
         <member name="T:Blueshift.WBISpaceAnomaly">
@@ -1602,42 +1414,6 @@
             Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "F:Blueshift.WBIJumpGate.statusDisplay" -->
-        <member name="F:Blueshift.WBIJumpGate.needsMaintenance">
-            <summary>
-            Flag to indicate that the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.mtbf">
-            <summary>
-            In hours, how long until the part needs maintenance in order to function. Default is 600.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.currentMTBF">
-            <summary>
-            In seconds, the current time remaining until the part needs maintenance in order to function.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.repairSkill">
-            <summary>
-            The skill required to perform repairs. Default is "RepairSkill" (Engineers have this).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.minimumSkillLevel">
-            <summary>
-            The minimum skill level required to perform repairs. Default is 1.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.repairKitName">
-            <summary>
-            The part name that is consumed during repairs. Default is "evaRepairKit" (the stock EVA Repair Kit).
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.repairKitsRequired">
-            <summary>
-            The number of repair kits required to repair the part. Default is 1.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module
@@ -1646,16 +1422,6 @@
         <member name="F:Blueshift.WBIJumpGate.vesselID">
             <summary>
             The ID of the vessel when it was first created.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIJumpGate.RepairPart">
-            <summary>
-            Performs maintenance on the part.
-            </summary>
-        </member>
-        <member name="M:Blueshift.WBIJumpGate.DebugBreakPart">
-            <summary>
-            Debug event to break the part.
             </summary>
         </member>
         <member name="M:Blueshift.WBIJumpGate.SetGateEnabled(System.Boolean)">
@@ -1730,11 +1496,6 @@
         <member name="M:Blueshift.WBICustomAsteroid.TargetCoM">
             <summary>
             Replacement event for ModuleAsteroid's event to target the asteroid's center of mass.
-            </summary>
-        </member>
-        <member name="T:Blueshift.WBIRepairBot">
-            <summary>
-            A simple helper class to identify a part as a repair bot. Repair bots can perform repairs on Blueshift parts that require repairs.
             </summary>
         </member>
     </members>

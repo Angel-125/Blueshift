@@ -169,7 +169,6 @@ namespace Blueshift
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
-            maintenanceEnabled = BlueshiftSettings.MaintenanceEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
 
             if (!spawnSpaceAnomalies)
@@ -283,37 +282,6 @@ namespace Blueshift
         #endregion
 
         #region API
-
-        /// <summary>
-        /// Determines whether or not the part can be repaired.
-        /// </summary>
-        /// <param name="maintenanceSkill">A string containing the required repair skill.</param>
-        /// <param name="minimumSkillLevel">An int containing the minimum skill level required.</param>
-        /// <param name="repairKitName">A string containing the name of the repair kit part.</param>
-        /// <param name="repairKitsRequired">An int containing the number of repair kits required.</param>
-        /// <returns></returns>
-        public bool CanRepairPart(string maintenanceSkill = "RepairSkill", int minimumSkillLevel = 1, string repairKitName = "evaRepairKit", int repairKitsRequired = 1)
-        {
-            // Make sure that we have sufficient skill
-            if (!hasSufficientSkill(FlightGlobals.ActiveVessel, maintenanceSkill, minimumSkillLevel))
-            {
-                string message = Localizer.Format("#LOC_BLUESHIFT_insufficientSkill", new string[1] { minimumSkillLevel.ToString() } );
-                ScreenMessages.PostScreenMessage(message, messageDuration, ScreenMessageStyle.UPPER_CENTER);
-                return false;
-            }
-
-            // Make sure that we have sufficient repair kits.
-            if (!hasEnoughRepairKits(FlightGlobals.ActiveVessel, repairKitsRequired, repairKitName))
-            {
-                string message = Localizer.Format("#LOC_BLUESHIFT_insufficientKits", new string[1] { repairKitsRequired.ToString() });
-                ScreenMessages.PostScreenMessage(message, messageDuration, ScreenMessageStyle.UPPER_CENTER);
-                return false;
-            }
-
-            // A-OK
-            return true;
-        }
-
         /// <summary>
         /// Returns the highest ranking astronaut in the vessel that has the required skill.
         /// </summary>
@@ -785,80 +753,6 @@ namespace Blueshift
         #endregion
 
         #region Helpers
-        /// <summary>
-        /// Consumes repair kits.
-        /// </summary>
-        /// <param name="vessel">The Vessel to consume the kits from</param>
-        /// <param name="repairKitName">A string containing the name of the repair part.</param>
-        /// <param name="amount">An int containing the number of kits to consume.</param>
-        public void ConsumeRepairKits(Vessel vessel, string repairKitName = "evaRepairKit", int amount = 1)
-        {
-            List<ModuleInventoryPart> inventories = vessel.FindPartModulesImplementing<ModuleInventoryPart>();
-            ModuleInventoryPart inventory;
-            int count = inventories.Count;
-            int repairPartsFound = 0;
-            int repairPartsRemaining = amount;
-
-            for (int index = 0; index < count; index++)
-            {
-                inventory = inventories[index];
-
-                if (inventory.ContainsPart(repairKitName))
-                {
-                    repairPartsFound += inventory.TotalAmountOfPartStored(repairKitName);
-
-                    if (repairPartsFound >= repairPartsRemaining)
-                    {
-                        inventory.RemoveNPartsFromInventory(repairKitName, repairPartsRemaining, true);
-                        break;
-                    }
-                    else
-                    {
-                        repairPartsRemaining -= repairPartsFound;
-                        inventory.RemoveNPartsFromInventory(repairKitName, repairPartsFound, true);
-                    }
-                }
-            }
-        }
-
-        private bool hasEnoughRepairKits(Vessel vessel, int repairKitsRequired, string repairKitName = "evaRepairKit")
-        {
-            List<ModuleInventoryPart> inventories = vessel.FindPartModulesImplementing<ModuleInventoryPart>();
-            int count = inventories.Count;
-            int repairPartsFound = 0;
-
-            for (int index = 0; index < count; index++)
-            {
-                if (inventories[index].ContainsPart(repairKitName))
-                {
-                    repairPartsFound += inventories[index].TotalAmountOfPartStored(repairKitName);
-                    if (repairPartsFound >= repairKitsRequired)
-                        return true;
-                }
-            }
-
-            return false;
-        }
-
-        private bool hasSufficientSkill(Vessel vessel, string maintenanceSkill, int minimumSkillLevel)
-        {
-            ProtoCrewMember astronaut;
-            int highestSkill = 0;
-
-            // Make sure that we have sufficient skill.
-            if (vessel.FindPartModuleImplementing<WBIRepairBot>())
-                return true;
-            else if (vessel.isEVA)
-                highestSkill = GetHighestRank(vessel, maintenanceSkill, out astronaut);
-            else
-                highestSkill = GetHighestRank(vessel, maintenanceSkill, out astronaut);
-
-            if (highestSkill < minimumSkillLevel)
-                return false;
-
-            return true;
-        }
-
         private void removeJumpgates()
         {
             int count = spaceAnomalies.Count;
@@ -1036,7 +930,6 @@ namespace Blueshift
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
             jumpgateStartupIsDestructive = BlueshiftSettings.JumpgateStartupIsDestructive;
-            maintenanceEnabled = BlueshiftSettings.MaintenanceEnabled;
 
             if (!spawnSpaceAnomalies)
             {
