@@ -608,9 +608,9 @@ namespace Blueshift
 
             bool enableCircularizeOrbit = BlueshiftScenario.autoCircularize && (spatialLocation == WBISpatialLocations.Planetary || 
                 (BlueshiftScenario.shared.IsAStar(vessel.mainBody) && BlueshiftScenario.shared.GetLastPlanet(vessel.mainBody) == null));
-            Events["CircularizeOrbit"].active = enableCircularizeOrbit;
-            Fields["autoCircularizeInclination"].guiActive = enableCircularizeOrbit;
-            Actions["CircularizeOrbitAction"].active = BlueshiftScenario.autoCircularize;
+            Events["CircularizeOrbit"].active = enableCircularizeOrbit && isOperational;
+            Fields["autoCircularizeInclination"].guiActive = enableCircularizeOrbit && isOperational;
+            Actions["CircularizeOrbitAction"].active = enableCircularizeOrbit && isOperational;
         }
 
         public override string GetInfo()
@@ -696,11 +696,29 @@ namespace Blueshift
 
             Fields["warpSpeedDisplay"].guiActive = true;
             Fields["maxWarpSpeedDisplay"].guiActive = true;
-
+            Fields["preflightCheck"].guiActive = true;
+                
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
             {
                 warpEngineTextures[index].isActivated = true;
+            }
+
+            // Auto-start any inactive converters that aren't broken. Because people are too damn lazy...
+            List<ModuleResourceConverter> powerPlants = part.FindModulesImplementing<ModuleResourceConverter>();
+            ModuleResourceConverter powerPlant;
+            if (powerPlants != null && powerPlants.Count > 0)
+            count = powerPlants.Count;
+            {
+                count = powerPlants.Count;
+                for (int index = 0; index < count; index++)
+                {
+                    powerPlant = powerPlants[index];
+                    if (!powerPlant.enabled || powerPlant.IsActivated)
+                        continue;
+
+                    powerPlant.StartResourceConverter();
+                }
             }
         }
 
@@ -711,7 +729,8 @@ namespace Blueshift
             spatialLocation = WBISpatialLocations.Unknown;
 
             Fields["warpSpeedDisplay"].guiActive = false;
-            Fields["maxWarpSpeedDisplay"].guiActive = true;
+            Fields["maxWarpSpeedDisplay"].guiActive = false;
+            Fields["preflightCheck"].guiActive = false;
 
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
@@ -795,6 +814,12 @@ namespace Blueshift
         /// <returns>true if the engine is flamed out, false if not.</returns>
         public bool IsFlamedOut()
         {
+            // Can't flame out if the throttle is zeroed.
+            if (throttleLevel <= 0)
+            {
+                return false;
+            }
+
             // If our power multiplier is below the ignition threshold then we are flamed out.
             if (powerMultiplier < warpIgnitionThreshold)
             {
@@ -935,14 +960,18 @@ namespace Blueshift
 
         protected void updateFTLPreflightStatus()
         {
-            if (powerMultiplier < warpIgnitionThreshold)
+            if (throttleLevel <= 0 && effectiveWarpCapacity > 0)
+            {
+                preflightCheck = Localizer.Format("#LOC_BLUESHIFT_warpZeroThrottleReady");
+            }
+
+            else if (powerMultiplier < warpIgnitionThreshold)
             {
                 preflightCheck = Localizer.Format("#LOC_BLUESHIFT_needsMorePower");
-                return;
             }
 
             // Update preflight check
-            if (maxWarpSpeed < 1)
+            else if (maxWarpSpeed < 1)
             {
                 // Determinine minimum capacity to reach light speed or better.
                 float FTLSpeed = 0;
@@ -1165,6 +1194,10 @@ namespace Blueshift
                 case WBISpatialLocations.Planetary:
                     float speedRatio = (float)(this.part.vessel.altitude / this.part.vessel.mainBody.sphereOfInfluence);
                     maxWarpSpeed *= planetarySOISpeedCurve.Evaluate(speedRatio);
+
+                    // Avoid snail's pace. We should have a minimum of 0.001C in planetary space.
+                    if (maxWarpSpeed < 0.001f && bestWarpSpeed > 0.001f)
+                        maxWarpSpeed = 0.001f;
                     break;
 
                 // No speed adjustment while interplanetary.
@@ -1303,14 +1336,10 @@ namespace Blueshift
                 }
             }
 
-            if (throttleLevel > 0)
-                Debug.Log(string.Format("[WBIWarpEngine] - throttleLevel: {0:n2}", throttleLevel));
             // Calculate displacement multiplier
-            totalDisplacement *= throttleLevel;
             displacementMultiplier = totalDisplacement / vesselMass;
 
             // Get effective warp capacity
-            totalWarpCapacity *= throttleLevel;
             effectiveWarpCapacity = totalWarpCapacity * displacementMultiplier * powerMultiplier;
         }
 
@@ -1599,7 +1628,14 @@ namespace Blueshift
 
             if (targetDistance > 0)
             {
+                Fields["vesselCourse"].guiActive = true;
+                Fields["targetDistance"].guiActive = true;
                 Fields["targetDistance"].guiUnits = units;
+            }
+            else
+            {
+                Fields["vesselCourse"].guiActive = false;
+                Fields["targetDistance"].guiActive = false;
             }
         }
         #endregion
