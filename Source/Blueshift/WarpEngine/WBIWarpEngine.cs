@@ -731,6 +731,7 @@ namespace Blueshift
             Fields["warpSpeedDisplay"].guiActive = false;
             Fields["maxWarpSpeedDisplay"].guiActive = false;
             Fields["preflightCheck"].guiActive = false;
+            Events["CircularizeOrbit"].active = false;
 
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
