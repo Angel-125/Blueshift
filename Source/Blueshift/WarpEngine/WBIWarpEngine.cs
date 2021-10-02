@@ -683,21 +683,16 @@ namespace Blueshift
             base.UnFlameout(showFX);
         }
 
-        public override void OnActive()
-        {
-            base.OnActive();
-            if (!staged)
-                part.force_activate(true);
-        }
-
         public override void Activate()
         {
             base.Activate();
+            if (!staged)
+                part.force_activate();
 
             Fields["warpSpeedDisplay"].guiActive = true;
             Fields["maxWarpSpeedDisplay"].guiActive = true;
             Fields["preflightCheck"].guiActive = true;
-                
+
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
             {

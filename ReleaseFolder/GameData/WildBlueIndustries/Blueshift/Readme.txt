@@ -12,16 +12,7 @@ Changes
 
 Warp Engines
 
-- The planetary SOI warp curve won't be applied if the vessel's max warp speed is below 0.001c. This will help prevent underpowered vessels from crawling at a snail's pace
-when in planetary space.
-- For lazy players: If a warp engine has power converters built in, then when you start the engine, the converters will also be automatically started as well.
-- The vessel course (a.k.a. selected target) and distance to target displays will be hidden when there is no target selected.
-- The Max Warp Speed and FTL Check displays will be hidden when the warp engine is shut down.
-- The Auto-circularize orbit button will be hidden when the warp engine is shut down.
-- The maximum warp speed display will be updated even when the throttle is at 0.
-- The FTL Check display now handles the case where the throttle is at 0.
-- Fixed issue where the warp engine flames out if the throttle is at 0.
-- Fixed "double-dipping" issue where warp capacity was affected by throttle, and speed was affected by throttle as well. Now, just warp speed is affected by the throttle.
+- Fixed issue where warp engines would not function when activated but not staged.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.
