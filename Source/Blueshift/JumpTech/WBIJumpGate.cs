@@ -286,7 +286,7 @@ namespace Blueshift
         #endregion
 
         #region Events
-        [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "LOC_BLUESHIFT_jumpGateSelectGate")]
+        [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "#LOC_BLUESHIFT_jumpGateSelectGate")]
         public void SelectGate()
         {
             if (jumpgates.Count > 1)
@@ -310,6 +310,9 @@ namespace Blueshift
             else
             {
                 Events["SelectGate"].active = false;
+                effectsThrottle = 0;
+                destinationVessel = null;
+                isActivated = false;
             }
         }
         #endregion
@@ -465,7 +468,7 @@ namespace Blueshift
 
         private void updateJumpgatePAW()
         {
-            if (jumpgates.Count == 1)
+            if (jumpgates.Count == 1 && isActivated)
             {
                 Events["SelectGate"].active = false;
                 effectsThrottle = 1.0f;

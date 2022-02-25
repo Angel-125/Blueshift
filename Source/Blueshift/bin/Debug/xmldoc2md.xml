@@ -4,6 +4,38 @@
         <name>Blueshift</name>
     </assembly>
     <members>
+        <member name="T:Blueshift.WBIGateAssembler">
+            <summary>
+            This is a helper module for jumpgates that are built insted of ones that are single-piece.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssembler.supportSegmentPartName">
+            <summary>
+            Name of the part that forms part of the ring. This part will be decoupled and deleted from the
+            vessel when assembling the jumpgate. When that happens, one of the segmentMesh items will be
+            enabled. Once all the segmentMesh entries are enabled, the ring becomes fully operational.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssembler.assembledCoM">
+            <summary>
+            When fully assembed, where to place the center of mass
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssembler.enabledMeshCount">
+            <summary>
+            Current count of enabled mesh segments.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssembler.portalTriggerName">
+            <summary>
+            Name of the portal trigger for the jumpgate.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIGateAssembler.AddSegment">
+            <summary>
+            Adds new segment to the jumpgate if one can be found. The located segment will be destroyed.
+            </summary>
+        </member>
         <member name="T:Blueshift.GateSelectedDelegate">
             <summary>
             Callback to indicate that a jumpgate was selected

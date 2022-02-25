@@ -748,6 +748,22 @@ namespace Blueshift
 
             return targetDistance;
         }
+
+        public double ConverToMeters(double distance, string units)
+        {
+            double distanceMeters = distance;
+
+            if (units == "Km")
+                distanceMeters *= 1000;
+            else if (units == "Mm")
+                distanceMeters *= kMegaMeter;
+            else if (units == "Gm")
+                distanceMeters *= kGigaMeter;
+            else
+                distanceMeters *= kLightYear;
+
+            return distanceMeters;
+        }
         #endregion
 
         #endregion

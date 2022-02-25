@@ -447,6 +447,7 @@ namespace Blueshift
         float prevWarpSpeed = 0;
         float prevMaxWarpSpeed = 0;
         bool wentInterstellar = false;
+        string targetDistanceUnits = string.Empty;
         #endregion
 
         #region Actions And Events
@@ -460,12 +461,6 @@ namespace Blueshift
             {
                 // We don't circularize if the ship is in interstellar space.
                 if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
-                {
-                    circularizationState = WBICircularizationStates.doNotCircularize;
-                    return;
-                }
-                // We don't circularize if the ship is in interplanetary space and the star has planets orbiting it.
-                else if (BlueshiftScenario.shared.IsAStar(part.vessel.mainBody) && BlueshiftScenario.shared.HasPlanets(part.vessel.mainBody))
                 {
                     circularizationState = WBICircularizationStates.doNotCircularize;
                     return;
@@ -488,7 +483,8 @@ namespace Blueshift
                 }
 
                 // If we are targeting a vessel and we're near it (10km) then rendezvous with it instead.
-                if (vessel.targetObject != null && vessel.targetObject.GetVessel() != null && targetDistance <= kMinRendezvousDistance)
+                double distanceMeters = BlueshiftScenario.shared.ConverToMeters(targetDistance, targetDistanceUnits);
+                if (vessel.targetObject != null && vessel.targetObject.GetVessel() != null && distanceMeters <= kMinRendezvousDistance)
                 {
                     Vector3 position = UnityEngine.Random.onUnitSphere * kRendezvousDistance;
                     FlightGlobals.fetch.SetShipOrbitRendezvous(vessel.targetObject.GetVessel(), position, Vector3d.zero);
@@ -510,7 +506,7 @@ namespace Blueshift
                 // Adjust the state vectors. This will shift the vessel's position, but the ship would've shifted around during normal gravity braking anyway.
                 circlularOrbit.GetOrbitalStateVectorsAtUT(currentTime, out state);
                 circlularOrbit.UpdateFromFixedVectors(orbit.pos, state.vel, this.part.vessel.mainBody.referenceBody, currentTime + 0.02);
-                FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, circlularOrbit.inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
+                FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
 
                 ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_orbitCircularized"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                 circularizationState = WBICircularizationStates.hasBeenCircularized;
@@ -606,8 +602,7 @@ namespace Blueshift
 
             UpdateWarpStatus();
 
-            bool enableCircularizeOrbit = BlueshiftScenario.autoCircularize && (spatialLocation == WBISpatialLocations.Planetary || 
-                (BlueshiftScenario.shared.IsAStar(vessel.mainBody) && BlueshiftScenario.shared.GetLastPlanet(vessel.mainBody) == null));
+            bool enableCircularizeOrbit = BlueshiftScenario.autoCircularize && spatialLocation != WBISpatialLocations.Interstellar && throttleLevel <= 0;
             Events["CircularizeOrbit"].active = enableCircularizeOrbit && isOperational;
             Fields["autoCircularizeInclination"].guiActive = enableCircularizeOrbit && isOperational;
             Actions["CircularizeOrbitAction"].active = enableCircularizeOrbit && isOperational;
@@ -1621,6 +1616,7 @@ namespace Blueshift
             string units = string.Empty;
 
             targetDistance = BlueshiftScenario.shared.GetDistanceToTarget(part.vessel, out units, out vesselCourse);
+            targetDistanceUnits = units;
 
             if (targetDistance > 0)
             {
