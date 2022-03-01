@@ -51,6 +51,9 @@ namespace Blueshift
         private static string kNetworkID = "networkID";
         private static string kJumpgateID = "jumpgateID";
         private static string kAnomalyTimer = "anomalyTimer";
+        private static string kMinRendezvousDistancePlanetary = "minRendezvousDistancePlanetary";
+        private static string kMinRendezvousDistanceInterplanetary = "minRendezvousDistanceInterplanetary";
+        private static string kRendezvousDistance = "rendezvousDistance";
         #endregion
 
         #region Housekeeping
@@ -99,6 +102,21 @@ namespace Blueshift
         /// Flag to indicate if parts require maintenance.
         /// </summary>
         public static bool maintenanceEnabled = false;
+
+        /// <summary>
+        /// In meters, minimum distance in planetary space that's required to rendezvous with a vessel via auto-circularization.
+        /// </summary>
+        public static double minRendezvousDistancePlanetary;
+
+        /// <summary>
+        /// In meters, minimum distance in interplanetary space that's required to rendezvous with a vessel via auto-circularization.
+        /// </summary>
+        public static double minRendezvousDistanceInterplanetary;
+
+        /// <summary>
+        /// In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+        /// </summary>
+        public static float rendezvousDistance = 100;
 
         private double soiMultiplier = 1.1;
         private double soiNoPlanetsMultiplier = 100;
@@ -995,6 +1013,15 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kSoiNoPlanetsMultiplier))
                     double.TryParse(nodeSettings.GetValue(kSoiNoPlanetsMultiplier), out soiNoPlanetsMultiplier);
+
+                if (nodeSettings.HasValue(kMinRendezvousDistancePlanetary))
+                    double.TryParse(nodeSettings.GetValue(kMinRendezvousDistancePlanetary), out minRendezvousDistancePlanetary);
+
+                if (nodeSettings.HasValue(kMinRendezvousDistanceInterplanetary))
+                    double.TryParse(nodeSettings.GetValue(kMinRendezvousDistanceInterplanetary), out minRendezvousDistanceInterplanetary);
+
+                if (nodeSettings.HasValue(kRendezvousDistance))
+                    float.TryParse(nodeSettings.GetValue(kRendezvousDistance), out rendezvousDistance);
             }
         }
 

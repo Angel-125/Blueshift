@@ -20,7 +20,6 @@ namespace Blueshift
     public class WBIJumpGate: WBIPartModule
     {
         #region Constants
-        const float kRendezvousDistance = 50f;
         const float kMessageDuration = 3f;
         #endregion
 
@@ -119,10 +118,10 @@ namespace Blueshift
         public FloatCurve triggerStartupScaleCurve;
 
         /// <summary>
-        /// Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform.
+        /// Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform. Set to -1 (the default) to use the value from Blueshift settings.
         /// </summary>
         [KSPField]
-        public float rendezvousDistance = kRendezvousDistance;
+        public float rendezvousDistance = -1f;
 
         #endregion
 
@@ -425,6 +424,10 @@ namespace Blueshift
                 GameEvents.onPartRepaired.Add(onPartRepaired);
                 GameEvents.onPartFailure.Add(onPartFailure);
             }
+
+            // Rendezvous distance
+            if (rendezvousDistance < 0)
+                rendezvousDistance = BlueshiftScenario.rendezvousDistance;
         }
         #endregion
 

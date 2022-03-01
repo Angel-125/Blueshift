@@ -92,10 +92,6 @@ namespace Blueshift
     {
         #region constants
         float kLightSpeed = 299792458;
-        // How close do you have to be to a targeted vessel before you can rendezvous with it during auto-circularization.
-        float kMinRendezvousDistance = 100000;
-        // How close to the targed vessel should you end up at when you rendezvous with it during auto-circularization.
-        float kRendezvousDistance = 100;
         float kMessageDuration = 3f;
         string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
         int kFrameSkipCount = 3;
@@ -484,9 +480,12 @@ namespace Blueshift
 
                 // If we are targeting a vessel and we're near it (10km) then rendezvous with it instead.
                 double distanceMeters = BlueshiftScenario.shared.ConverToMeters(targetDistance, targetDistanceUnits);
-                if (vessel.targetObject != null && vessel.targetObject.GetVessel() != null && distanceMeters <= kMinRendezvousDistance)
+                double minRendezvousDistance = BlueshiftScenario.minRendezvousDistancePlanetary;
+                if (spatialLocation == WBISpatialLocations.Interplanetary)
+                    minRendezvousDistance = BlueshiftScenario.minRendezvousDistanceInterplanetary;
+                if (vessel.targetObject != null && vessel.targetObject.GetVessel() != null && distanceMeters <= minRendezvousDistance)
                 {
-                    Vector3 position = UnityEngine.Random.onUnitSphere * kRendezvousDistance;
+                    Vector3 position = UnityEngine.Random.onUnitSphere * BlueshiftScenario.rendezvousDistance;
                     FlightGlobals.fetch.SetShipOrbitRendezvous(vessel.targetObject.GetVessel(), position, Vector3d.zero);
                     ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_rendezvousComplete"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                     circularizationState = WBICircularizationStates.hasBeenCircularized;

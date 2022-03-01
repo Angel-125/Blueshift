@@ -999,6 +999,21 @@
             Flag to indicate if parts require maintenance.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.minRendezvousDistancePlanetary">
+            <summary>
+            In meters, minimum distance in planetary space that's required to rendezvous with a vessel via auto-circularization.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.minRendezvousDistanceInterplanetary">
+            <summary>
+            In meters, minimum distance in interplanetary space that's required to rendezvous with a vessel via auto-circularization.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.rendezvousDistance">
+            <summary>
+            In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+            </summary>
+        </member>
         <member name="M:Blueshift.BlueshiftScenario.GetHighestRank(Vessel,System.String,ProtoCrewMember@)">
             <summary>
             Returns the highest ranking astronaut in the vessel that has the required skill.
@@ -1443,7 +1458,7 @@
         </member>
         <member name="F:Blueshift.WBIJumpGate.rendezvousDistance">
             <summary>
-            Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform.
+            Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform. Set to -1 (the default) to use the value from Blueshift settings.
             </summary>
         </member>
         <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">
