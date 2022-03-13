@@ -10,11 +10,7 @@ GameData
 
 Changes
 
-- Added minRendezvousDistancePlanetary and minRendezvousDistanceInterplanetary to Blueshift/settings.cfg. They specify, in meters, the minimum distance required to rendezvous with a vessel via the warp engine's auto-circularization feature. They apply to planetary and interplanetart space, respectively.
-
-- Added rendezvousDistance to Blueshift/settings.cfg. It specifies, in meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
-
-- WBIJumpGate's rendezvousDistance will defer to the rendezvousDistance in Blueshift/settings.cfg if set to -1 (it is -1 by default).
+- Fixed interaction issue between Blueshift and Kerbal Flying Saucers.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

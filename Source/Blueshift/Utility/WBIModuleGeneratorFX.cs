@@ -142,16 +142,19 @@ namespace Blueshift
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
+            ConfigNode configNode = getPartConfigNode();
+            if (configNode == null)
+                return;
 
-            if (node.HasNode("DRAINED_RESOURCE"))
+            if (configNode.HasNode("DRAINED_RESOURCE"))
             {
-                ConfigNode[] nodes = node.GetNodes("DRAINED_RESOURCE");
+                ConfigNode[] nodes = configNode.GetNodes("DRAINED_RESOURCE");
                 double ratio = 0;
                 bool dumpExcess = true;
                 ResourceFlowMode flowMode = ResourceFlowMode.ALL_VESSEL;
                 for (int index = 0; index < nodes.Length; index++)
                 {
-                    ConfigNode configNode = nodes[index];
+                    configNode = nodes[index];
                     if (!configNode.HasValue("ResourceName") && !configNode.HasValue("Ratio"))
                         continue;
 
@@ -160,7 +163,7 @@ namespace Blueshift
                     double.TryParse(configNode.GetValue("Ratio"), out ratio);
                     bool.TryParse(configNode.GetValue("DumpExcess"), out dumpExcess);
 
-                    ResourceRatio resource = new ResourceRatio(node.GetValue("ResourceName"), ratio, dumpExcess);
+                    ResourceRatio resource = new ResourceRatio(configNode.GetValue("ResourceName"), ratio, dumpExcess);
 
                     flowMode = ResourceFlowMode.ALL_VESSEL;
                     if (configNode.HasValue("FlowMode"))
@@ -353,6 +356,35 @@ namespace Blueshift
             }
 
             return animationModules.ToArray();
+        }
+
+        private ConfigNode getPartConfigNode()
+        {
+            if (!HighLogic.LoadedSceneIsEditor && !HighLogic.LoadedSceneIsFlight)
+                return null;
+            if (this.part.partInfo.partConfig == null)
+                return null;
+            ConfigNode[] nodes = this.part.partInfo.partConfig.GetNodes("MODULE");
+            ConfigNode partConfigNode = null;
+            ConfigNode node = null;
+            string moduleName;
+
+            //Get the switcher config node.
+            for (int index = 0; index < nodes.Length; index++)
+            {
+                node = nodes[index];
+                if (node.HasValue("name"))
+                {
+                    moduleName = node.GetValue("name");
+                    if (moduleName == this.ClassName)
+                    {
+                        partConfigNode = node;
+                        break;
+                    }
+                }
+            }
+
+            return partConfigNode;
         }
         #endregion
     }
