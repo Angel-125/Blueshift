@@ -103,6 +103,8 @@ namespace Blueshift
         WBIAnimatedTexture[] animatedTextures = null;
         List<ResourceRatio> drainedResources = new List<ResourceRatio>();
         WFModuleWaterfallFX waterfallFXModule = null;
+        bool drainedResourceProduced = false;
+        string resourcesDrainedHash = string.Empty;
         #endregion
 
         #region IModuleInfo
@@ -139,6 +141,11 @@ namespace Blueshift
         #endregion
 
         #region Overrides
+        public void OnDestroy()
+        {
+            GameEvents.OnResourceConverterOutput.Remove(onResourceConverterOutput);
+        }
+
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
@@ -184,6 +191,7 @@ namespace Blueshift
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
+            GameEvents.OnResourceConverterOutput.Add(onResourceConverterOutput);
             if (HighLogic.LoadedSceneIsEditor)
                 this.DisableModule();
             else if (HighLogic.LoadedSceneIsFlight)
@@ -198,6 +206,12 @@ namespace Blueshift
 
             // Get Waterfall module (if any)
             waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
+
+            int count = outputList.Count;
+            for (int index = 0; index < count; index++)
+            {
+                resourcesDrainedHash += outputList[index].ResourceName;
+            }
         }
 
         public override void StartResourceConverter()
@@ -241,6 +255,7 @@ namespace Blueshift
             {
                 // Drain any resources that we need to deplete.
                 drainResources();
+                drainedResourceProduced = false;
                 return;
             }
 
@@ -248,6 +263,7 @@ namespace Blueshift
             if (isMissingResources)
             {
                 drainResources();
+                drainedResourceProduced = false;
                 animationThrottle = 0f;
             }
 
@@ -318,8 +334,24 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+
+        private void onResourceConverterOutput(PartModule converter, string resourceName, double amount)
+        {
+            int count = drainedResources.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (drainedResources[index].ResourceName == resourceName)
+                {
+                    drainedResourceProduced = true;
+                    return;
+                }
+            }
+        }
+
         protected void drainResources()
         {
+            if (drainedResourceProduced)
+                return;
             int count = drainedResources.Count;
             ResourceRatio resource;
 

@@ -212,6 +212,8 @@ namespace Blueshift
             }
 
             // Make sure that the vessel can fit.
+            // Note: This ultimately uses ShipConstruction.CalculateCraftSize, which has DIFFERENT sizes in editor vs flight. We can't trust the in-flight values.
+            // It appears to be related to the part transform's relative position.
             vesselToTeleport.UpdateVesselSize();
             Vector3 size = vesselToTeleport.vesselSize;
             /*
