@@ -99,7 +99,7 @@ namespace Blueshift
 
         #region Fields
         [KSPField]
-        public bool debugEnabled = false;
+        public bool debugMode = false;
 
         /// <summary>
         /// Short description of the module as displayed in the editor.
@@ -268,6 +268,10 @@ namespace Blueshift
         [KSPField]
         public float warpIgnitionThreshold = 0.25f;
 
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_superchargerMultiplier", guiFormat = "n0", guiUnits = "%", isPersistant = true)]
+        [UI_FloatRange(affectSymCounterparts = UI_Scene.All, minValue = 0f, maxValue = 100f, stepIncrement = 5f)]
+        float superchargerMultiplier = 0f;
+
         #region SkillBoost
         /// <summary>
         /// The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -355,16 +359,19 @@ namespace Blueshift
         /// (Debug visible) amount of simulation resource produced.
         /// </summary>
         [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
-        double resourceProduced = 0;
+        double warpResourceProduced = 0;
 
         /// <summary>
         /// (Debug visible) amount of simulation resource consumed.
         /// </summary>
         [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
-        double resourceConsumed = 0;
+        double warpResourceRequired = 0;
 
-        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
-        double resourceAmount = 0;
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u")]
+        double warpResourceAmount = 0;
+
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u")]
+        double warpResourceMaxAmount = 0;
 
         /// <summary>
         /// Hit test stuff to make sure we don't run into planets.
@@ -530,6 +537,8 @@ namespace Blueshift
             {
                 GameEvents.onEditorShipModified.Remove(onEditorShipModified);
             }
+
+            disableGeneratorBypass();
         }
 
         public override void OnFixedUpdate()
@@ -638,19 +647,21 @@ namespace Blueshift
             Fields["fuelFlowGui"].guiActive = false;
 
             // Debug fields
-            Fields["isInSpace"].guiActive = debugEnabled;
-            Fields["meetsWarpAltitude"].guiActive = debugEnabled;
-            Fields["hasWarpCapacity"].guiActive = debugEnabled;
-            Fields["applyWarpTranslation"].guiActive = debugEnabled;
-            Fields["totalDisplacementImpulse"].guiActive = debugEnabled;
-            Fields["totalWarpCapacity"].guiActive = debugEnabled;
-            Fields["minPlanetaryRadius"].guiActive = debugEnabled;
-            Fields["effectiveWarpCapacity"].guiActive = debugEnabled;
-            Fields["warpDistance"].guiActive = debugEnabled;
-            Fields["effectsThrottle"].guiActive = debugEnabled;
-            Fields["resourceProduced"].guiActive = debugEnabled;
-            Fields["resourceConsumed"].guiActive = debugEnabled;
-            Fields["resourceAmount"].guiActive = debugEnabled;
+            debugMode = BlueshiftScenario.debugMode;
+            Fields["isInSpace"].guiActive = debugMode;
+            Fields["meetsWarpAltitude"].guiActive = debugMode;
+            Fields["hasWarpCapacity"].guiActive = debugMode;
+            Fields["applyWarpTranslation"].guiActive = debugMode;
+            Fields["totalDisplacementImpulse"].guiActive = debugMode;
+            Fields["totalWarpCapacity"].guiActive = debugMode;
+            Fields["minPlanetaryRadius"].guiActive = debugMode;
+            Fields["effectiveWarpCapacity"].guiActive = debugMode;
+            Fields["warpDistance"].guiActive = debugMode;
+            Fields["effectsThrottle"].guiActive = debugMode;
+            Fields["warpResourceProduced"].guiActive = debugMode;
+            Fields["warpResourceRequired"].guiActive = debugMode;
+            Fields["warpResourceAmount"].guiActive = debugMode;
+            Fields["warpResourceMaxAmount"].guiActive = debugMode;
 
             // Editor events
             if (HighLogic.LoadedSceneIsEditor)
@@ -668,6 +679,7 @@ namespace Blueshift
             warpFlameout = true;
             hasExceededLightSpeed = false;
             spatialLocation = WBISpatialLocations.Unknown;
+            disableGeneratorBypass();
         }
 
         public override void UnFlameout(bool showFX = true)
@@ -727,6 +739,8 @@ namespace Blueshift
             {
                 warpEngineTextures[index].isActivated = false;
             }
+
+            disableGeneratorBypass();
         }
 
         public override void FXUpdate()
@@ -1033,7 +1047,7 @@ namespace Blueshift
             float warpDisplacementImpulse = 0;
             float warpCapacity = 0;
             double resourceRequired = 0;
-            double resourceProduced = 0;
+            double warpResourceProduced = 0;
 
             if (vesselPartCount == count)
                 return;
@@ -1057,12 +1071,12 @@ namespace Blueshift
                 // Get generator stats
                 generator = ship.parts[index].FindModuleImplementing<WBIModuleGeneratorFX>();
                 if (generator != null)
-                    resourceProduced += generator.GetAmountProduced(warpSimulationResource);
+                    warpResourceProduced += generator.GetAmountProduced(warpSimulationResource);
             }
 
             // Calculate multipliers
             displacementMultiplier = warpDisplacementImpulse / vesselMass;
-            powerMultiplier = (float)(resourceProduced / resourceRequired);
+            powerMultiplier = (float)(warpResourceProduced / resourceRequired);
 
             // Get effective warp capacity
             effectiveWarpCapacity = warpCapacity * displacementMultiplier * powerMultiplier;
@@ -1109,10 +1123,11 @@ namespace Blueshift
 
         void updateWarpCapacityAndSpeed()
         {
-            // Give generators a chance to build up a charge whenever we change the throttle or cross a spatial boundary.
+            // Give generators a chance to build up a charge whenever we change the throttle or cross a spatial boundary or the ship is nearly out of gravity waves.
             float diff = Mathf.Abs(prevThrottle * 0.0001f);
             bool throttlesEqual = Mathf.Abs(prevThrottle - throttleLevel) <= diff;
             bool crossedSpatialBoundary = prevSpatialLocation != spatialLocation;
+            double warpResourceProducedPerTick = warpResourceProduced * TimeWarp.fixedDeltaTime;
 
             // If we crossed a spatial boundary then skip frames.
             if (crossedSpatialBoundary)
@@ -1283,22 +1298,27 @@ namespace Blueshift
                 totalResourceRequired += warpCoil.GetAmountRequired(warpSimulationResource);
             }
 
+            // Update warp resource statistics
+            PartResourceDefinition resourceDef = null;
+            PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
+            resourceDef = definitions[warpSimulationResource];
+
+            vessel.GetConnectedResourceTotals(resourceDef.id, out warpResourceAmount, out warpResourceMaxAmount);
+            warpResourceProduced = totalResourceProduced;
+            warpResourceRequired = totalResourceRequired;
+
             // Calculate the power multiplier
             powerMultiplier = (float)(totalResourceProduced / totalResourceRequired);
             if (totalResourceRequired <= 0)
                 powerMultiplier = 0.0001f;
 
-            // Debug info
-            if (debugEnabled)
+            // If the supercharger is off then set the powerMultiplier to 1. Otherwise adust the power multiplier.
+            if (powerMultiplier > 1)
             {
-                double maxAmount = 0;
-                PartResourceDefinition resourceDef = null;
-                PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
-                resourceDef = definitions[warpSimulationResource];
-
-                vessel.GetConnectedResourceTotals(resourceDef.id, out resourceAmount, out maxAmount);
-                resourceProduced = totalResourceProduced;
-                resourceConsumed = totalResourceRequired;
+                if (superchargerMultiplier <= 0)
+                    powerMultiplier = 1f; // (float)warpResourceRequired;
+                else
+                    powerMultiplier = powerMultiplier * superchargerMultiplier * 0.01f;
             }
 
             // Check for flamout
@@ -1372,6 +1392,18 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 generator = warpGenerators[index];
+
+                if (!generator.isEnabled || !generator.IsActivated || generator.isMissingResources)
+                {
+                    if (generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
+                    {
+                        generator.EfficiencyModifiers.Remove(kInterstellarEfficiencyModifier);
+                        generator.TallyEfficiencyModifiers();
+                    }
+                    generator.bypassRunCycle = false;
+                    continue;
+                }
+
                 if (spatialLocation == WBISpatialLocations.Interstellar)
                 {
                     if (!generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
@@ -1384,6 +1416,32 @@ namespace Blueshift
                     generator.EfficiencyModifiers.Remove(kInterstellarEfficiencyModifier);
                     generator.TallyEfficiencyModifiers();
                 }
+
+                generator.bypassRunCycle = true;
+                generator.RunGeneratorCycle();
+            }
+        }
+
+        /// <summary>
+        /// In order to synchronize the converter's process with the active warp engine, we enable a generator bypass. The moment that we no longer need to do that, such as when
+        /// the engine is shut down, or it flames out, we want to disable the bypass.
+        /// </summary>
+        protected void disableGeneratorBypass()
+        {
+            try
+            {
+                if (applyWarpTranslation)
+                {
+                    int count = warpGenerators.Count;
+                    for (int index = 0; index < count; index++)
+                    {
+                        warpGenerators[index].bypassRunCycle = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex);
             }
         }
 

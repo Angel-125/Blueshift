@@ -149,6 +149,7 @@ namespace Blueshift
             }
 
             // Setup GUI
+            debugMode = BlueshiftScenario.debugMode;
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
 

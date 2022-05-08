@@ -239,6 +239,7 @@ namespace Blueshift
             base.OnStart(state);
 
             // Setup GUI
+            debugMode = BlueshiftScenario.debugMode;
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
             statusDisplay = needsMaintenance ? Localizer.Format("#LOC_BLUESHIFT_needsMaintenance") : Localizer.Format("#LOC_BLUESHIFT_statusOK");

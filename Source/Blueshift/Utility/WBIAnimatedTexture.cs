@@ -145,6 +145,7 @@ namespace Blueshift
             imageSwitchTime = Planetarium.GetUniversalTime() + 1 / framesPerSecond;
 
             // Show debug GUI
+            debugMode = BlueshiftScenario.debugMode;
             Fields["isActivated"].guiActive = debugMode;
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["fadesAtMinThrottle"].guiActive = debugMode;

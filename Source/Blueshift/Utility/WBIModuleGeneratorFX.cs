@@ -100,6 +100,14 @@ namespace Blueshift
         /// </summary>
         public bool isMissingResources = false;
 
+        /// <summary>
+        /// This flag lets an external part module bypass the converter's run cycle which is triggered by FixedUpdate. When this flag is set to true, then the base class's FixedUpdate won't be called.
+        /// Without the base class' FixedUpdate getting called, no resources will be converted. The external part module is expected to call RunGeneratorCycle manually.
+        /// This system was put in place to get around timing issues where gravitic generators should produce enough resources for warp coils to consume each time tick, but due to timing issues, 
+        /// the resources aren't produced in time for the warp engine to handle resource consumption. To get around that problem, the active warp engine handles resource conversion during its fixed update.
+        /// </summary>
+        public bool bypassRunCycle = false;
+
         WBIAnimatedTexture[] animatedTextures = null;
         List<ResourceRatio> drainedResources = new List<ResourceRatio>();
         WFModuleWaterfallFX waterfallFXModule = null;
@@ -198,6 +206,7 @@ namespace Blueshift
                 this.EnableModule();
 
             // Setup GUI
+            debugMode = BlueshiftScenario.debugMode;
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
 
@@ -216,6 +225,7 @@ namespace Blueshift
 
         public override void StartResourceConverter()
         {
+            bypassRunCycle = false;
             base.StartResourceConverter();
 
             this.part.Effect(startEffect, 1.0f);
@@ -225,6 +235,7 @@ namespace Blueshift
 
         public override void StopResourceConverter()
         {
+            bypassRunCycle = false;
             base.StopResourceConverter();
 
             this.part.Effect(runningEffect, 0.0f);
@@ -280,6 +291,15 @@ namespace Blueshift
             }
         }
 
+        public override void FixedUpdate()
+        {
+            // Don't do the fixed update if the run cycle has been bypassed.
+            if (bypassRunCycle)
+                return;
+
+            base.FixedUpdate();
+        }
+
         protected override ConversionRecipe PrepareRecipe(double deltatime)
         {
             if (!HighLogic.LoadedSceneIsFlight)
@@ -314,6 +334,15 @@ namespace Blueshift
         #endregion
 
         #region API
+        /// <summary>
+        /// This is a helper function to avoid issues where a warp engine needs a certain amount of resources in order to operate, the system should have them,
+        /// but due to timing in the game, the resources aren't produced when they should be.
+        /// </summary>
+        public void RunGeneratorCycle()
+        {
+            base.FixedUpdate();
+        }
+
         /// <summary>
         /// Returns the amount of the supplied resource that is produced per second.
         /// </summary>

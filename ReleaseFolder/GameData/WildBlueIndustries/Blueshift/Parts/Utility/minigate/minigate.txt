@@ -18,9 +18,9 @@
 	cost = 15000000
 	category = Utility
 	subcategory = 0
-	title = Miniature Jumpgate
+	title = #LOC_BLUESHIFT_miniJumpGateTitle // Miniature Jump gate
 	manufacturer = <CLASSIFIED>
-	description = After studying the [REDACTED] that we [REDACTED], we [REDACTED] the [REDACTED] and then [REDACTED] the [REDACTED] in order to create a miniaturized jumpgate. Like the [REDACTED] the Miniature Jumpgate forms a wormhole that enables users to instantly traverse vast distances to a desired destination gate.
+	description = #LOC_BLUESHIFT_miniJumpGateDesc // After studying the [REDACTED], we designed the Miniature Jumpgate. It forms a wormhole that enables users to instantly traverse vast distances to a desired destination gate. The Miniature Jumpgate has limited range and has a limit to the mass that it can transport, but it can be used on a celestial body as well as in space.
 	attachRules = 1,0,1,1,1
 	mass = 5
 	dragModelType = default
@@ -50,13 +50,17 @@
 		// The exception is a network of two gates; max range is ignored.
 		// Set to -1 (the default) for unlimited jump range.
 		// Units are in light-years (9460700000000000 meters)
-		maxJumpRange = 0.25
+		maxJumpRange = 0.2
 
-		// Maximum width and height of the vessel that the gate can support.
-		jumpMaxDimensions = 2,2
+		// Since KSP's vessel measurements are so wacked when in flight, we'll use a maximum jump mass instead.
+		// Set to -1 (the default value) for unlimited mass.
+		jumpMaxMass = 5
 
 		// Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity.
 		portalTriggerTransform = portalTrigger
+
+		// Animation to play before playing the portal effect.
+		startupAnimation = GateSpin
 
 		// Scale curve to use during startup. This should follow the Waterfall effect (if any).
 		// During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught
@@ -88,9 +92,24 @@
 		// When parts require maintenance, how many repair kits are required to repair the part.
 		repairKitsRequired = 4
 
+		// In order to jump a vessel, gates can require that the vessel pay a toll of one or more resources.
+		// If the vessel doesn't have sufficient resources then it cannot jump. Simply add one or more Resource nodes.
+		// The cost is per metric ton of the vessel.
+		// This is also used if there isn't a RESOURCE_TOLL specified for a price tier.
+		RESOURCE
+		{
+			name = Graviolium
+			rate = 5
+			FlowMode = STAGE_PRIORITY_FLOW
+		}
+
 		// Defines a resource that must be paid in order to reach the desired destination.
+		// This node overrides the older RESOURCE node that defined the jump toll.
 		RESOURCE_TOLL
 		{
+			// Name of the toll. This is mainly for ModuleManager purposes.
+			name = planetarySOIToll
+
 			// Price tier- one of: planetary, interplanetary, interstellar
 			priceTier = planetary
 
@@ -105,6 +124,7 @@
 		}
 		RESOURCE_TOLL
 		{
+			name = interplanetaryToll
 			priceTier = interplanetary
 			resourceName = Graviolium
 			amountPerTonne = 1
@@ -112,6 +132,7 @@
 		}
 		RESOURCE_TOLL
 		{
+			name = interstellarToll
 			priceTier = interstellar
 			resourceName = Graviolium
 			amountPerTonne = 5
@@ -187,13 +208,6 @@
 		name = ElectricCharge
 		amount = 50.0
 		maxAmount = 50.0
-	}
-
-	RESOURCE
-	{
-		name = Graviolium
-		amount = 5
-		maxAmount = 5
 	}
 
 // Begin Waterfall

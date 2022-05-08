@@ -17,6 +17,57 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 namespace Blueshift
 {
+    #region Resource Toll
+    public enum ResourcePriceTiers
+    {
+        /// <summary>
+        /// Planetary price tier
+        /// </summary>
+        Planetary,
+
+        /// <summary>
+        /// Interplanetary price tier
+        /// </summary>
+        Interplanetary,
+
+        /// <summary>
+        /// Interstellar price tier
+        /// </summary>
+        Interstellar
+    }
+
+    /// <summary>
+    /// Defines a resource that must be paid in order to reach the desired destination. If defined, then the default mechanics are overridden.
+    /// </summary>
+    public struct ResourceToll
+    {
+        /// <summary>
+        /// Name of the resource toll.
+        /// </summary>
+        public string name;
+
+        /// <summary>
+        /// Price tier- one of: planetary, interplanetary, interstellar
+        /// </summary>
+        public ResourcePriceTiers priceTier;
+
+        /// <summary>
+        /// Name of the resource required to pay the jump toll.
+        /// </summary>
+        public string resourceName;
+
+        /// <summary>
+        /// Amount of resource per metric tonne mass of the traveler
+        /// </summary>
+        public double amountPerTonne;
+
+        /// <summary>
+        /// Resource is paid by the traveler that is initiating the jump
+        /// </summary>
+        public bool paidByTraveler;
+    }
+    #endregion
+
     public class WBIJumpGate: WBIPartModule
     {
         #region Constants
@@ -35,6 +86,12 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string textureModuleID = string.Empty;
+
+        /// <summary>
+        /// Animation to play before playing the portal effect.
+        /// </summary>
+        [KSPField]
+        public string startupAnimation = string.Empty;
 
         /// <summary>
         /// Warp coils can play a running effect while the generator is running.
@@ -98,6 +155,13 @@ namespace Blueshift
         public string jumpMaxDimensions = string.Empty;
 
         /// <summary>
+        /// Since KSP's vessel measurements are so wacked when in flight, we'll use a maximum jump mass instead.
+        /// Set to -1 (the default value) for unlimited mass.
+        /// </summary>
+        [KSPField]
+        public double jumpMaxMass = -1f;
+
+        /// <summary>
         /// Range at which players can interact with the gate's PAW. Default is 500 meters.
         /// </summary>
         [KSPField]
@@ -142,12 +206,13 @@ namespace Blueshift
         bool isActivated = false;
         Vessel destinationVessel = null;
         Vector2 jumpDimensions = Vector2.zero;
-        bool dimensionsExceededMsgShown = false;
-        bool insufficientResourcesMsgShown = false;
+        bool errorMessageShown = false;
         List<Vessel> jumpgates;
         JumpgateSelector jumpgateSelector;
         bool playEffects = false;
         Transform portalTrigger = null;
+        List<ResourceToll> resourceTolls = null;
+        ResourcePriceTiers destinationPriceTier = ResourcePriceTiers.Interstellar;
         #endregion
 
         #region IModuleInfo
@@ -211,78 +276,59 @@ namespace Blueshift
                 return;
             }
 
-            // Make sure that the vessel can fit.
-            // Note: This ultimately uses ShipConstruction.CalculateCraftSize, which has DIFFERENT sizes in editor vs flight. We can't trust the in-flight values.
+            // Make sure that the vessel can fit. Originally I intended to use dimensions but that didn't work out. Vessel.UpdateVesselSize()
+            // Nuses ShipConstruction.CalculateCraftSize, which has DIFFERENT sizes in editor vs flight. Thus, we can't trust the in-flight values.
             // It appears to be related to the part transform's relative position.
-            vesselToTeleport.UpdateVesselSize();
-            Vector3 size = vesselToTeleport.vesselSize;
-            /*
-            if (jumpDimensions.magnitude > 0 && (size.x > jumpDimensions.x || size.z > jumpDimensions.y))
+            float vesselToTeleportMass = vesselToTeleport.GetTotalMass();
+            if (jumpMaxMass > 0 && vesselToTeleportMass > jumpMaxMass)
             {
-                if (!dimensionsExceededMsgShown)
+                if (!errorMessageShown)
                 {
-                    dimensionsExceededMsgShown = true;
-                    ScreenMessages.PostScreenMessage(kJumpDimensionsExceeded, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+                    errorMessageShown = true;
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateMassToMuch", new string[] { string.Format("{0:n2", vesselToTeleportMass), string.Format("{0:n2", jumpMaxMass) }), kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
                 }
                 return;
             }
-            */
 
-            // Pay the toll if needed. Cost per resources is rate * vessel mass.
-            if (resHandler.inputResources.Count > 0 && !CheatOptions.InfinitePropellant)
+            // Pay the jump toll.
+            string statusMessage = string.Empty;
+            if (!payJumpToll(vesselToTeleport, out statusMessage))
             {
-                float vesselMass = vesselToTeleport.GetTotalMass();
-                string errorStatus = string.Empty;
-                int count = resHandler.inputResources.Count;
-                PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
-                PartResourceDefinition definition;
-                ModuleResource resource;
-                double amount = 0;
-                double maxAmount = 0;
-
-                // First make sure that the ship can pay the toll.
-                for (int index = 0; index < count; index++)
+                if (!errorMessageShown)
                 {
-                    resource = resHandler.inputResources[index];
-                    if (!definitions.Contains(resource.name))
-                        continue;
-                    definition = definitions[resource.name];
-
-                    vesselToTeleport.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
-                    if (amount < (resource.rate * vesselMass))
-                    {
-                        if (!insufficientResourcesMsgShown)
-                        {
-                            insufficientResourcesMsgShown = true;
-                            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateInsufficentResources") + definition.displayName, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
-                        }
-                        return;
-                    }
+                    errorMessageShown = true;
+                    ScreenMessages.PostScreenMessage(statusMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
                 }
-
-                // Now pay the toll.
-                for (int index = 0; index < count; index++)
-                {
-                    resource = resHandler.inputResources[index];
-                    if (!definitions.Contains(resource.name))
-                        continue;
-                    definition = definitions[resource.name];
-
-                    vesselToTeleport.RequestResource(vesselToTeleport.rootPart, definition.id, resource.rate * vesselMass, true);
-                }
+                return;
             }
 
             // Good to go.
-            dimensionsExceededMsgShown = false;
-            insufficientResourcesMsgShown = false;
-            Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + size.y);
-            FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
+            errorMessageShown = false;
+
+            // If the destination is in space then rendezvous with its orbit. Otherwise, land next to it.
+            // We can use size here because, while inaccurate, it is overestimated, and we just want to get in the vicinity
+            vesselToTeleport.UpdateVesselSize();
+            Vector3 size = vesselToTeleport.vesselSize;
+            if (destinationVessel.situation == Vessel.Situations.ORBITING)
+            {
+                Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + size.y);
+                FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
+            }
+
+            else if (destinationVessel.situation == Vessel.Situations.LANDED || destinationVessel.situation == Vessel.Situations.SPLASHED)
+            {
+                double longitude = destinationVessel.longitude;
+                double latitude = destinationVessel.latitude;
+                double altitude = destinationVessel.altitude + 5f;
+                double inclination = destinationVessel.srfRelRotation.Pitch();
+                double heading = destinationVessel.srfRelRotation.Yaw();
+                FlightGlobals.fetch.SetVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, altitude, inclination, heading, true, true);
+            }
         }
 
         public void OnTriggerExit(Collider collider)
         {
-            dimensionsExceededMsgShown = false;
-            insufficientResourcesMsgShown = false;
+            errorMessageShown = false;
         }
         #endregion
 
@@ -383,6 +429,7 @@ namespace Blueshift
             base.OnStart(state);
 
             // Setup GUI
+            debugMode = BlueshiftScenario.debugMode;
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
 
@@ -430,10 +477,196 @@ namespace Blueshift
             // Rendezvous distance
             if (rendezvousDistance < 0)
                 rendezvousDistance = BlueshiftScenario.rendezvousDistance;
+
+            // Resource tolls
+            loadResourceTolls();
         }
         #endregion
 
         #region Helpers
+        bool payJumpToll(Vessel vesselToTeleport, out string statusMessage)
+        {
+            // If we have a resource toll then use that instead of the standard toll.
+            if (resourceTolls.Count > 0)
+                return payTieredJumpToll(vesselToTeleport, out statusMessage);
+
+            // Pay standard jump toll
+            else
+                return payStandardJumpToll(vesselToTeleport, out statusMessage);
+        }
+
+        bool payTieredJumpToll(Vessel vesselToTeleport, out string statusMessage)
+        {
+            statusMessage = "";
+            List<ResourceToll> filteredTolls = new List<ResourceToll>();
+
+            // Filter the tolls by the destination price tier
+            int count = resourceTolls.Count;
+            ResourceToll resourceToll;
+            for (int index = 0; index < count; index++)
+            {
+                resourceToll = resourceTolls[index];
+                if (resourceToll.priceTier == destinationPriceTier)
+                    filteredTolls.Add(resourceToll);
+            }
+
+            // Now make sure that the toll can be paid.
+            PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
+            PartResourceDefinition definition;
+            double amount = 0;
+            double maxAmount = 0;
+            count = filteredTolls.Count;
+            float vesselMass = vesselToTeleport.GetTotalMass();
+            for (int index = 0; index < count; index++)
+            {
+                resourceToll = filteredTolls[index];
+
+                if (!definitions.Contains(resourceToll.resourceName))
+                    continue;
+                definition = definitions[resourceToll.resourceName];
+
+                // Check the amount of resource required
+                if (resourceToll.paidByTraveler)
+                    vesselToTeleport.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
+                else
+                    part.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
+
+                // If we don't have enough then we're done.
+                if (amount < (resourceToll.amountPerTonne * vesselMass))
+                {
+                    statusMessage = Localizer.Format("#LOC_BLUESHIFT_jumpGateInsufficentResources") + definition.displayName;
+                    return false;
+                }
+            }
+
+            // We know we have enough, now pay the toll.
+            for (int index = 0; index < count; index++)
+            {
+                resourceToll = filteredTolls[index];
+
+                if (!definitions.Contains(resourceToll.resourceName))
+                    continue;
+                definition = definitions[resourceToll.resourceName];
+
+                // Check the amount of resource required
+                if (resourceToll.paidByTraveler)
+                    vesselToTeleport.RequestResource(vesselToTeleport.rootPart, definition.id, resourceToll.amountPerTonne * vesselMass, true);
+                else
+                    part.vessel.RequestResource(part.vessel.rootPart, definition.id, resourceToll.amountPerTonne * vesselMass, true);
+            }
+
+            return true;
+        }
+
+        bool payStandardJumpToll(Vessel vesselToTeleport, out string statusMessage)
+        {
+            statusMessage = "";
+
+            // Pay the toll if needed. Cost per resources is rate * vessel mass.
+            if (resHandler.inputResources.Count > 0 && !CheatOptions.InfinitePropellant)
+            {
+                float vesselMass = vesselToTeleport.GetTotalMass();
+                int count = resHandler.inputResources.Count;
+                PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
+                PartResourceDefinition definition;
+                ModuleResource resource;
+                double amount = 0;
+                double maxAmount = 0;
+
+                // First make sure that the ship can pay the toll.
+                for (int index = 0; index < count; index++)
+                {
+                    resource = resHandler.inputResources[index];
+                    if (!definitions.Contains(resource.name))
+                        continue;
+                    definition = definitions[resource.name];
+
+                    vesselToTeleport.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
+                    if (amount < (resource.rate * vesselMass))
+                    {
+                        statusMessage = Localizer.Format("#LOC_BLUESHIFT_jumpGateInsufficentResources") + definition.displayName;
+                        return false;
+                    }
+                }
+
+                // Now pay the toll.
+                for (int index = 0; index < count; index++)
+                {
+                    resource = resHandler.inputResources[index];
+                    if (!definitions.Contains(resource.name))
+                        continue;
+                    definition = definitions[resource.name];
+
+                    vesselToTeleport.RequestResource(vesselToTeleport.rootPart, definition.id, resource.rate * vesselMass, true);
+                }
+            }
+            return true;
+        }
+
+        void loadResourceTolls()
+        {
+            resourceTolls = new List<ResourceToll>();
+            ConfigNode node = getPartConfigNode();
+            if (node == null)
+                return;
+            if (!node.HasNode("RESOURCE_TOLL"))
+                return;
+
+            ConfigNode[] nodes = node.GetNodes("RESOURCE_TOLL");
+            ResourceToll resourceToll;
+            ResourcePriceTiers priceTier = ResourcePriceTiers.Interstellar;
+            double amount = 0;
+            bool paidByTraveler = true;
+            for (int index = 0; index < nodes.Length; index++)
+            {
+                node = nodes[index];
+                resourceToll = new ResourceToll();
+
+                if (node.HasValue("name"))
+                    resourceToll.name = node.GetValue("name");
+
+                if (node.HasValue("priceTier"))
+                {
+                    try
+                    {
+                        resourceToll.priceTier = (ResourcePriceTiers)Enum.Parse(typeof(ResourcePriceTiers), node.GetValue("priceTier"), true);
+                    }
+                    catch(Exception ex)
+                    {
+                        Debug.Log(ex);
+                        resourceToll.priceTier = ResourcePriceTiers.Interstellar;
+                    }
+                }
+                else
+                {
+                    resourceToll.priceTier = ResourcePriceTiers.Interstellar;
+                }
+
+                if (node.HasValue("resourceName"))
+                    resourceToll.resourceName = node.GetValue("resourceName");
+                else
+                    resourceToll.resourceName = resHandler.inputResources[0].name;
+
+                if (node.HasValue("amountPerTonne"))
+                {
+                    if (double.TryParse(node.GetValue("amountPerTonne"), out amount))
+                        resourceToll.amountPerTonne = amount;
+                    else
+                        resourceToll.amountPerTonne = resHandler.inputResources[0].rate;
+                }
+
+                if (node.HasValue("paidByTraveler"))
+                {
+                    if (bool.TryParse(node.GetValue("paidByTraveler"), out paidByTraveler))
+                        resourceToll.paidByTraveler = paidByTraveler;
+                    else
+                        resourceToll.paidByTraveler = true;
+                }
+
+                resourceTolls.Add(resourceToll);
+            }
+        }
+
         void onPartFailure(Part failedPart)
         {
             if (failedPart != part)
@@ -457,6 +690,57 @@ namespace Blueshift
             effectsThrottle = 0;
             playEffects = true;
             isActivated = false;
+
+            // Determine destination's price tier
+            CelestialBody sourceGateBody = part.vessel.mainBody;
+            CelestialBody sourceGateParentBody = part.vessel.mainBody.referenceBody;
+            CelestialBody destinationGateBody = destinationGate.mainBody;
+            CelestialBody destinationGateParentBody = destinationGate.mainBody.referenceBody;
+            CelestialBody sourceGateStar = BlueshiftScenario.shared.GetParentStar(sourceGateBody);
+            CelestialBody destinationGateStar = BlueshiftScenario.shared.GetParentStar(destinationGateBody);
+            bool sourceGateBodyisAStar = BlueshiftScenario.shared.IsAStar(sourceGateBody);
+            bool sourceGateParentBodyisAStar = BlueshiftScenario.shared.IsAStar(sourceGateParentBody);
+            bool destinationGateBodyIsAStar = BlueshiftScenario.shared.IsAStar(destinationGateBody);
+            bool destinationGateParentBodyIsAStar = BlueshiftScenario.shared.IsAStar(destinationGateParentBody);
+
+            // Source gate's body is a planet.
+            if (!sourceGateBodyisAStar)
+            {
+                // Same planet
+                if (sourceGateBody == destinationGateBody)
+                    destinationPriceTier = ResourcePriceTiers.Planetary;
+
+                // If the destination gate's body is a moon of the source, or vice-versa, then we're planetary.
+                else if (destinationGateParentBody == sourceGateBody || (sourceGateParentBody == destinationGateBody && !destinationGateBodyIsAStar))
+                    destinationPriceTier = ResourcePriceTiers.Planetary;
+
+                // If the destination gate's parent body is the same as the source gate's parent body, then we're planetary.
+                else if (sourceGateParentBody == destinationGateParentBody && !sourceGateParentBodyisAStar)
+                    destinationPriceTier = ResourcePriceTiers.Planetary;
+
+                // If the destination gate is in the same solar system then we're interplanetary.
+                else if ((sourceGateStar == destinationGateStar && sourceGateStar != null) || sourceGateStar == destinationGateBody)
+                    destinationPriceTier = ResourcePriceTiers.Interplanetary;
+
+                // We're interstellar
+                else
+                    destinationPriceTier = ResourcePriceTiers.Interstellar;
+            }
+
+            // Source gate body is a star.
+            else
+            {
+                // If the source and destination bodys are the same then we're interplanetary.
+                if (sourceGateBody == destinationGateBody)
+                    destinationPriceTier = ResourcePriceTiers.Interplanetary;
+
+                // If the destination gate's parent star is the source gate's star, then we're interplanetary.
+                else if (destinationGateStar == sourceGateBody)
+                    destinationPriceTier = ResourcePriceTiers.Interplanetary;
+
+                else
+                    destinationPriceTier = ResourcePriceTiers.Interstellar;
+            }
         }
 
         private void setupJumpNetwork()

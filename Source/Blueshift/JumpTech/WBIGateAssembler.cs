@@ -12,6 +12,13 @@ namespace Blueshift
     public class WBIGateAssembler: WBIPartModule
     {
         #region Fields
+
+        /// <summary>
+        /// Debug flag.
+        /// </summary>
+        [KSPField]
+        public bool debugMode = false;
+
         /// <summary>
         /// Name of the part that forms part of the ring. This part will be decoupled and deleted from the
         /// vessel when assembling the jumpgate. When that happens, one of the segmentMesh items will be
@@ -51,6 +58,10 @@ namespace Blueshift
         {
             base.OnStart(state);
 
+            debugMode = BlueshiftScenario.debugMode;
+            Events["CompleteAssembly"].guiActive = debugMode;
+            Events["CompleteAssembly"].guiActiveEditor = debugMode;
+
             // Find the jumpgate controller
             jumpgateController = part.FindModuleImplementing<WBIJumpGate>();
 
@@ -63,7 +74,7 @@ namespace Blueshift
                 setMeshEnabled(index, true);
 
             // Enable the controller if we've enabled all the segments
-            enableJumpgateIfNeeded();
+            enableJumpgateIfNeeded(false);
         }
         #endregion
 
@@ -90,8 +101,23 @@ namespace Blueshift
             setMeshEnabled(enabledMeshCount - 1, true);
 
             // if we've added all the segments then enable the jumpgate controller.
-            enableJumpgateIfNeeded(false);
+            enableJumpgateIfNeeded(true);
             ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateSegmentAdded"), 5.0f, ScreenMessageStyle.UPPER_CENTER);
+        }
+
+        /// <summary>
+        /// Debug method to complete gate assembly.
+        /// </summary>
+        [KSPEvent(guiName = "(Debug) Complete Assembly")]
+        public void CompleteAssembly()
+        {
+            int count = segmentMeshes.Count;
+            for (int index = 0; index < count; index++)
+            {
+                setMeshEnabled(index, true);
+            }
+            enabledMeshCount = count;
+            enableJumpgateIfNeeded(false);
         }
         #endregion
 

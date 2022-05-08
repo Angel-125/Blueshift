@@ -54,6 +54,7 @@ namespace Blueshift
         private static string kMinRendezvousDistancePlanetary = "minRendezvousDistancePlanetary";
         private static string kMinRendezvousDistanceInterplanetary = "minRendezvousDistanceInterplanetary";
         private static string kRendezvousDistance = "rendezvousDistance";
+        private static string kDebugMode = "debugMode";
         #endregion
 
         #region Housekeeping
@@ -61,6 +62,11 @@ namespace Blueshift
         /// Shared instance of the helper.
         /// </summary>
         public static BlueshiftScenario shared;
+
+        /// <summary>
+        /// Flag to indicate that the mod is in debug mode.
+        /// </summary>
+        public static bool debugMode = false;
 
         /// <summary>
         /// When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go.
@@ -767,6 +773,22 @@ namespace Blueshift
             return targetDistance;
         }
 
+        /// <summary>
+        /// Find the parent star of the celestial body.
+        /// </summary>
+        /// <param name="body">The celestial body to check.</param>
+        /// <returns>A CelestialBody that is the query parameter's star, or null.</returns>
+        public CelestialBody GetParentStar(CelestialBody body)
+        {
+            CelestialBody parent = body.referenceBody;
+            while (parent != null && !IsAStar(parent))
+            {
+                parent = parent.referenceBody;
+            }
+
+            return IsAStar(parent) ? parent : null;
+        }
+
         public double ConverToMeters(double distance, string units)
         {
             double distanceMeters = distance;
@@ -1022,6 +1044,9 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kRendezvousDistance))
                     float.TryParse(nodeSettings.GetValue(kRendezvousDistance), out rendezvousDistance);
+
+                if (nodeSettings.HasValue(kDebugMode))
+                    bool.TryParse(nodeSettings.GetValue(kDebugMode), out debugMode);
             }
         }
 
