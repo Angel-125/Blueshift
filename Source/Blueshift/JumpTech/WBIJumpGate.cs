@@ -323,6 +323,10 @@ namespace Blueshift
                 double inclination = destinationVessel.srfRelRotation.Pitch();
                 double heading = destinationVessel.srfRelRotation.Yaw();
                 FlightGlobals.fetch.SetVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, altitude, inclination, heading, true, true);
+                Transform refTransform = destinationVessel.ReferenceTransform;
+                Vector3 translateVector = refTransform.up * rendezvousDistance;
+                Vector3d offsetPosition = refTransform.position + translateVector;
+                destinationVessel.SetPosition(offsetPosition);
             }
         }
 

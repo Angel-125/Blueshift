@@ -466,6 +466,15 @@ namespace Blueshift
                 if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
                 {
                     circularizationState = WBICircularizationStates.doNotCircularize;
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsSolarOrbit"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                    return;
+                }
+
+                // The ship needs to be at or above minimum planetary radius.
+                if (!MeetsWarpAltitude())
+                {
+                    circularizationState = WBICircularizationStates.doNotCircularize;
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsAltitude"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                     return;
                 }
 
@@ -478,6 +487,7 @@ namespace Blueshift
                     this.part.GetConnectedResourceTotals(BlueshiftScenario.circularizationResourceDef.id, out amount, out maxAmount);
                     if (amount < resourceCost)
                     {
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsResources"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                         circularizationState = WBICircularizationStates.doNotCircularize;
                         return;
                     }
