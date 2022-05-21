@@ -82,6 +82,12 @@
             Gate selected delegate.
             </summary>
         </member>
+        <member name="M:Blueshift.SDModuleSpaceDustHarvester.#ctor(PartModule)">
+            <summary>
+            Instantiates a new SDModuleSpaceDustHarvester
+            </summary>
+            <param name="module">The PartModule representing the FX module.</param>
+        </member>
         <member name="T:Blueshift.WBIAnomalyTypes">
             <summary>
             Type of anomaly.
@@ -170,6 +176,11 @@
         <member name="F:Blueshift.WBISpatialLocations.Interstellar">
             <summary>
             Interstellar space: the void between the stars...
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleAnimation.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
             </summary>
         </member>
         <member name="T:Blueshift.WBIModuleGeneratorFX">
@@ -548,6 +559,31 @@
                 textureModuleID = WarpCore
             }
             `
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.onWarpEffectsUpdated">
+            <summary>
+            Game event signifying when warp engine effects have been updated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.onWarpEngineStart">
+            <summary>
+            Game event signifying when the warp engine starts.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.onWarpEngineShutdown">
+            <summary>
+            Game event signifying when the warp engine shuts down.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.onWarpEngineFlameout">
+            <summary>
+            Game event signifying when the warp engine flames out.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.onWarpEngineUnFlameout">
+            <summary>
+            Game event signifying when the warp engine un-flames out.
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.moduleDescription">
@@ -1049,6 +1085,14 @@
             In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
             </summary>
         </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetDestinationLocation(CelestialBody,CelestialBody)">
+            <summary>
+            Determines the spatial location of the destination celestial body relative to the source body.
+            </summary>
+            <param name="sourceBody">A CelestialBody representing the source. Typically this is the active vessel's mainBody.</param>
+            <param name="destinationBody">A CelestialBody containing the desired destination.</param>
+            <returns>A WBISpacialLocations enum with the relative location of the destination.</returns>
+        </member>
         <member name="M:Blueshift.BlueshiftScenario.GetHighestRank(Vessel,System.String,ProtoCrewMember@)">
             <summary>
             Returns the highest ranking astronaut in the vessel that has the required skill.
@@ -1524,11 +1568,6 @@
             The exception is a network of two gates; max range is ignored.
             Set to -1 (the default) for unlimited jump range.
             Units are in light-years (9460700000000000 meters)
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.jumpMaxDimensions">
-            <summary>
-            Maximum width and height of the vessel that the gate can support.
             </summary>
         </member>
         <member name="F:Blueshift.WBIJumpGate.jumpMaxMass">

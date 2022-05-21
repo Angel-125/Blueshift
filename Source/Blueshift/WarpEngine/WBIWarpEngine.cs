@@ -97,6 +97,29 @@ namespace Blueshift
         int kFrameSkipCount = 3;
         #endregion
 
+        #region GameEvents
+        /// <summary>
+        /// Game event signifying when warp engine effects have been updated.
+        /// </summary>
+        public static EventData<Vessel, WBIWarpEngine, float> onWarpEffectsUpdated = new EventData<Vessel, WBIWarpEngine, float>("onWarpEffectsUpdated");
+        /// <summary>
+        /// Game event signifying when the warp engine starts.
+        /// </summary>
+        public static EventData<Vessel, WBIWarpEngine> onWarpEngineStart = new EventData<Vessel, WBIWarpEngine>("onWarpEngineStart");
+        /// <summary>
+        /// Game event signifying when the warp engine shuts down.
+        /// </summary>
+        public static EventData<Vessel, WBIWarpEngine> onWarpEngineShutdown = new EventData<Vessel, WBIWarpEngine>("onWarpEngineShutdown");
+        /// <summary>
+        /// Game event signifying when the warp engine flames out.
+        /// </summary>
+        public static EventData<Vessel, WBIWarpEngine> onWarpEngineFlameout = new EventData<Vessel, WBIWarpEngine>("onWarpEngineFlameout");
+        /// <summary>
+        /// Game event signifying when the warp engine un-flames out.
+        /// </summary>
+        public static EventData<Vessel, WBIWarpEngine> onWarpEngineUnFlameout = new EventData<Vessel, WBIWarpEngine>("onWarpEngineUnFlameout");
+        #endregion
+
         #region Fields
         [KSPField]
         public bool debugMode = false;
@@ -443,9 +466,11 @@ namespace Blueshift
         /// Multiplier used for consumption of resources and MTBF/heat.
         double consumptionRateMultiplier = 1.0;
 
+        public float warpSpeed = 0;
+        public double consumptionMultiplier = 1f;
+
         int skipFrames = 0;
         float prevThrottle = -1f;
-        float warpSpeed = 0;
         float maxWarpSpeed = 0;
         float prevWarpSpeed = 0;
         float prevMaxWarpSpeed = 0;
@@ -690,6 +715,7 @@ namespace Blueshift
             hasExceededLightSpeed = false;
             spatialLocation = WBISpatialLocations.Unknown;
             disableGeneratorBypass();
+            onWarpEngineFlameout.Fire(part.vessel, this);
         }
 
         public override void UnFlameout(bool showFX = true)
@@ -697,6 +723,7 @@ namespace Blueshift
             if (warpFlameout)
                 return;
             base.UnFlameout(showFX);
+            onWarpEngineUnFlameout.Fire(part.vessel, this);
         }
 
         public override void Activate()
@@ -731,6 +758,8 @@ namespace Blueshift
                     powerPlant.StartResourceConverter();
                 }
             }
+
+            onWarpEngineStart.Fire(part.vessel, this);
         }
 
         public override void Shutdown()
@@ -751,6 +780,8 @@ namespace Blueshift
             }
 
             disableGeneratorBypass();
+
+            onWarpEngineShutdown.Fire(part.vessel, this);
         }
 
         public override void FXUpdate()
@@ -759,11 +790,17 @@ namespace Blueshift
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
+            bool isOperational = false;
             if (EngineIgnited && isEnabled && !flameout && !warpFlameout)
+            {
                 this.part.Effect(runningEffectName, 1f);
+                isOperational = true;
+            }
 
             // Update our animated texture module, if any.
             float throttle = FlightInputHandler.state.mainThrottle;
+            if (!isOperational)
+                throttle = 0;
             int count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
             {
@@ -809,6 +846,8 @@ namespace Blueshift
                 hasExceededLightSpeed = true;
                 this.part.Effect(photonicBoomEffectName, 1);
             }
+
+            onWarpEffectsUpdated.Fire(part.vessel, this, throttle);
         }
         #endregion
 
@@ -1339,7 +1378,7 @@ namespace Blueshift
             }
 
             // Calculate the consumption multiplier and update the EVA Repairs module (if any)
-            double consumptionMultiplier = powerMultiplier * consumptionRateMultiplier;
+            consumptionMultiplier = powerMultiplier * consumptionRateMultiplier;
 
             // Calculate displacement impulse and warp capacity for the active coils that are powered up.
             count = warpCoils.Count;

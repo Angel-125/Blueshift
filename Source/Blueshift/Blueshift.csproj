@@ -48,6 +48,10 @@
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.AudioModule">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
@@ -80,11 +84,16 @@
     <Compile Include="SettingsAndScenario\BlueshiftSettings.cs" />
     <Compile Include="GUI\JumpgateSelector.cs" />
     <Compile Include="GUI\PotatoScannerInfo.cs" />
+    <Compile Include="SpaceDust\SDModuleSpaceDustHarvester.cs" />
+    <Compile Include="SpaceDust\SDWrapper.cs" />
     <Compile Include="Utility\Dialog\Dialog.cs" />
     <Compile Include="Utility\Dialog\DialogManager.cs" />
     <Compile Include="Utility\Dialog\DialogUils.cs" />
     <Compile Include="Utility\Enumerators.cs" />
+    <Compile Include="Utility\WBIModuleAnimation.cs" />
     <Compile Include="Utility\WBIPotatoScanner.cs" />
+    <Compile Include="Utility\WBIResourceVent.cs" />
+    <Compile Include="Utility\WBIWarpSpeedHarvester.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
     <Compile Include="Utility\WBIPartModule.cs" />

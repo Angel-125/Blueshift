@@ -10,9 +10,24 @@ GameData
 
 Changes
 
-- Fixed issue where Auto-Circularization wouldn't respect the minimum altitude required to warp.
-- Updated SpaceDust configs- thanks for the assist, Grimmas! :)
-- Graviolium now has an exceptionally small amount of mass to support SpaceDust.
+New Parts
+
+- S1 Bussard Collector: This part collects Graviolium in the depths of space. It also works with SpaceDust.
+- S2 Bussard Collector: This part collects Graviolium in the depths of space. It also works with SpaceDust.
+- S1 Plasma Vent: Requires Kerbal Flying Saucers. This part reduces Static Charge built up in the ship by expending Xenon Gas.
+- S2 Plasma Vent: Requires Kerbal Flying Saucers. This part reduces Static Charge built up in the ship by expending Xenon Gas.
+
+Fixes
+
+- SpaceDust fix- Thanks Rakete!
+
+Part Modules
+
+- WBIModuleAnimation: This animation module lets you loop animations, play the animation in forward/reverse, and adjust the emissive textures on desired model transforms. Its state can be synchronized with a warp engine on the vessel and/or with a converter on the part if desired.
+
+- WBIWarpSpeedHarvester: This specialized resource harvester collects resources while the vessel is at warp.
+
+- WBIResourceVent: This is a souped up version of Kerbal Flying Saucers' WBIResourceDischarger. It is affected by warp engines.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.

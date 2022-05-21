@@ -307,6 +307,63 @@ namespace Blueshift
 
         #region API
         /// <summary>
+        /// Determines the spatial location of the destination celestial body relative to the source body.
+        /// </summary>
+        /// <param name="sourceBody">A CelestialBody representing the source. Typically this is the active vessel's mainBody.</param>
+        /// <param name="destinationBody">A CelestialBody containing the desired destination.</param>
+        /// <returns>A WBISpacialLocations enum with the relative location of the destination.</returns>
+        public WBISpatialLocations GetDestinationLocation(CelestialBody sourceBody, CelestialBody destinationBody)
+        {
+            CelestialBody sourceParentBody = sourceBody.referenceBody;
+            CelestialBody destinationParentBody = destinationBody.referenceBody;
+            CelestialBody sourceBodyStar = GetParentStar(sourceBody);
+            CelestialBody destinationBodyStar = GetParentStar(destinationParentBody);
+            bool sourceBodyisAStar = IsAStar(sourceBody);
+            bool sourceParentBodyisAStar = IsAStar(sourceParentBody);
+            bool destinationBodyIsAStar = IsAStar(destinationParentBody);
+            bool destinationParentBodyIsAStar = IsAStar(destinationParentBody);
+
+            // Source is a planet.
+            if (!sourceBodyisAStar)
+            {
+                // Same planet
+                if (sourceBody == destinationBody)
+                    return WBISpatialLocations.Planetary;
+
+                // If the destination's body is a moon of the source, or vice-versa, then we're planetary.
+                else if (destinationParentBody == sourceBody || (sourceParentBody == destinationBody && !destinationBodyIsAStar))
+                    return WBISpatialLocations.Planetary;
+
+                // If the destination's parent body is the same as the source gate's parent body, then we're planetary.
+                else if (sourceParentBody == destinationParentBody && !sourceParentBodyisAStar)
+                    return WBISpatialLocations.Planetary;
+
+                // If the destination is in the same solar system then we're interplanetary.
+                else if ((sourceBodyStar == destinationBodyStar && sourceBodyStar != null) || sourceBodyStar == destinationBody)
+                    return WBISpatialLocations.Interplanetary;
+
+                // We're interstellar
+                else
+                    return WBISpatialLocations.Interstellar;
+            }
+
+            // Source is a star.
+            else
+            {
+                // If the source and destination bodys are the same then we're interplanetary.
+                if (sourceBody == destinationBody)
+                    return WBISpatialLocations.Interplanetary;
+
+                // If the destination's parent star is the source's star, then we're interplanetary.
+                else if (destinationBodyStar == sourceBody)
+                    return WBISpatialLocations.Interplanetary;
+
+                else
+                    return WBISpatialLocations.Interstellar;
+            }
+        }
+
+        /// <summary>
         /// Returns the highest ranking astronaut in the vessel that has the required skill.
         /// </summary>
         /// <param name="vessel">The vessel to check for the highest ranking kerbal.</param>
@@ -578,6 +635,11 @@ namespace Blueshift
             return vessel.situation == Vessel.Situations.SUB_ORBITAL ||
                 vessel.situation == Vessel.Situations.ORBITING ||
                 vessel.situation == Vessel.Situations.ESCAPING;
+        }
+
+        public bool IsLandedOrSplashed(Vessel vessel)
+        {
+            return vessel.situation == Vessel.Situations.LANDED || vessel.situation == Vessel.Situations.SPLASHED || vessel.situation == Vessel.Situations.PRELAUNCH;
         }
 
         /// <summary>

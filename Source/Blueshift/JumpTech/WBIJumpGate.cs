@@ -149,12 +149,6 @@ namespace Blueshift
         public float maxJumpRange = -1f;
 
         /// <summary>
-        /// Maximum width and height of the vessel that the gate can support.
-        /// </summary>
-        [KSPField]
-        public string jumpMaxDimensions = string.Empty;
-
-        /// <summary>
         /// Since KSP's vessel measurements are so wacked when in flight, we'll use a maximum jump mass instead.
         /// Set to -1 (the default value) for unlimited mass.
         /// </summary>
@@ -309,24 +303,34 @@ namespace Blueshift
             // We can use size here because, while inaccurate, it is overestimated, and we just want to get in the vicinity
             vesselToTeleport.UpdateVesselSize();
             Vector3 size = vesselToTeleport.vesselSize;
-            if (destinationVessel.situation == Vessel.Situations.ORBITING)
+            if (BlueshiftScenario.shared.IsInSpace(destinationVessel))
             {
                 Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + size.y);
                 FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
             }
 
-            else if (destinationVessel.situation == Vessel.Situations.LANDED || destinationVessel.situation == Vessel.Situations.SPLASHED)
+            // Land the vessel next to the jumpgate.
+            else if (BlueshiftScenario.shared.IsLandedOrSplashed(destinationVessel))
             {
-                double longitude = destinationVessel.longitude;
-                double latitude = destinationVessel.latitude;
-                double altitude = destinationVessel.altitude + 5f;
+                // Get destination's location.
                 double inclination = destinationVessel.srfRelRotation.Pitch();
                 double heading = destinationVessel.srfRelRotation.Yaw();
-                FlightGlobals.fetch.SetVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, altitude, inclination, heading, true, true);
+                Vector3d worldPos = destinationVessel.GetWorldPos3D();
+
+                // Now, calculate how far to offset the teleporting vessel relative to the destination
                 Transform refTransform = destinationVessel.ReferenceTransform;
-                Vector3 translateVector = refTransform.up * rendezvousDistance;
-                Vector3d offsetPosition = refTransform.position + translateVector;
-                destinationVessel.SetPosition(offsetPosition);
+                double distance = Math.Round(Mathf.Max(size.x, size.y, size.z), 2) / 2 + 5.0;
+                Vector3 translateVector = refTransform.up * (float)distance;
+                Vector3d offsetPosition = worldPos + translateVector;
+
+                // Get the offset latitude and longitute
+                Vector2d latLong = destinationVessel.mainBody.GetLatitudeAndLongitude(offsetPosition);
+                double latitude = latLong.x;
+                double longitude = latLong.y;
+
+                // Off we go
+                FlightGlobals.fetch.SetVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, distance, inclination, heading, true, true);
+                FloatingOrigin.ResetTerrainShaderOffset();
             }
         }
 
@@ -437,6 +441,17 @@ namespace Blueshift
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
 
+            // Get portal trigger, if any.
+            if (!string.IsNullOrEmpty(portalTriggerTransform))
+            {
+                portalTrigger = part.FindModelTransform(portalTriggerTransform);
+                loadCurve(triggerStartupScaleCurve, "triggerStartupScaleCurve");
+                if (HighLogic.LoadedSceneIsEditor)
+                {
+                    disablePortalTrigger();
+                }
+            }
+
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
@@ -449,21 +464,6 @@ namespace Blueshift
 
             // Get Waterfall module (if any)
             waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
-
-            // Get jump dimensions
-            if (!string.IsNullOrEmpty(jumpMaxDimensions))
-            {
-                string[] dimensions = jumpMaxDimensions.Split(new char[] {','});
-                float.TryParse(dimensions[0], out jumpDimensions.x);
-                float.TryParse(dimensions[1], out jumpDimensions.y);
-            }
-
-            // Get portal trigger, if any.
-            if (!string.IsNullOrEmpty(portalTriggerTransform))
-            {
-                portalTrigger = part.FindModelTransform(portalTriggerTransform);
-                loadCurve(triggerStartupScaleCurve, "triggerStartupScaleCurve");
-            }
 
             // Setup anomaly-specific parameters if needed.
             setupAnomalyFields();
@@ -686,6 +686,16 @@ namespace Blueshift
         {
         }
 
+        private void disablePortalTrigger()
+        {
+            portalTrigger.gameObject.SetActive(false);
+            Collider collider = portalTrigger.gameObject.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.enabled = false;
+            }
+        }
+
         private void jumpgateSelected(Vessel destinationGate)
         {
             destinationVessel = destinationGate;
@@ -761,7 +771,7 @@ namespace Blueshift
 
         private void updateJumpgatePAW()
         {
-            if (jumpgates.Count == 1 && isActivated)
+            if (jumpgates.Count == 1 && !isActivated)
             {
                 Events["SelectGate"].active = false;
                 effectsThrottle = 1.0f;
