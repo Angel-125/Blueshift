@@ -303,9 +303,10 @@ namespace Blueshift
             // We can use size here because, while inaccurate, it is overestimated, and we just want to get in the vicinity
             vesselToTeleport.UpdateVesselSize();
             Vector3 size = vesselToTeleport.vesselSize;
+            double distance = Math.Round(Mathf.Max(size.x, size.y, size.z), 2) / 2 + 5.0;
             if (BlueshiftScenario.shared.IsInSpace(destinationVessel))
             {
-                Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + size.y);
+                Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + (float)distance);
                 FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
             }
 
@@ -319,7 +320,6 @@ namespace Blueshift
 
                 // Now, calculate how far to offset the teleporting vessel relative to the destination
                 Transform refTransform = destinationVessel.ReferenceTransform;
-                double distance = Math.Round(Mathf.Max(size.x, size.y, size.z), 2) / 2 + 5.0;
                 Vector3 translateVector = refTransform.up * (float)distance;
                 Vector3d offsetPosition = worldPos + translateVector;
 
@@ -344,6 +344,7 @@ namespace Blueshift
         [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "#LOC_BLUESHIFT_jumpGateSelectGate")]
         public void SelectGate()
         {
+            setupJumpNetwork();
             if (jumpgates.Count > 1)
             {
                 jumpgateSelector.jumpgates = jumpgates;

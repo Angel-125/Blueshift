@@ -93,6 +93,7 @@
     <Compile Include="Utility\WBIModuleAnimation.cs" />
     <Compile Include="Utility\WBIPotatoScanner.cs" />
     <Compile Include="Utility\WBIResourceVent.cs" />
+    <Compile Include="Utility\WBIStaticAttach.cs" />
     <Compile Include="Utility\WBIWarpSpeedHarvester.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />

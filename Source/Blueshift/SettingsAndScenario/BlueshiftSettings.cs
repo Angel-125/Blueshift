@@ -79,10 +79,7 @@ namespace Blueshift
 
         public override bool Enabled(System.Reflection.MemberInfo member, GameParameters parameters)
         {
-            if (member.Name == "enableDestructiveGateStartup")
-                return enableSpaceAnomalies && enableJumpGates;
-
-            else if (member.Name == "enableJumpGates")
+            if (member.Name == "enableJumpGates")
                 return enableSpaceAnomalies;
 
             return true;

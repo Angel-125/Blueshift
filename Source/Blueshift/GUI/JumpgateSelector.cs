@@ -72,15 +72,23 @@ namespace Blueshift
 
             GUILayout.Label("<color=white>" + selectionMessage + "</color>");
             if (selectedVessel != null)
+            {
                 GUILayout.Label("<color=white>" + selectedVessel.vesselName + "</color>");
+            }
             else
+            {
                 GUILayout.Label(" ");
+            }
 
             _scrollPos = GUILayout.BeginScrollView(_scrollPos);
             int count = jumpgates.Count;
+            string vesselName;
             for (int index = 0; index < count; index++)
             {
-                if (GUILayout.Button(jumpgates[index].vesselName))
+                vesselName = jumpgates[index].vesselName;
+                if (BlueshiftScenario.shared.IsInSpace(jumpgates[index]))
+                    vesselName = vesselName + "  " +Localizer.Format("#LOC_BLUESHIFT_jumpGateInSpace");
+                if (GUILayout.Button(vesselName))
                 {
                     selectedVessel = jumpgates[index];
                 }

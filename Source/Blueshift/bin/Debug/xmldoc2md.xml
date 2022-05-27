@@ -725,6 +725,11 @@
             When the powerMultiplier drops below this value, the engine will flame out.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpEngine.planetarySpeedBrakeEnabled">
+            <summary>
+            Planetary Speed Brake
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpEngineerSkill">
             <summary>
             The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)

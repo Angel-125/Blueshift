@@ -194,6 +194,7 @@ namespace Blueshift
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+            GameEvents.onVesselWasModified.Add(onVesselWasModified);
 
             if (!spawnSpaceAnomalies)
                 removeSpaceAnomalies();
@@ -204,6 +205,7 @@ namespace Blueshift
         public void OnDestroy()
         {
             GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
+            GameEvents.onVesselWasModified.Remove(onVesselWasModified);
         }
 
         public override void OnLoad(ConfigNode node)
@@ -259,6 +261,8 @@ namespace Blueshift
                     for (int gateIndex = 0; gateIndex < jumpgateIDs.Length; gateIndex++)
                     {
                         jumpgateID = jumpgateIDs[gateIndex];
+
+                        // Make sure the vessel exists
                         if (!jumpgates.Contains(jumpgateID))
                             jumpgates.Add(jumpgateID);
                     }
@@ -1061,6 +1065,15 @@ namespace Blueshift
             {
                 anomalyTimer = 0;
             }
+        }
+
+        private void onVesselWasModified(Vessel vessel)
+        {
+            WBIJumpGate jumpGate = vessel.FindPartModuleImplementing<WBIJumpGate>();
+            if (jumpGate == null)
+                return;
+
+            AddJumpgateToNetwork(vessel.id.ToString(), jumpGate.networkID);
         }
 
         private void loadSettings()
