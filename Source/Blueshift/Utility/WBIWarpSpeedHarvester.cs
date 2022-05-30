@@ -60,9 +60,9 @@ namespace Blueshift
         {
             if (!HighLogic.LoadedSceneIsFlight || !isActivated || warpEngine == null || warpEngine.spatialLocation == WBISpatialLocations.Planetary || warpEngine.spatialLocation == WBISpatialLocations.Unknown || engineThrottle <= 0)
             {
-                if (!isActivated)
+                if (!isActivated || warpEngine != null && warpEngine.spatialLocation == WBISpatialLocations.Unknown || !warpEngine.EngineIgnited || !warpEngine.isOperational)
                     status = Localizer.Format("#LOC_BLUESHIFT_statusOff");
-                else if (warpEngine == null || warpEngine.spatialLocation == WBISpatialLocations.Planetary || warpEngine.spatialLocation == WBISpatialLocations.Unknown)
+                else if (warpEngine != null && warpEngine.spatialLocation == WBISpatialLocations.Planetary)
                     status = Localizer.Format("#LOC_BLUESHIFT_statusInvalidLocation");
                 else
                     status = Localizer.Format("#LOC_BLUESHIFT_statusIdle");
