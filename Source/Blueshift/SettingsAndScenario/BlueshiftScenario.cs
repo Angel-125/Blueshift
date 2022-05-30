@@ -393,41 +393,75 @@ namespace Blueshift
             string checkSkill;
             int highestRank = 0;
             int crewRank = 0;
-            bool hasABadass = false;
-            bool hasAVeteran = false;
-            bool hasAHero = false;
+            ProtoCrewMember[] vesselCrew = vessel.GetVesselCrew().ToArray();
             for (int skillIndex = 0; skillIndex < skillsToCheck.Length; skillIndex++)
             {
                 checkSkill = skillsToCheck[skillIndex];
 
                 //Find the highest racking kerbal with the desired skill (if any)
-                ProtoCrewMember[] vesselCrew = vessel.GetVesselCrew().ToArray();
-                for (int index = 0; index < vesselCrew.Length; index++)
+                crewRank = GetHighestRank(vesselCrew, checkSkill, out astronaut);
+                if (crewRank > highestRank)
+                    highestRank = crewRank;
+            }
+
+            return highestRank;
+        }
+
+        public int GetHighestRank(ShipConstruct ship, string skillName, out ProtoCrewMember astronaut)
+        {
+            astronaut = null;
+            if (string.IsNullOrEmpty(skillName))
+                return 0;
+
+            string[] skillsToCheck = skillName.Split(new char[] { ';' });
+            string checkSkill;
+            int highestRank = 0;
+            int crewRank = 0;
+            Part[] parts;
+            ProtoCrewMember[] crewMembers;
+            for (int skillIndex = 0; skillIndex < skillsToCheck.Length; skillIndex++)
+            {
+                checkSkill = skillsToCheck[skillIndex];
+
+                //Find the highest racking kerbal with the desired skill (if any)
+                parts = ship.Parts.ToArray();
+                for (int partIndex = 0; partIndex < parts.Length; partIndex++)
                 {
-                    if (vesselCrew[index].HasEffect(checkSkill))
-                    {
-                        if (vesselCrew[index].isBadass)
-                            hasABadass = true;
-                        if (vesselCrew[index].veteran)
-                            hasAVeteran = true;
-                        if (vesselCrew[index].isHero)
-                            hasAHero = true;
-                        crewRank = vesselCrew[index].experienceTrait.CrewMemberExperienceLevel();
-                        if (crewRank > highestRank)
-                        {
-                            highestRank = crewRank;
-                            astronaut = vesselCrew[index];
-                        }
-                    }
+                    crewMembers = parts[partIndex].protoModuleCrew.ToArray();
+                    crewRank = GetHighestRank(crewMembers, checkSkill, out astronaut);
+                    if (crewRank > highestRank)
+                        highestRank = crewRank;
                 }
             }
 
-            if (hasABadass)
-                highestRank += 1;
-            if (hasAVeteran)
-                highestRank += 1;
-            if (hasAHero)
-                highestRank += 1;
+            return highestRank;
+        }
+
+        public int GetHighestRank(ProtoCrewMember[] crewMembers, string checkSkill, out ProtoCrewMember astronaut)
+        {
+            astronaut = null;
+            int highestRank = 0;
+            int crewRank = 0;
+
+            for (int index = 0; index < crewMembers.Length; index++)
+            {
+                if (crewMembers[index].HasEffect(checkSkill))
+                {
+                    crewRank = crewMembers[index].experienceTrait.CrewMemberExperienceLevel();
+                    if (crewRank > highestRank)
+                    {
+                        highestRank = crewRank;
+                        astronaut = crewMembers[index];
+
+                        if (crewMembers[index].isBadass)
+                            highestRank += 1;
+                        if (crewMembers[index].veteran)
+                            highestRank += 1;
+                        if (crewMembers[index].isHero)
+                            highestRank += 1;
+                    }
+                }
+            }
 
             return highestRank;
         }

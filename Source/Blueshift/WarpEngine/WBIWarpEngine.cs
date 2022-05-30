@@ -209,14 +209,6 @@ namespace Blueshift
         public float interstellarPowerMultiplier = 10f;
 
         /// <summary>
-        /// Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties.
-        /// Going over this limit incurs performance penalties, but staying under this value provides benefits.
-        /// The displacement value is rated in metric tons.
-        /// </summary>
-        [KSPField]
-        public float displacementImpulse = 10;
-
-        /// <summary>
         /// In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with
         /// a WBIWarpCoil part module can generate warpCapacity.
         /// The warp curve controls how much warpCapacity is neeeded to go light speed or faster.
@@ -663,7 +655,6 @@ namespace Blueshift
             StringBuilder info = new StringBuilder();
             info.Append(base.GetInfo());
             info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpEngineDesc"));
-            info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_displacementImpulse", new string[1] { string.Format("{0:n2}", displacementImpulse) }));
             return info.ToString();
         }
 
@@ -991,22 +982,11 @@ namespace Blueshift
         #region Helpers
         protected void updateFTLPreflightStatus()
         {
-            if (throttleLevel <= 0 && effectiveWarpCapacity > 0)
-            {
-                if (HighLogic.LoadedSceneIsFlight)
-                    preflightCheck = Localizer.Format("#LOC_BLUESHIFT_warpZeroThrottleReady");
-                else if (HighLogic.LoadedSceneIsEditor)
-                    preflightCheck = Localizer.Format("#LOC_BLUESHIFT_IncreaseThrottle");
-                else
-                    preflightCheck = "Um, whut?";
-            }
-
-            else if (powerMultiplier < warpIgnitionThreshold)
+            if (powerMultiplier < warpIgnitionThreshold)
             {
                 preflightCheck = Localizer.Format("#LOC_BLUESHIFT_needsMorePower");
             }
 
-            // Update preflight check
             else if (maxWarpSpeed < 1)
             {
                 // Determinine minimum capacity to reach light speed or better.
@@ -1030,6 +1010,17 @@ namespace Blueshift
                     preflightCheck = Localizer.Format("#LOC_BLUESHIFT_addWarpCapacity", new string[2] { string.Format("{0:n2}", effectiveWarpCapacity), string.Format("{0:n2}", warpCapacity) });
                 }
             }
+
+            else if (throttleLevel <= 0 && effectiveWarpCapacity > 0)
+            {
+                if (HighLogic.LoadedSceneIsFlight)
+                    preflightCheck = Localizer.Format("#LOC_BLUESHIFT_warpZeroThrottleReady");
+                else if (HighLogic.LoadedSceneIsEditor)
+                    preflightCheck = Localizer.Format("#LOC_BLUESHIFT_IncreaseThrottle");
+                else
+                    preflightCheck = "Um, whut?";
+            }
+
             else
             {
                 preflightCheck = Localizer.Format("#LOC_BLUESHIFT_canGoFTL");
@@ -1221,6 +1212,8 @@ namespace Blueshift
                     bestWarpSpeed = warpCurveSpeed;
             }
             maxWarpSpeed = bestWarpSpeed;
+            if (maxWarpSpeed < 0)
+                maxWarpSpeed = 0;
 
             // In the editor, max warp speed is limited by throttleLevel.
             if (HighLogic.LoadedSceneIsEditor)
@@ -1256,18 +1249,26 @@ namespace Blueshift
             }
 
             // Account for miracle workers
+            int highestRank = 0;
+            ProtoCrewMember astronaut;
             if (HighLogic.LoadedSceneIsFlight)
             {
-                ProtoCrewMember astronaut;
-                int highestRank = BlueshiftScenario.shared.GetHighestRank(vessel, warpEngineerSkill, out astronaut);
-                if (highestRank >= warpSpeedBoostRank)
-                {
-                    maxWarpSpeed *= (1.0f + warpSpeedSkillMultiplier) * highestRank;
-                }
+                highestRank = BlueshiftScenario.shared.GetHighestRank(vessel, warpEngineerSkill, out astronaut);
+            }
+            else if (HighLogic.LoadedSceneIsEditor)
+            {
+                ShipConstruct ship = EditorLogic.fetch.ship;
+                highestRank = BlueshiftScenario.shared.GetHighestRank(ship, warpEngineerSkill, out astronaut);
+            }
+            float skillMultiplier = 0f;
+            if (highestRank >= warpSpeedBoostRank)
+            {
+                skillMultiplier = 1.0f + (warpSpeedSkillMultiplier * highestRank);
+                maxWarpSpeed *= skillMultiplier;
             }
 
             // Account for throttle setting and thrust limiter.
-            if (throttleLevel <= 0)
+            if (throttleLevel <= 0 || maxWarpSpeed <= 0)
             {
                 warpSpeed = 0;
                 prevInterstellarAcceleration = 0;

@@ -43,6 +43,9 @@ namespace Blueshift
 
         [KSPField]
         public float efficiency = 1f;
+
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpSpeedHarvesterName")]
+        public string status;
         #endregion
 
         #region Housekeeping
@@ -55,8 +58,16 @@ namespace Blueshift
         #region Overrides
         public void FixedUpdate()
         {
-            if (!HighLogic.LoadedSceneIsFlight || !isActivated || warpEngine ==  null || warpEngine.spatialLocation == WBISpatialLocations.Planetary || warpEngine.spatialLocation == WBISpatialLocations.Unknown || engineThrottle <= 0)
+            if (!HighLogic.LoadedSceneIsFlight || !isActivated || warpEngine == null || warpEngine.spatialLocation == WBISpatialLocations.Planetary || warpEngine.spatialLocation == WBISpatialLocations.Unknown || engineThrottle <= 0)
+            {
+                if (!isActivated)
+                    status = Localizer.Format("#LOC_BLUESHIFT_statusOff");
+                else if (warpEngine == null || warpEngine.spatialLocation == WBISpatialLocations.Planetary || warpEngine.spatialLocation == WBISpatialLocations.Unknown)
+                    status = Localizer.Format("#LOC_BLUESHIFT_statusInvalidLocation");
+                else
+                    status = Localizer.Format("#LOC_BLUESHIFT_statusIdle");
                 return;
+            }
 
             // Get resource distributions
             List<ResourceDistribution> distributions = null;
@@ -64,23 +75,38 @@ namespace Blueshift
             {
                 case WBISpatialLocations.Interstellar:
                     if (resourceDistributions.ContainsKey(kInterstellar))
+                    {
                         distributions = resourceDistributions[kInterstellar];
+                    }
                     else
+                    {
+                        status = Localizer.Format("#LOC_BLUESHIFT_statusInvalidLocation");
                         return;
+                    }
                     break;
 
                 case WBISpatialLocations.Interplanetary:
                     if (resourceDistributions.ContainsKey(part.vessel.mainBody.name))
+                    {
                         distributions = resourceDistributions[part.vessel.mainBody.name];
+                    }
                     else if (resourceDistributions.ContainsKey(kGlobalInterplanetary))
+                    {
                         distributions = resourceDistributions[kGlobalInterplanetary];
+                    }
                     else
+                    {
+                        status = Localizer.Format("#LOC_BLUESHIFT_statusInvalidLocation");
                         return;
+                    }
                     break;
 
                 default:
                     break;
             }
+
+            // Update status
+            status = Localizer.Format("#LOC_BLUESHIFT_statusCollecting");
 
             // Compute abundance
             float abundance = 0f;

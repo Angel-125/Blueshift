@@ -654,13 +654,6 @@
             Default multiplier is 10.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.displacementImpulse">
-            <summary>
-            Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties.
-            Going over this limit incurs performance penalties, but staying under this value provides benefits.
-            The displacement value is rated in metric tons.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpCurve">
             <summary>
             In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with

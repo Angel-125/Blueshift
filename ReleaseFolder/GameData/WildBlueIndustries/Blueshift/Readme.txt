@@ -10,33 +10,11 @@ GameData
 
 Changes
 
-New Parts
-
-- S1 Bussard Collector: This part collects Graviolium in the depths of space. It also works with SpaceDust.
-- S2 Bussard Collector: This part collects Graviolium in the depths of space. It also works with SpaceDust.
-- S1 Plasma Vent: This part reduces Static Charge built up in the ship by expending Xenon Gas if you have Kerbal Flying Saucers installed. Otherwise it just looks cool.
-- S2 Plasma Vent: This part reduces Static Charge built up in the ship by expending Xenon Gas if you have Kerbal Flying Saucers installed. Otherwise it just looks cool.
-- Miniature Jumpgate: This miniaturized jumpgate has limited range and has a limit to the mass that it can transport, but it can be used on a celestial body as well as in space. Plus, the gate's vessel pays the graviolium toll, not the traveler.
-- Mini Jumpgate Platform: This platform is designed for use on planetary surfaces and to support the Miniature Jumpgate
-
-Module Manager Patches
-
-- SpaceDust fix- Thanks Rakete and Grimmas!
-- Added ExpensiveDrives patch to increase the cost of warp tech. This is optional and found in the Blueshift/Extras folder. Just rename it from .txt to .cfg to use it. Thanks Grimmas!
-- Fixed tech tree node positions for Community Tech Tree and Unkerballed Start.
-- Added B9PS support to the Far Future Technologies patch.
-
-Part Modules
-
-- WBIModuleAnimation: This animation module lets you loop animations, play the animation in forward/reverse, and adjust the emissive textures on desired model transforms. Its state can be synchronized with a warp engine on the vessel and/or with a converter on the part if desired.
-
-- WBIWarpSpeedHarvester: This specialized resource harvester collects resources while the vessel is at warp. Resource distributions are defined by INTERSTELLAR_DISTRIBUTION, GLOBAL_INTERPLANETARY_DISTRIBUTION, and INTERPLANETARY_DISTRIBUTION config nodes. Check out WildBlueIndustries/Blueshift/Resources/ResourceDefinitions.cfg for examples.
-
-- WBIResourceVent: This is a souped up version of Kerbal Flying Saucers' WBIResourceDischarger. It is affected by warp engines.
-
-- WBIJumpgate: Implemented ability to jump a vessel to a gate on the ground. Disabled the portal trigger when in the editor.
-
-- WBIWarpEngine: Updated max warp speed calculations. Added Planetary Speed Brake toggle button. When enabled, the ship's max speed is limited based on how far down the planet's gravity well it is. When disabled, the ship can travel at interplanetary speeds within interplanetary space. Use with caution.
+- Rearranged warp engine FTL pre-flight checks to provide more accurate readings.
+- Added status texts to the warp speed harvester.
+- Fixed issue where warp engines couldn't draw their required Electric Charge "propellant" requirements.
+- Fixed issue with deprecated parts causing ship loading errors.
+- Fixed issue where engineers were adding way too much of a speed bonus to the warp engines (should be 1% bonus per engineering star).
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.
@@ -46,7 +24,7 @@ Note that Wild Blue Industries is a ficticious entity
 created for entertainment purposes. It is in no way meant to represent a real entity.
 Any similarity to a real entity is purely coincidental.
 
-Source code copyright 2021 by Michael Billard (Angel-125)
+Source code copyright 2021-2022 by Michael Billard (Angel-125)
 
     This source code is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
