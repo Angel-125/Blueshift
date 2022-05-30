@@ -410,6 +410,7 @@ namespace Blueshift
         public int GetHighestRank(ShipConstruct ship, string skillName, out ProtoCrewMember astronaut)
         {
             astronaut = null;
+            return 0;
             if (string.IsNullOrEmpty(skillName))
                 return 0;
 
