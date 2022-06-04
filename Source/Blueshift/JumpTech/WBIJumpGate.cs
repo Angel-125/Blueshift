@@ -181,6 +181,12 @@ namespace Blueshift
         [KSPField]
         public float rendezvousDistance = -1f;
 
+        /// <summary>
+        /// Flag to automatically activate the jumpgate. It requires two gates in the network.
+        /// </summary>
+        [KSPField]
+        public bool autoActivate = false;
+
         #endregion
 
         #region Housekeeping
@@ -299,6 +305,10 @@ namespace Blueshift
             // Good to go.
             errorMessageShown = false;
 
+            // Save the source and destination gates. We need this so we can set focus back to the source and jump another vessel.
+            BlueshiftScenario.shared.jumpGateSourceId = part.vessel.id.ToString();
+            BlueshiftScenario.shared.destinationGateId = destinationVessel.id.ToString();
+
             // If the destination is in space then rendezvous with its orbit. Otherwise, land next to it.
             // We can use size here because, while inaccurate, it is overestimated, and we just want to get in the vicinity
             vesselToTeleport.UpdateVesselSize();
@@ -350,6 +360,17 @@ namespace Blueshift
                 jumpgateSelector.jumpgates = jumpgates;
                 jumpgateSelector.SetVisible(true);
             }
+        }
+
+        [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "#LOC_BLUESHIFT_jumpGateSwitchToSource")]
+        public void SwitchToSource()
+        {
+            Guid guid = new Guid(BlueshiftScenario.shared.jumpGateSourceId);
+            Vessel sourceGate = FlightGlobals.FindVessel(guid);
+
+            BlueshiftScenario.shared.jumpGateSourceId = string.Empty;
+            if (sourceGate != null)
+                FlightGlobals.ForceSetActiveVessel(sourceGate);
         }
 
         /// <summary>
@@ -441,6 +462,29 @@ namespace Blueshift
             debugMode = BlueshiftScenario.debugMode;
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
+
+            // Enable event to return back to source gate.
+            string vesselId = part.vessel.id.ToString();
+            string jumpGateSourceId = BlueshiftScenario.shared.jumpGateSourceId;
+            string destinationGateId = BlueshiftScenario.shared.destinationGateId;
+            if (!string.IsNullOrEmpty(jumpGateSourceId) && !string.IsNullOrEmpty(destinationGateId) && destinationGateId == vesselId)
+            {
+                Guid guid = new Guid(BlueshiftScenario.shared.jumpGateSourceId);
+                Vessel sourceGate = FlightGlobals.FindVessel(guid);
+                if (sourceGate != null)
+                {
+                    Events["SwitchToSource"].active = true;
+                    Events["SwitchToSource"].guiName = Localizer.Format("#LOC_BLUESHIFT_jumpGateSwitchToSource") + " " + sourceGate.vesselName;
+                }
+                else
+                {
+                    Events["SwitchToSource"].active = false;
+                }
+            }
+            else
+            {
+                Events["SwitchToSource"].active = false;
+            }
 
             // Get portal trigger, if any.
             if (!string.IsNullOrEmpty(portalTriggerTransform))
@@ -772,7 +816,7 @@ namespace Blueshift
 
         private void updateJumpgatePAW()
         {
-            if (jumpgates.Count == 1 && !isActivated)
+            if (jumpgates.Count == 1 && !isActivated && autoActivate)
             {
                 Events["SelectGate"].active = false;
                 effectsThrottle = 1.0f;

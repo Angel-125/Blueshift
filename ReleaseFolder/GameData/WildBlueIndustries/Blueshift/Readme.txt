@@ -10,14 +10,33 @@ GameData
 
 Changes
 
-- Rearranged warp engine FTL pre-flight checks to provide more accurate readings.
-- Added status texts to the warp speed harvester.
-- Fixed issue where warp engines couldn't draw their required Electric Charge "propellant" requirements.
-- Fixed issue with deprecated parts causing ship loading errors.
-- Fixed issue where engineers were adding way too much of a speed bonus to the warp engines (should be 1% bonus per engineering star).
+New Parts
+
+- Mk2 Bussard Collector: This collector collects particles while at warp similar to the S1 and S2 Bussard Collectors.
+
+- Mk2 Plasma Vent: This part vents plasma and eliminates Static Charge when Kerbal Flying Saucers is installed. Without it, it just looks cool.
+
+WBIJumpGate
+
+- Jumpgates will no longer automatically activate when there are only two gates in the network unless the autoActivate flag in WBIJumpGate is set.
+
+- Added the ability to switch vesel focus back to the source jumpgate after making the jump. This makes it easier to bring multiple vessels through the gate.
+
+WBIWarpEngine & Settings
+
+- Added warpEngineerSkill to the global settings.cfg file, and changed the default value for WBIWarpEngine's warpEngineerSkill to an empty value. If WBIWarpEngine's warpEngineerSkill is defined, then it will override the global warpEngineerSkill value.
+
+- Added warpSpeedBoostRank to the global settings.cfg file, and changed the default value for WBIWarpEngine's warpSpeedBoostRank to -1. If WBIWarpEngine's warpSpeedSkiwarpSpeedBoostRank is greater than 0, then it will override the global warpSpeedBoostRank value.
+
+- Added warpSpeedSkillMultiplier to the global settings.cfg file, and changed the default value for WBIWarpEngine's warpSpeedSkillMultiplier to -1. If WBIWarpEngine's warpSpeedSkillMultiplier is greater than 0, then it will override the global warpSpeedSkillMultiplier value.
+
+Fixes
+
+- Fixed NREs generated during part loading.
+- Fixed texture issues with mk2 warp tech parts.
 
 ---LICENSE---
-Art Assets, including .mu, .png, and .dds files are copyright 2021 by Michael Billard, All Rights Reserved.
+Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.
 
 Wild Blue Industries is trademarked by Michael Billard. All rights reserved.
 Note that Wild Blue Industries is a ficticious entity 

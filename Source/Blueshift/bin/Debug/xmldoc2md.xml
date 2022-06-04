@@ -1033,6 +1033,21 @@
             For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.warpEngineerSkill">
+            <summary>
+            Skill to use for improving warp engine performance.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.warpSpeedBoostRank">
+            <summary>
+            Minimum skill rank required to improve warp engine performance.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.warpSpeedSkillMultiplier">
+            <summary>
+            Skill multiplier to use when improving warp engine performance.
+            </summary>
+        </member>
         <member name="F:Blueshift.BlueshiftScenario.autoCircularize">
             <summary>
             Flag to indicate whether or not to auto-circularize the orbit.
@@ -1081,6 +1096,16 @@
         <member name="F:Blueshift.BlueshiftScenario.rendezvousDistance">
             <summary>
             In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.jumpGateSourceId">
+            <summary>
+            The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.destinationGateId">
+            <summary>
+            The destination gate that the traveler is traviling to. This is primarily used to set focus back to the source gate to jump something else.
             </summary>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.GetDestinationLocation(CelestialBody,CelestialBody)">
@@ -1594,6 +1619,11 @@
         <member name="F:Blueshift.WBIJumpGate.rendezvousDistance">
             <summary>
             Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform. Set to -1 (the default) to use the value from Blueshift settings.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.autoActivate">
+            <summary>
+            Flag to automatically activate the jumpgate. It requires two gates in the network.
             </summary>
         </member>
         <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">

@@ -299,19 +299,19 @@ namespace Blueshift
         /// The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
         /// </summary>
         [KSPField]
-        public string warpEngineerSkill = "ConverterSkill";
+        public string warpEngineerSkill;
 
         /// <summary>
         /// The skill rank required to improve warp speed.
         /// </summary>
         [KSPField]
-        public int warpSpeedBoostRank = 5;
+        public int warpSpeedBoostRank = -1;
 
         /// <summary>
         /// Per skill rank, the multiplier to multiply warp speed by.
         /// </summary>
         [KSPField]
-        public float warpSpeedSkillMultiplier = 0.01f;
+        public float warpSpeedSkillMultiplier = -1f;
         #endregion
 
         #endregion
@@ -662,6 +662,14 @@ namespace Blueshift
         {
             base.OnStart(state);
             loadFloatCurves();
+
+            // Use global warp performance improvement skills if the part doesn't define any.
+            if (string.IsNullOrEmpty(warpEngineerSkill))
+                warpEngineerSkill = BlueshiftScenario.warpEngineerSkill;
+            if (warpSpeedBoostRank <= 0)
+                warpSpeedBoostRank = BlueshiftScenario.warpSpeedBoostRank;
+            if (warpSpeedSkillMultiplier <= 0)
+                warpSpeedSkillMultiplier = BlueshiftScenario.warpSpeedSkillMultiplier;
 
             warpEngines = new List<WBIWarpEngine>();
             warpCoils = new List<WBIWarpCoil>();
@@ -1506,10 +1514,14 @@ namespace Blueshift
         /// </summary>
         protected void disableGeneratorBypass()
         {
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
+
             try
             {
                 if (applyWarpTranslation)
                 {
+                    warpGenerators = part.vessel.FindPartModulesImplementing<WBIModuleGeneratorFX>();
                     int count = warpGenerators.Count;
                     for (int index = 0; index < count; index++)
                     {

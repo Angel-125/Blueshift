@@ -55,6 +55,11 @@ namespace Blueshift
         private static string kMinRendezvousDistanceInterplanetary = "minRendezvousDistanceInterplanetary";
         private static string kRendezvousDistance = "rendezvousDistance";
         private static string kDebugMode = "debugMode";
+        private static string kWarpEngineerSkill = "warpEngineerSkill";
+        private static string kWarpSpeedBoostRank = "warpSpeedBoostRank";
+        private static string kWarpSpeedSkillMultiplier = "warpSpeedSkillMultiplier";
+        private static string kJumpGateSourceId = "jumpGateSourceId";
+        private static string kDestinationGateId = "destinationGateId";
         #endregion
 
         #region Housekeeping
@@ -73,6 +78,21 @@ namespace Blueshift
         /// For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
         /// </summary>
         public static float interstellarWarpSpeedMultiplier = 1000;
+
+        /// <summary>
+        /// Skill to use for improving warp engine performance.
+        /// </summary>
+        public static string warpEngineerSkill = "ConverterSkill";
+
+        /// <summary>
+        /// Minimum skill rank required to improve warp engine performance.
+        /// </summary>
+        public static int warpSpeedBoostRank = 3;
+
+        /// <summary>
+        /// Skill multiplier to use when improving warp engine performance.
+        /// </summary>
+        public static float warpSpeedSkillMultiplier = 0.1f;
 
         /// <summary>
         /// Flag to indicate whether or not to auto-circularize the orbit.
@@ -123,6 +143,16 @@ namespace Blueshift
         /// In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
         /// </summary>
         public static float rendezvousDistance = 100;
+
+        /// <summary>
+        /// The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
+        /// </summary>
+        public string jumpGateSourceId = string.Empty;
+
+        /// <summary>
+        /// The destination gate that the traveler is traviling to. This is primarily used to set focus back to the source gate to jump something else.
+        /// </summary>
+        public string destinationGateId = string.Empty;
 
         private double soiMultiplier = 1.1;
         private double soiNoPlanetsMultiplier = 100;
@@ -268,6 +298,12 @@ namespace Blueshift
                     }
                 }
             }
+
+            if (node.HasValue(kJumpGateSourceId))
+                jumpGateSourceId = node.GetValue(kJumpGateSourceId);
+
+            if (node.HasValue(kDestinationGateId))
+                destinationGateId = node.GetValue(kDestinationGateId);
         }
 
         public override void OnSave(ConfigNode node)
@@ -306,6 +342,14 @@ namespace Blueshift
 
                 node.AddNode(gateNetworkNode);
             }
+
+            // Source gate
+            if (!string.IsNullOrEmpty(jumpGateSourceId))
+                node.AddValue(kJumpGateSourceId, jumpGateSourceId);
+
+            // Destination gate
+            if (!string.IsNullOrEmpty(destinationGateId))
+                node.AddValue(kDestinationGateId, destinationGateId);
         }
         #endregion
 
@@ -1157,6 +1201,15 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kDebugMode))
                     bool.TryParse(nodeSettings.GetValue(kDebugMode), out debugMode);
+
+                if (nodeSettings.HasValue(kWarpEngineerSkill))
+                    warpEngineerSkill = nodeSettings.GetValue(kWarpEngineerSkill);
+
+                if (nodeSettings.HasValue(kWarpSpeedBoostRank))
+                    int.TryParse(nodeSettings.GetValue(kWarpSpeedBoostRank), out warpSpeedBoostRank);
+
+                if (nodeSettings.HasValue(kWarpSpeedSkillMultiplier))
+                    float.TryParse(nodeSettings.GetValue(kWarpSpeedSkillMultiplier), out warpSpeedSkillMultiplier);
             }
         }
 
