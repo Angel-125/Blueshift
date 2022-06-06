@@ -65,7 +65,6 @@ C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\UnityEng
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\UnityEngine.PerformanceReportingModule.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\KSPAssets.XmlSerializers.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csprojAssemblyReference.cache
-C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.CoreCompileInputs.cache
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.CopyComplete
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.pdb

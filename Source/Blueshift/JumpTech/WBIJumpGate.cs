@@ -355,7 +355,7 @@ namespace Blueshift
         public void SelectGate()
         {
             setupJumpNetwork();
-            if (jumpgates.Count > 1)
+            if (jumpgates.Count >= 1)
             {
                 jumpgateSelector.jumpgates = jumpgates;
                 jumpgateSelector.SetVisible(true);
@@ -464,26 +464,29 @@ namespace Blueshift
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
 
             // Enable event to return back to source gate.
-            string vesselId = part.vessel.id.ToString();
-            string jumpGateSourceId = BlueshiftScenario.shared.jumpGateSourceId;
-            string destinationGateId = BlueshiftScenario.shared.destinationGateId;
-            if (!string.IsNullOrEmpty(jumpGateSourceId) && !string.IsNullOrEmpty(destinationGateId) && destinationGateId == vesselId)
+            if (HighLogic.LoadedSceneIsFlight)
             {
-                Guid guid = new Guid(BlueshiftScenario.shared.jumpGateSourceId);
-                Vessel sourceGate = FlightGlobals.FindVessel(guid);
-                if (sourceGate != null)
+                string vesselId = part.vessel.id.ToString();
+                string jumpGateSourceId = BlueshiftScenario.shared.jumpGateSourceId;
+                string destinationGateId = BlueshiftScenario.shared.destinationGateId;
+                if (!string.IsNullOrEmpty(jumpGateSourceId) && !string.IsNullOrEmpty(destinationGateId) && destinationGateId == vesselId)
                 {
-                    Events["SwitchToSource"].active = true;
-                    Events["SwitchToSource"].guiName = Localizer.Format("#LOC_BLUESHIFT_jumpGateSwitchToSource") + " " + sourceGate.vesselName;
+                    Guid guid = new Guid(BlueshiftScenario.shared.jumpGateSourceId);
+                    Vessel sourceGate = FlightGlobals.FindVessel(guid);
+                    if (sourceGate != null)
+                    {
+                        Events["SwitchToSource"].active = true;
+                        Events["SwitchToSource"].guiName = Localizer.Format("#LOC_BLUESHIFT_jumpGateSwitchToSource") + " " + sourceGate.vesselName;
+                    }
+                    else
+                    {
+                        Events["SwitchToSource"].active = false;
+                    }
                 }
                 else
                 {
                     Events["SwitchToSource"].active = false;
                 }
-            }
-            else
-            {
-                Events["SwitchToSource"].active = false;
             }
 
             // Get portal trigger, if any.
@@ -825,7 +828,7 @@ namespace Blueshift
             }
 
             // Enable the gate selector if we have more than one gate.
-            else if (jumpgates.Count > 1)
+            else if (jumpgates.Count >= 1)
             {
                 Events["SelectGate"].active = true;
                 Events["SelectGate"].unfocusedRange = interactionRange;
