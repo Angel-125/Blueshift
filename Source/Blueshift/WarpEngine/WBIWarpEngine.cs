@@ -49,7 +49,7 @@ namespace Blueshift
     /// <summary>
     /// The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. 
     /// 
-    /// `
+    /// ```
     /// MODULE
     /// {
     ///     name = WBIWarpEngine
@@ -84,7 +84,7 @@ namespace Blueshift
     ///     
     ///     textureModuleID = WarpCore
     /// }
-    /// `
+    /// ```
     /// </summary>
     #endregion
     [KSPModule("#LOC_BLUESHIFT_warpEngineTitle")]
@@ -520,16 +520,37 @@ namespace Blueshift
                 }
 
                 // If we are targeting a vessel and we're near it (10km) then rendezvous with it instead.
-                double distanceMeters = BlueshiftScenario.shared.ConverToMeters(targetDistance, targetDistanceUnits);
-                double minRendezvousDistance = BlueshiftScenario.minRendezvousDistancePlanetary;
-                if (spatialLocation == WBISpatialLocations.Interplanetary)
-                    minRendezvousDistance = BlueshiftScenario.minRendezvousDistanceInterplanetary;
-                if (vessel.targetObject != null && vessel.targetObject.GetVessel() != null && distanceMeters <= minRendezvousDistance)
+                Vessel targetVessel = null;
+                if (vessel.targetObject != null)
+                    targetVessel = vessel.targetObject.GetVessel();
+                if (targetVessel != null)
                 {
-                    Vector3 position = UnityEngine.Random.onUnitSphere * BlueshiftScenario.rendezvousDistance;
-                    FlightGlobals.fetch.SetShipOrbitRendezvous(vessel.targetObject.GetVessel(), position, Vector3d.zero);
-                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_rendezvousComplete"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
-                    circularizationState = WBICircularizationStates.hasBeenCircularized;
+                    // Check SOI
+                    if (vessel.mainBody != targetVessel.mainBody)
+                    {
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsSameSOI"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                        circularizationState = WBICircularizationStates.doNotCircularize;
+                        return;
+                    }
+
+                    double distanceMeters = BlueshiftScenario.shared.ConverToMeters(targetDistance, targetDistanceUnits);
+                    double minRendezvousDistance = BlueshiftScenario.minRendezvousDistancePlanetary;
+                    if (spatialLocation == WBISpatialLocations.Interplanetary)
+                        minRendezvousDistance = BlueshiftScenario.minRendezvousDistanceInterplanetary;
+
+                    // Check rendezvous distance
+                    if (distanceMeters <= minRendezvousDistance)
+                    {
+                        Vector3 position = UnityEngine.Random.onUnitSphere * BlueshiftScenario.rendezvousDistance;
+                        FlightGlobals.fetch.SetShipOrbitRendezvous(vessel.targetObject.GetVessel(), position, Vector3d.zero);
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_rendezvousComplete"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                        circularizationState = WBICircularizationStates.hasBeenCircularized;
+                    }
+                    else
+                    {
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsMinDistance"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                        circularizationState = WBICircularizationStates.doNotCircularize;
+                    }
                     return;
                 }
 

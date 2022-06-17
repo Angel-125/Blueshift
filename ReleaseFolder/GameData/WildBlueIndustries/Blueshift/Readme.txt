@@ -10,8 +10,8 @@ GameData
 
 Fixes
 
-- Fixed jumpgate selection unable to select gates when only 2 gates are in the network.
-- Fixed jumpgate trigger scaling on Miniature Jumpgate that would cause nearby vessels to explode.
+- If targeting another vessel during auto-circularization, the target vessel must be in the same SOI as the current vessel.
+- Added additional checks for minimum distance required to rendezvous with another vessel.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.

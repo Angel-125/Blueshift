@@ -523,7 +523,7 @@
             <summary>
             The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. 
             
-            `
+            ```
             MODULE
             {
                 name = WBIWarpEngine
@@ -558,7 +558,7 @@
                 
                 textureModuleID = WarpCore
             }
-            `
+            ```
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.onWarpEffectsUpdated">
