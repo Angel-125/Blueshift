@@ -15,10 +15,41 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 The amount of warp capacity that the coil can produce.
 ### isActivated
 The activation switch. When not running, the animations won't be animated.
+### statusDisplay
+Display string for the warp coil status.
 ### animationThrottle
 A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
 ### displacementImpulse
 Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
+### needsMaintenance
+Flag to indicate that the part needs maintenance in order to function.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
+## Methods
+
+
+### UpdateMTBFRateMultiplier(System.Double)
+Updates the MTBF rate multiplier with the new rate.
+> #### Parameters
+> **rateMultiplier:** A double containing the new multiplier.
+
+
+### UpdateMTBF(System.Double)
+Updates the warp core's EVA Repairs' MTBF, if any.
+
+### HasEnoughResources(System.Double)
+Determines whether or not the warp coil has enough resources to operate.
+> #### Parameters
+> **rateMultiplier:** The resource consumption rate multiplier
+
+> #### Return value
+> True if the vessel has enough resources to power the warp coil, false if not.
+
+### GetAmountRequired(System.String)
+Returns the amount of resource required per second.
+> #### Parameters
+> **resourceName:** A string containing the name of the resource.
+
+> #### Return value
+> A double containing the amount of required resource if it can be found, or 0 if not.
 

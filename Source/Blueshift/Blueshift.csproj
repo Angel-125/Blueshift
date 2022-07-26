@@ -20,7 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\xmldoc2md.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\Blueshift.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -122,12 +122,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="RunMDSeparator.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="RunPowershell.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="xmldoc2md.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -136,6 +130,9 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetPath)" "C:\KSPDev\GameData\WildBlueIndustries\Blueshift\Plugins\"﻿
 xcopy /Y "$(TargetDir)$(TargetName).pdb" "C:\KSPDev\GameData\WildBlueIndustries\Blueshift\Plugins\"
-xcopy /Y "$(TargetDir)$(TargetName).dll" "C:\KSPDev\GameData\WildBlueIndustries\Blueshift\Plugins\"</PostBuildEvent>
+xcopy /Y "$(TargetDir)$(TargetName).dll" "C:\KSPDev\GameData\WildBlueIndustries\Blueshift\Plugins\"
+
+Powershell.exe -ExecutionPolicy Unrestricted -file "$(TargetDir)xmldoc2md.ps1" -xml "$(TargetDir)$(TargetName).xml" -xsl "$(TargetDir)xmldoc2md.xsl" -output "$(TargetDir)API.md"
+$(TargetDir)MarkdownSeparator.exe $(TargetDir)API.md Wiki</PostBuildEvent>
   </PropertyGroup>
 </Project>

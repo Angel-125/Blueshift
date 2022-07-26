@@ -10,8 +10,9 @@ GameData
 
 Fixes
 
-- If targeting another vessel during auto-circularization, the target vessel must be in the same SOI as the current vessel.
-- Added additional checks for minimum distance required to rendezvous with another vessel.
+- Hid deprecated parts from Community Category Kit.
+- Fixed Effects issues on the mini jumpgate.
+- If the graviolium toll is set to be paid by the jumpgate, and it can't be paid by the jumpgate, then the jumpgate will check to see if the traveler can pay the toll instead.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.

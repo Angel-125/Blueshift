@@ -350,6 +350,17 @@ namespace Blueshift
         }
         #endregion
 
+        #region Actions
+        /// Displays the jumpgate selector
+        /// </summary>
+        /// <param name="param">A KSPActionParam containing the action parameters.</param>
+        [KSPAction("#LOC_BLUESHIFT_jumpGateSelectGate")]
+        public void ActionSelectGate(KSPActionParam param)
+        {
+            SelectGate();
+        }
+        #endregion
+
         #region Events
         [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "#LOC_BLUESHIFT_jumpGateSelectGate")]
         public void SelectGate()
@@ -579,9 +590,19 @@ namespace Blueshift
 
                 // Check the amount of resource required
                 if (resourceToll.paidByTraveler)
+                {
                     vesselToTeleport.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
+                }
                 else
+                {
                     part.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
+
+                    // As a backup, if the jumpgate can't pay the toll, check the traveler.
+                    if (amount < (resourceToll.amountPerTonne * vesselMass))
+                    {
+                        vesselToTeleport.GetConnectedResourceTotals(definition.id, out amount, out maxAmount);
+                    }
+                }
 
                 // If we don't have enough then we're done.
                 if (amount < (resourceToll.amountPerTonne * vesselMass))

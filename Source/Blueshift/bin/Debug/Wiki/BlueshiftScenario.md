@@ -9,10 +9,20 @@ Light-year unit of measurement. Abbreviated "Ly."
 Gigameter unit of measurement. Abbreviate "Gm."
 ### kMegaMeter
 Megameter unit of measurement. Abbreviated "Mm."
+### messageDuration
+How long to display a screen message.
 ### shared
 Shared instance of the helper.
+### debugMode
+Flag to indicate that the mod is in debug mode.
 ### interstellarWarpSpeedMultiplier
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
+### warpEngineerSkill
+Skill to use for improving warp engine performance.
+### warpSpeedBoostRank
+Minimum skill rank required to improve warp engine performance.
+### warpSpeedSkillMultiplier
+Skill multiplier to use when improving warp engine performance.
 ### autoCircularize
 Flag to indicate whether or not to auto-circularize the orbit.
 ### circularizationResourceDef
@@ -25,8 +35,42 @@ Flag to indicate whether or not Space Anomalies are enabled.
 Flag to indicate whether or not Jumpgate anomalies are enabled.
 ### jumpgateStartupIsDestructive
 The jumpgate startup sequence is destructive. Stay clear!
+### maintenanceEnabled
+Flag to indicate if parts require maintenance.
+### minRendezvousDistancePlanetary
+In meters, minimum distance in planetary space that's required to rendezvous with a vessel via auto-circularization.
+### minRendezvousDistanceInterplanetary
+In meters, minimum distance in interplanetary space that's required to rendezvous with a vessel via auto-circularization.
+### rendezvousDistance
+In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+### jumpGateSourceId
+The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
+### destinationGateId
+The destination gate that the traveler is traviling to. This is primarily used to set focus back to the source gate to jump something else.
 ## Methods
 
+
+### GetDestinationLocation(CelestialBody,CelestialBody)
+Determines the spatial location of the destination celestial body relative to the source body.
+> #### Parameters
+> **sourceBody:** A CelestialBody representing the source. Typically this is the active vessel's mainBody.
+
+> **destinationBody:** A CelestialBody containing the desired destination.
+
+> #### Return value
+> A WBISpacialLocations enum with the relative location of the destination.
+
+### GetHighestRank(Vessel,System.String,ProtoCrewMember@)
+Returns the highest ranking astronaut in the vessel that has the required skill.
+> #### Parameters
+> **vessel:** The vessel to check for the highest ranking kerbal.
+
+> **skillName:** The name of the skill to look for. Examples include RepairSkill and ScienceSkill.
+
+> **astronaut:** The astronaut that has the highest ranking skill.
+
+> #### Return value
+> The skill rank rating of the highest ranking astronaut (if any)
 
 ### AddJumpgateToNetwork(Blueshift.WBISpaceAnomaly)
 Adds the jumpgate anomaly to the network.
@@ -144,4 +188,12 @@ Calculates the distance and units of measurement to the vessel's target (if any)
 
 > #### Return value
 > A double containing the distance. If there is no target then the distance is 0.
+
+### GetParentStar(CelestialBody)
+Find the parent star of the celestial body.
+> #### Parameters
+> **body:** The celestial body to check.
+
+> #### Return value
+> A CelestialBody that is the query parameter's star, or null.
 

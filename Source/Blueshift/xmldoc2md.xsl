@@ -125,6 +125,13 @@ URL: http://github.com/jaime-olivares/xmldoc2md
   <xsl:template match="remarks">
     <xsl:text>&#10;</xsl:text>
     <xsl:value-of select="normalize-space()" />
+    <xsl:text>  </xsl:text>
+  </xsl:template>
+
+  <xsl:template match="li">
+    <xsl:text>* </xsl:text>
+    <xsl:value-of select="normalize-space()" />
+    <xsl:text>  </xsl:text>
   </xsl:template>
 
   <xsl:template match="c">
@@ -134,9 +141,10 @@ URL: http://github.com/jaime-olivares/xmldoc2md
   </xsl:template>
 
   <xsl:template match="code">
+    <xsl:text>&#10;&gt; #### Example</xsl:text>
     <xsl:text>&#10;```&#10;</xsl:text>
     <xsl:value-of select="text()" />
-    <xsl:text>```</xsl:text>
+    <xsl:text>&#10;```&#10;</xsl:text>
   </xsl:template>
 
   <xsl:template match="exception">

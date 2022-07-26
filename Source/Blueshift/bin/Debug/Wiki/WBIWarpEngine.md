@@ -1,16 +1,30 @@
             
-The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. ` MODULE { name = WBIWarpEngine ...Standard engine parameters here... moduleDescription = Enables fater than light travel. bowShockTransformName = bowShock minPlanetaryRadius = 3.0 displacementImpulse = 100 planetarySOISpeedCurve { key = 1 0.1 ... key = 0.1 0.005 } warpCurve { key = 1 0 key = 10 1 ... key = 1440 10 } waterfallEffectController = warpEffectController waterfallWarpEffectsCurve { key = 0 0 ... key = 1.5 1 } textureModuleID = WarpCore } `
+The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. ``` MODULE { name = WBIWarpEngine ...Standard engine parameters here... moduleDescription = Enables fater than light travel. bowShockTransformName = bowShock minPlanetaryRadius = 3.0 displacementImpulse = 100 planetarySOISpeedCurve { key = 1 0.1 ... key = 0.1 0.005 } warpCurve { key = 1 0 key = 10 1 ... key = 1440 10 } waterfallEffectController = warpEffectController waterfallWarpEffectsCurve { key = 0 0 ... key = 1.5 1 } textureModuleID = WarpCore } ```
         
 ## Fields
 
+### onWarpEffectsUpdated
+Game event signifying when warp engine effects have been updated.
+### onWarpEngineStart
+Game event signifying when the warp engine starts.
+### onWarpEngineShutdown
+Game event signifying when the warp engine shuts down.
+### onWarpEngineFlameout
+Game event signifying when the warp engine flames out.
+### onWarpEngineUnFlameout
+Game event signifying when the warp engine un-flames out.
 ### moduleDescription
 Short description of the module as displayed in the editor.
 ### minPlanetaryRadius
 Minimum planetary radius needed to go to warp. This is used to calculate the user-friendly minimum warp altitude display.
 ### minWarpAltitudeDisplay
 Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
-### warpSpeed
-The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+### warpSpeedDisplay
+The FTL display velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+### maxWarpSpeedDisplay
+(Debug visible) Maximum possible warp speed.
+### preflightCheck
+Pre-flight status check.
 ### spatialLocation
 Where we are in space.
 ### vesselCourse
@@ -23,8 +37,6 @@ Limits top speed while in a planetary or munar SOI so we don't zoom past the cel
 Whenever you cross into interstellar space, or are already in interstellar space and throttled down, then apply this acceleration curve. The warp speed will be max warp speed * curve's speed modifier. The first number represents the time since crossing the boundary/throttling up, and the second number is the multiplier. We don't apply this curve when going from interstellar to interplanetary space.
 ### interstellarPowerMultiplier
 Multiplies resource consumption and production rates by this multiplier when in interstellar space. Generators identified by warpPowerGeneratorID will be affected by this multiplier. Default multiplier is 10.
-### displacementImpulse
-Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
 ### warpCurve
 In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with a WBIWarpCoil part module can generate warpCapacity. The warp curve controls how much warpCapacity is neeeded to go light speed or faster. The first number represents the available warpCapacity, while the second number gives multiples of C. You can apply any kind of warp curve you want, but the baseline uses the Fibonacci sequence * 10. It may seem steep, but in KSP's small scale, 1C is plenty fast. This curve is modified by the engine's displacementImpulse and current vessel mass. effectiveWarpCapacity = warpCapacity * (displacementImpulse / vessel mass)
 ### waterfallEffectController
@@ -37,6 +49,22 @@ The name of the WBIAnimatedTexture to drive as part of the warp effects.
 Engines can drive WBIModuleGeneratorFX that produce resources needed for warp travel if their moduleID matches this value.
 ### photonicBoomEffectName
 Optional effect to play when the vessel exceeds the speed of light.
+### warpSimulationResource
+Used when calculating the max warp speed in the editor, this is the resource that is common between the warp engine, gravitic generator, and warp coil. This resource should be the limiting resource in the trio (the one that runs out the fastest).
+### powerMultiplier
+The ratio between the amount of power produced for the warp coils to the amount of power consumed by the warp coils.
+### displacementMultiplier
+The ratio between the total mass displaced by the warp coils to the vessel's total mass.
+### warpIgnitionThreshold
+When the powerMultiplier drops below this value, the engine will flame out.
+### planetarySpeedBrakeEnabled
+Planetary Speed Brake
+### warpEngineerSkill
+The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
+### warpSpeedBoostRank
+The skill rank required to improve warp speed.
+### warpSpeedSkillMultiplier
+Per skill rank, the multiplier to multiply warp speed by.
 ### isInSpace
 (Debug visible) Flag to indicate that we're in space (orbiting, suborbital, or escaping)
 ### meetsWarpAltitude
@@ -53,12 +81,14 @@ Name of optional bow shock transform.
 (Debug visible) Total warp capacity calculated from all active warp engines.
 ### effectiveWarpCapacity
 (Debug visible) Effective warp capacity after accounting for vessel mass
-### maxWarpSpeed
-(Debug visible) Maximum possible warp speed.
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
 ### effectsThrottle
 (Debug visible) Current throttle level for the warp effects.
+### warpResourceProduced
+(Debug visible) amount of simulation resource produced.
+### warpResourceRequired
+(Debug visible) amount of simulation resource consumed.
 ### terrainHit
 Hit test stuff to make sure we don't run into planets.
 ### layerMask
@@ -67,6 +97,8 @@ Layer mask used for the hit test
 List of active warp engines
 ### warpCoils
 List of enabled warp coils
+### warpGenerators
+List of warp generators
 ### warpEngineTextures
 List of animated textures driven by the warp engine
 ### previousBody
@@ -83,6 +115,8 @@ Due to the way engines work on FixedUpdate, the engine can determine that it is 
 Optional (but highly recommended) Waterfall effects module
 ### hasExceededLightSpeed
 Flag to indicate whether or not the vessel has exceeded light speed.
+### consumptionRateMultiplier
+Multiplier used for consumption of resources and MTBF/heat.
 ## Methods
 
 
@@ -138,13 +172,8 @@ Calulates the total warp capacity from the vessel's active warp coils. Each warp
 ### updateWarpPowerGenerators
 Updates the generators that provide warp power.
 
-### consumeCoilResources(Blueshift.WBIWarpCoil)
-Consumes the warp coil's required resources.
-> #### Parameters
-> **warpCoil:** The WBIWarpCoil to check for required resources.
-
-> #### Return value
-> true if the coil successfully consumed its required resources, false if not.
+### disableGeneratorBypass
+In order to synchronize the converter's process with the active warp engine, we enable a generator bypass. The moment that we no longer need to do that, such as when the engine is shut down, or it flames out, we want to disable the bypass.
 
 ### shouldApplyWarp
 Looks for all the active warp engines in the vessel. From the list, only the top-most engine in the list of active engines should apply warp translation. All others simply provide support.

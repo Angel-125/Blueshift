@@ -1,6 +1,31 @@
 ﻿# Blueshift
 
 
+# WBIGateAssembler
+            
+This is a helper module for jumpgates that are built insted of ones that are single-piece.
+        
+## Fields
+
+### debugMode
+Debug flag.
+### supportSegmentPartName
+Name of the part that forms part of the ring. This part will be decoupled and deleted from the vessel when assembling the jumpgate. When that happens, one of the segmentMesh items will be enabled. Once all the segmentMesh entries are enabled, the ring becomes fully operational.
+### assembledCoM
+When fully assembed, where to place the center of mass
+### enabledMeshCount
+Current count of enabled mesh segments.
+### portalTriggerName
+Name of the portal trigger for the jumpgate.
+## Methods
+
+
+### AddSegment
+Adds new segment to the jumpgate if one can be found. The located segment will be destroyed.
+
+### CompleteAssembly
+Debug method to complete gate assembly.
+
 # GateSelectedDelegate
             
 Callback to indicate that a jumpgate was selected
@@ -84,7 +109,7 @@ Interstellar space: the void between the stars...
 
 # WBIModuleGeneratorFX
             
-An enhanced version of the stock ModuleGenerator that supports playing effects.
+An enhanced version of the stock ModuleGenerator that supports playing effects. Supports Waterfall.
         
 ## Fields
 
@@ -110,6 +135,23 @@ Generators can play a stop effect when the generator is deactivated.
 Generators can play a running effect while the generator is running.
 ### waterfallEffectController
 Name of the Waterfall effects controller that controls the warp effects (if any).
+### isMissingResources
+Flag indicating whether or not we're missing resources needed to produce outputs.
+### bypassRunCycle
+This flag lets an external part module bypass the converter's run cycle which is triggered by FixedUpdate. When this flag is set to true, then the base class's FixedUpdate won't be called. Without the base class' FixedUpdate getting called, no resources will be converted. The external part module is expected to call RunGeneratorCycle manually. This system was put in place to get around timing issues where gravitic generators should produce enough resources for warp coils to consume each time tick, but due to timing issues, the resources aren't produced in time for the warp engine to handle resource consumption. To get around that problem, the active warp engine handles resource conversion during its fixed update.
+## Methods
+
+
+### RunGeneratorCycle
+This is a helper function to avoid issues where a warp engine needs a certain amount of resources in order to operate, the system should have them, but due to timing in the game, the resources aren't produced when they should be.
+
+### GetAmountProduced(System.String)
+Returns the amount of the supplied resource that is produced per second.
+> #### Parameters
+> **resourceName:** A string containing the name of the resource to look for.
+
+> #### Return value
+> A double containing the amount of the resource produced, or 0 if the resource can't be found.
 
 # WBIPartModule
             
@@ -217,12 +259,43 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 The amount of warp capacity that the coil can produce.
 ### isActivated
 The activation switch. When not running, the animations won't be animated.
+### statusDisplay
+Display string for the warp coil status.
 ### animationThrottle
 A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
 ### displacementImpulse
 Warp coils can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
+### needsMaintenance
+Flag to indicate that the part needs maintenance in order to function.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
+## Methods
+
+
+### UpdateMTBFRateMultiplier(System.Double)
+Updates the MTBF rate multiplier with the new rate.
+> #### Parameters
+> **rateMultiplier:** A double containing the new multiplier.
+
+
+### UpdateMTBF(System.Double)
+Updates the warp core's EVA Repairs' MTBF, if any.
+
+### HasEnoughResources(System.Double)
+Determines whether or not the warp coil has enough resources to operate.
+> #### Parameters
+> **rateMultiplier:** The resource consumption rate multiplier
+
+> #### Return value
+> True if the vessel has enough resources to power the warp coil, false if not.
+
+### GetAmountRequired(System.String)
+Returns the amount of resource required per second.
+> #### Parameters
+> **resourceName:** A string containing the name of the resource.
+
+> #### Return value
+> A double containing the amount of required resource if it can be found, or 0 if not.
 
 # WBICircularizationStates
             
@@ -241,18 +314,32 @@ Orbit can be circularized.
 
 # WBIWarpEngine
             
-The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. ` MODULE { name = WBIWarpEngine ...Standard engine parameters here... moduleDescription = Enables fater than light travel. bowShockTransformName = bowShock minPlanetaryRadius = 3.0 displacementImpulse = 100 planetarySOISpeedCurve { key = 1 0.1 ... key = 0.1 0.005 } warpCurve { key = 1 0 key = 10 1 ... key = 1440 10 } waterfallEffectController = warpEffectController waterfallWarpEffectsCurve { key = 0 0 ... key = 1.5 1 } textureModuleID = WarpCore } `
+The Warp Engine is designed to propel a vessel faster than light. It requires WarpCapacity That is produced by WBIWarpCoil part modules. ``` MODULE { name = WBIWarpEngine ...Standard engine parameters here... moduleDescription = Enables fater than light travel. bowShockTransformName = bowShock minPlanetaryRadius = 3.0 displacementImpulse = 100 planetarySOISpeedCurve { key = 1 0.1 ... key = 0.1 0.005 } warpCurve { key = 1 0 key = 10 1 ... key = 1440 10 } waterfallEffectController = warpEffectController waterfallWarpEffectsCurve { key = 0 0 ... key = 1.5 1 } textureModuleID = WarpCore } ```
         
 ## Fields
 
+### onWarpEffectsUpdated
+Game event signifying when warp engine effects have been updated.
+### onWarpEngineStart
+Game event signifying when the warp engine starts.
+### onWarpEngineShutdown
+Game event signifying when the warp engine shuts down.
+### onWarpEngineFlameout
+Game event signifying when the warp engine flames out.
+### onWarpEngineUnFlameout
+Game event signifying when the warp engine un-flames out.
 ### moduleDescription
 Short description of the module as displayed in the editor.
 ### minPlanetaryRadius
 Minimum planetary radius needed to go to warp. This is used to calculate the user-friendly minimum warp altitude display.
 ### minWarpAltitudeDisplay
 Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
-### warpSpeed
-The FTL velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+### warpSpeedDisplay
+The FTL display velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
+### maxWarpSpeedDisplay
+(Debug visible) Maximum possible warp speed.
+### preflightCheck
+Pre-flight status check.
 ### spatialLocation
 Where we are in space.
 ### vesselCourse
@@ -265,8 +352,6 @@ Limits top speed while in a planetary or munar SOI so we don't zoom past the cel
 Whenever you cross into interstellar space, or are already in interstellar space and throttled down, then apply this acceleration curve. The warp speed will be max warp speed * curve's speed modifier. The first number represents the time since crossing the boundary/throttling up, and the second number is the multiplier. We don't apply this curve when going from interstellar to interplanetary space.
 ### interstellarPowerMultiplier
 Multiplies resource consumption and production rates by this multiplier when in interstellar space. Generators identified by warpPowerGeneratorID will be affected by this multiplier. Default multiplier is 10.
-### displacementImpulse
-Warp engines can efficiently move a certain amount of mass to light speed and beyond without penalties. Going over this limit incurs performance penalties, but staying under this value provides benefits. The displacement value is rated in metric tons.
 ### warpCurve
 In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with a WBIWarpCoil part module can generate warpCapacity. The warp curve controls how much warpCapacity is neeeded to go light speed or faster. The first number represents the available warpCapacity, while the second number gives multiples of C. You can apply any kind of warp curve you want, but the baseline uses the Fibonacci sequence * 10. It may seem steep, but in KSP's small scale, 1C is plenty fast. This curve is modified by the engine's displacementImpulse and current vessel mass. effectiveWarpCapacity = warpCapacity * (displacementImpulse / vessel mass)
 ### waterfallEffectController
@@ -279,6 +364,22 @@ The name of the WBIAnimatedTexture to drive as part of the warp effects.
 Engines can drive WBIModuleGeneratorFX that produce resources needed for warp travel if their moduleID matches this value.
 ### photonicBoomEffectName
 Optional effect to play when the vessel exceeds the speed of light.
+### warpSimulationResource
+Used when calculating the max warp speed in the editor, this is the resource that is common between the warp engine, gravitic generator, and warp coil. This resource should be the limiting resource in the trio (the one that runs out the fastest).
+### powerMultiplier
+The ratio between the amount of power produced for the warp coils to the amount of power consumed by the warp coils.
+### displacementMultiplier
+The ratio between the total mass displaced by the warp coils to the vessel's total mass.
+### warpIgnitionThreshold
+When the powerMultiplier drops below this value, the engine will flame out.
+### planetarySpeedBrakeEnabled
+Planetary Speed Brake
+### warpEngineerSkill
+The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
+### warpSpeedBoostRank
+The skill rank required to improve warp speed.
+### warpSpeedSkillMultiplier
+Per skill rank, the multiplier to multiply warp speed by.
 ### isInSpace
 (Debug visible) Flag to indicate that we're in space (orbiting, suborbital, or escaping)
 ### meetsWarpAltitude
@@ -295,12 +396,14 @@ Name of optional bow shock transform.
 (Debug visible) Total warp capacity calculated from all active warp engines.
 ### effectiveWarpCapacity
 (Debug visible) Effective warp capacity after accounting for vessel mass
-### maxWarpSpeed
-(Debug visible) Maximum possible warp speed.
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
 ### effectsThrottle
 (Debug visible) Current throttle level for the warp effects.
+### warpResourceProduced
+(Debug visible) amount of simulation resource produced.
+### warpResourceRequired
+(Debug visible) amount of simulation resource consumed.
 ### terrainHit
 Hit test stuff to make sure we don't run into planets.
 ### layerMask
@@ -309,6 +412,8 @@ Layer mask used for the hit test
 List of active warp engines
 ### warpCoils
 List of enabled warp coils
+### warpGenerators
+List of warp generators
 ### warpEngineTextures
 List of animated textures driven by the warp engine
 ### previousBody
@@ -325,6 +430,8 @@ Due to the way engines work on FixedUpdate, the engine can determine that it is 
 Optional (but highly recommended) Waterfall effects module
 ### hasExceededLightSpeed
 Flag to indicate whether or not the vessel has exceeded light speed.
+### consumptionRateMultiplier
+Multiplier used for consumption of resources and MTBF/heat.
 ## Methods
 
 
@@ -380,13 +487,8 @@ Calulates the total warp capacity from the vessel's active warp coils. Each warp
 ### updateWarpPowerGenerators
 Updates the generators that provide warp power.
 
-### consumeCoilResources(Blueshift.WBIWarpCoil)
-Consumes the warp coil's required resources.
-> #### Parameters
-> **warpCoil:** The WBIWarpCoil to check for required resources.
-
-> #### Return value
-> true if the coil successfully consumed its required resources, false if not.
+### disableGeneratorBypass
+In order to synchronize the converter's process with the active warp engine, we enable a generator bypass. The moment that we no longer need to do that, such as when the engine is shut down, or it flames out, we want to disable the bypass.
 
 ### shouldApplyWarp
 Looks for all the active warp engines in the vessel. From the list, only the top-most engine in the list of active engines should apply warp translation. All others simply provide support.
@@ -415,10 +517,20 @@ Light-year unit of measurement. Abbreviated "Ly."
 Gigameter unit of measurement. Abbreviate "Gm."
 ### kMegaMeter
 Megameter unit of measurement. Abbreviated "Mm."
+### messageDuration
+How long to display a screen message.
 ### shared
 Shared instance of the helper.
+### debugMode
+Flag to indicate that the mod is in debug mode.
 ### interstellarWarpSpeedMultiplier
 When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go. For comparison, Mass Effect Andromeda's Tempest can cruise at 4745 times light speed, or 13 light-years per day.
+### warpEngineerSkill
+Skill to use for improving warp engine performance.
+### warpSpeedBoostRank
+Minimum skill rank required to improve warp engine performance.
+### warpSpeedSkillMultiplier
+Skill multiplier to use when improving warp engine performance.
 ### autoCircularize
 Flag to indicate whether or not to auto-circularize the orbit.
 ### circularizationResourceDef
@@ -431,8 +543,42 @@ Flag to indicate whether or not Space Anomalies are enabled.
 Flag to indicate whether or not Jumpgate anomalies are enabled.
 ### jumpgateStartupIsDestructive
 The jumpgate startup sequence is destructive. Stay clear!
+### maintenanceEnabled
+Flag to indicate if parts require maintenance.
+### minRendezvousDistancePlanetary
+In meters, minimum distance in planetary space that's required to rendezvous with a vessel via auto-circularization.
+### minRendezvousDistanceInterplanetary
+In meters, minimum distance in interplanetary space that's required to rendezvous with a vessel via auto-circularization.
+### rendezvousDistance
+In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+### jumpGateSourceId
+The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
+### destinationGateId
+The destination gate that the traveler is traviling to. This is primarily used to set focus back to the source gate to jump something else.
 ## Methods
 
+
+### GetDestinationLocation(CelestialBody,CelestialBody)
+Determines the spatial location of the destination celestial body relative to the source body.
+> #### Parameters
+> **sourceBody:** A CelestialBody representing the source. Typically this is the active vessel's mainBody.
+
+> **destinationBody:** A CelestialBody containing the desired destination.
+
+> #### Return value
+> A WBISpacialLocations enum with the relative location of the destination.
+
+### GetHighestRank(Vessel,System.String,ProtoCrewMember@)
+Returns the highest ranking astronaut in the vessel that has the required skill.
+> #### Parameters
+> **vessel:** The vessel to check for the highest ranking kerbal.
+
+> **skillName:** The name of the skill to look for. Examples include RepairSkill and ScienceSkill.
+
+> **astronaut:** The astronaut that has the highest ranking skill.
+
+> #### Return value
+> The skill rank rating of the highest ranking astronaut (if any)
 
 ### AddJumpgateToNetwork(Blueshift.WBISpaceAnomaly)
 Adds the jumpgate anomaly to the network.
@@ -551,6 +697,14 @@ Calculates the distance and units of measurement to the vessel's target (if any)
 > #### Return value
 > A double containing the distance. If there is no target then the distance is 0.
 
+### GetParentStar(CelestialBody)
+Find the parent star of the celestial body.
+> #### Parameters
+> **body:** The celestial body to check.
+
+> #### Return value
+> A CelestialBody that is the query parameter's star, or null.
+
 # WBIModuleHarvesterFX
             
 This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
@@ -590,6 +744,8 @@ Describes a space anomaly. Similar to asteroids, space anomalies are listed as u
 Identifier for the space anomaly.
 ### partName
 Name of the part to spawn
+### vesselName
+Anomalies are typically named "UNK-" and a sequence of letters and numbers, but you can override the name of the vessel if desired. This field should be used with unique anomalies (maxInstances = 1).
 ### anomalyType
 Type of anomaly. Default is generic.
 ### sizeClass
@@ -623,7 +779,7 @@ Maximum number of objects of this type that may exist at any given time. Default
 ### vesselId
 ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
 ### isKnown
-Flag to indicate whether or not the gate should automatically be added to the network's known gates. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
+Flag to indicate whether or not the gate should automatically be added to the network's known gates and/or is automatically tracked by the Tracking Station. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
 ### networkID
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
 ### rendezvousDistance
@@ -677,6 +833,23 @@ Flag to indicate whether or not the part has been visited.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
 
+# ResourceToll
+            
+Defines a resource that must be paid in order to reach the desired destination. If defined, then the default mechanics are overridden.
+        
+## Fields
+
+### name
+Name of the resource toll.
+### priceTier
+Price tier- one of: planetary, interplanetary, interstellar
+### resourceName
+Name of the resource required to pay the jump toll.
+### amountPerTonne
+Amount of resource per metric tonne mass of the traveler
+### paidByTraveler
+Resource is paid by the traveler that is initiating the jump
+
 # WBIDockingAlignmentLock
             
 A simple helper class to lock the docking alignment.
@@ -698,3 +871,30 @@ Total number of segments to check.
 Name of the node to check for other gate segments.
 ### secondaryNodeName
 Name of the node to check for other gate segments.
+
+# WBICustomAsteroid
+            
+A customized version of ModuleAsteroid to allow for standard asteroid functionality while avoiding the procedural mesh generation. This is helpful for custom asteroid anomalies like Oumuamua.
+        
+## Fields
+
+### sampleAcquired
+Flag indicating that a sample of the asteroid has been acquired.
+### scienceExperiment
+The science experiment to run.
+### flightCoMTracker
+Tracker for the asteroid's center of mass.
+## Methods
+
+
+### OnStart(PartModule.StartState)
+Overrides the start method to avoid generating a procedural asteroid.
+> #### Parameters
+> **state:** 
+
+
+### RunExperiment
+Replacement event for the asteroid's sample return experiment.
+
+### TargetCoM
+Replacement event for ModuleAsteroid's event to target the asteroid's center of mass.

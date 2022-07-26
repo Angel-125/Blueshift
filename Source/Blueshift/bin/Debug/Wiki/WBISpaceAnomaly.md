@@ -7,6 +7,8 @@ Describes a space anomaly. Similar to asteroids, space anomalies are listed as u
 Identifier for the space anomaly.
 ### partName
 Name of the part to spawn
+### vesselName
+Anomalies are typically named "UNK-" and a sequence of letters and numbers, but you can override the name of the vessel if desired. This field should be used with unique anomalies (maxInstances = 1).
 ### anomalyType
 Type of anomaly. Default is generic.
 ### sizeClass
@@ -40,7 +42,7 @@ Maximum number of objects of this type that may exist at any given time. Default
 ### vesselId
 ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
 ### isKnown
-Flag to indicate whether or not the gate should automatically be added to the network's known gates. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
+Flag to indicate whether or not the gate should automatically be added to the network's known gates and/or is automatically tracked by the Tracking Station. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
 ### networkID
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
 ### rendezvousDistance

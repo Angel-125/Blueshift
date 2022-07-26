@@ -533,7 +533,7 @@ namespace Blueshift
                         return;
                     }
 
-                    double distanceMeters = BlueshiftScenario.shared.ConverToMeters(targetDistance, targetDistanceUnits);
+                    double distanceMeters = Math.Abs((part.vessel.GetWorldPos3D() - targetVessel.GetWorldPos3D()).magnitude);
                     double minRendezvousDistance = BlueshiftScenario.minRendezvousDistancePlanetary;
                     if (spatialLocation == WBISpatialLocations.Interplanetary)
                         minRendezvousDistance = BlueshiftScenario.minRendezvousDistanceInterplanetary;

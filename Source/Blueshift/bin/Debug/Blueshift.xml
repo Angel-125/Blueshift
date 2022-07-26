@@ -185,7 +185,7 @@
         </member>
         <member name="T:Blueshift.WBIModuleGeneratorFX">
             <summary>
-            An enhanced version of the stock ModuleGenerator that supports playing effects.
+            An enhanced version of the stock ModuleGenerator that supports playing effects. Supports Waterfall.
             </summary>
         </member>
         <member name="F:Blueshift.WBIModuleGeneratorFX.debugMode">
@@ -1636,6 +1636,7 @@
             The ID of the vessel when it was first created.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "M:Blueshift.WBIJumpGate.ActionSelectGate(KSPActionParam)" -->
         <member name="M:Blueshift.WBIJumpGate.SetGateEnabled(System.Boolean)">
             <summary>
             Enables/disables the jumpgate.

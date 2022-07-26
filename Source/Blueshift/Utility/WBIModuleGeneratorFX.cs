@@ -21,7 +21,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 namespace Blueshift
 {
     /// <summary>
-    /// An enhanced version of the stock ModuleGenerator that supports playing effects.
+    /// An enhanced version of the stock ModuleGenerator that supports playing effects. Supports Waterfall.
     /// </summary>
     public class WBIModuleGeneratorFX : ModuleResourceConverter, IModuleInfo
     {
