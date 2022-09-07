@@ -212,6 +212,63 @@ namespace Blueshift
 
             return 0;
         }
+
+        public bool ConsumeResources(double rateMultiplier, bool isTimewarping)
+        {
+            // If we're not timewarping then let the resource handler, uh, handle it.
+            if (!isTimewarping)
+            {
+                string errorStatus = string.Empty;
+                int count = resHandler.inputResources.Count;
+
+                resHandler.UpdateModuleResourceInputs(ref errorStatus, rateMultiplier, 0.1, true, true);
+                for (int index = 0; index < count; index++)
+                {
+                    if (!resHandler.inputResources[index].available)
+                        return false;
+                }
+
+                return true;
+            }
+
+            // We are timewarping. Manually consume the resources.
+            // We need to manually consume resources to avoid an issue where high timewarp will attempt to pull far more resources than exist.
+            else
+            {
+                int count = resHandler.inputResources.Count;
+                double amount = 0;
+                double maxAmount = 0;
+                double demand = 0;
+
+                for (int index = 0; index < count; index++)
+                {
+                    // Get the resource's current and max amounts.
+                    part.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
+
+                    // Determine how many units per second we require.
+                    demand = resHandler.inputResources[index].rate;
+
+                    // Cap demand to maxAmount if the timewarp-adjusted demand exceeds the maxAmount.
+                    if (demand * TimeWarp.fixedDeltaTime > maxAmount)
+                        demand = maxAmount;
+                    else
+                        demand *= TimeWarp.fixedDeltaTime;
+
+                    // Pull the resource if we have enough. Otherwise, we can't consume the resouce and we're done.
+                    if (amount >= demand)
+                    {
+                        part.RequestResource(resHandler.inputResources[index].id, demand);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+
+                // A-Ok
+                return true;
+            }
+        }
         #endregion
 
         #region Overrides

@@ -131,7 +131,7 @@ namespace Blueshift
                 }
 
                 // Calculate demand
-                demand = abundance * crewEfficiency * warpEngine.warpSpeed;
+                demand = abundance * crewEfficiency * warpEngine.warpSpeed * TimeWarp.fixedDeltaTime;
 
                 // Now generate the resources
                 part.RequestResource(distribution.resourceName, -demand);

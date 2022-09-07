@@ -46,6 +46,58 @@
             Debug method to complete gate assembly.
             </summary>
         </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.debugMode">
+            <summary>
+            A flag to enable/disable debug mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.textureModuleID">
+            <summary>
+            This field tells the module which WBIAnimatedTexture to control.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.startupAnimation">
+            <summary>
+            Animation to play before playing the portal effect.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.runningEffect">
+            <summary>
+            Warp coils can play a running effect while the generator is running.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.waterfallEffectController">
+            <summary>
+            Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.effectSpoolTime">
+            <summary>
+            In seconds, how quickly to throttle up the waterfall effect from 0 to 1.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.effectsThrottle">
+            <summary>
+            A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.maxJumpRange">
+            <summary>
+            The is the maxium range of the jump engine. Units are in light-years (9460700000000000 meters)
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.cooldownTime">
+            <summary>
+            The amount of time per metric ton of vessel mass that it takes for the engine to cool down before it can make another jump.
+            Units are in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.JumpTech.WBIJumpEngine.cooldownEndTime">
+            <summary>
+            Timestamp of when the cooldown is completed.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Blueshift.JumpTech.WBIJumpEngine.ActionJumpShip(KSPActionParam)" -->
         <member name="T:Blueshift.GateSelectedDelegate">
             <summary>
             Callback to indicate that a jumpgate was selected
@@ -647,13 +699,6 @@
             We don't apply this curve when going from interstellar to interplanetary space.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.interstellarPowerMultiplier">
-            <summary>
-            Multiplies resource consumption and production rates by this multiplier when in interstellar space.
-            Generators identified by warpPowerGeneratorID will be affected by this multiplier.
-            Default multiplier is 10.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpCurve">
             <summary>
             In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with
@@ -783,7 +828,7 @@
             (Debug visible) Distance per physics update that the vessel will move.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.effectsThrottle">
+        <member name="F:Blueshift.WBIWarpEngine.waterfallEffectsLevel">
             <summary>
             (Debug visible) Current throttle level for the warp effects.
             </summary>
@@ -863,8 +908,15 @@
             Flag to indicate whether or not the vessel has exceeded light speed.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.consumptionRateMultiplier">
-            Multiplier used for consumption of resources and MTBF/heat.
+        <member name="F:Blueshift.WBIWarpEngine.warpSpeed">
+            <summary>
+            Current speed of the ship in terms of C.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.consumptionMultiplier">
+            <summary>
+            Current multiplier used for the consumption of resources.
+            </summary>
         </member>
         <member name="M:Blueshift.WBIWarpEngine.CircularizeOrbit">
             <summary>

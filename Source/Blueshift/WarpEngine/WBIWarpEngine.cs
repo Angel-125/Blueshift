@@ -94,7 +94,7 @@ namespace Blueshift
         float kLightSpeed = 299792458;
         float kMessageDuration = 3f;
         string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
-        int kFrameSkipCount = 3;
+        double kFrameSkipTime = 0.1f;
         #endregion
 
         #region GameEvents
@@ -199,14 +199,6 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public FloatCurve interstellarAccelerationCurve;
-
-        /// <summary>
-        /// Multiplies resource consumption and production rates by this multiplier when in interstellar space.
-        /// Generators identified by warpPowerGeneratorID will be affected by this multiplier.
-        /// Default multiplier is 10.
-        /// </summary>
-        [KSPField]
-        public float interstellarPowerMultiplier = 10f;
 
         /// <summary>
         /// In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with
@@ -375,7 +367,7 @@ namespace Blueshift
         /// (Debug visible) Current throttle level for the warp effects.
         /// </summary>
         [KSPField]
-        protected float effectsThrottle = 0;
+        protected float waterfallEffectsLevel = 0;
 
         /// <summary>
         /// (Debug visible) amount of simulation resource produced.
@@ -460,21 +452,29 @@ namespace Blueshift
         // Used for gradually accelerating to interstellar speed.
         private WBISpatialLocations prevSpatialLocation = WBISpatialLocations.Unknown;
         private double speedStartTime = 0f;
-        private float prevInterstellarAcceleration = 0;
 
-        /// Multiplier used for consumption of resources and MTBF/heat.
-        double consumptionRateMultiplier = 1.0;
-
+        /// <summary>
+        /// Current speed of the ship in terms of C.
+        /// </summary>
         public float warpSpeed = 0;
+
+        /// <summary>
+        /// Current multiplier used for the consumption of resources.
+        /// </summary>
         public double consumptionMultiplier = 1f;
 
-        int skipFrames = 0;
         float prevThrottle = -1f;
         float maxWarpSpeed = 0;
         float prevWarpSpeed = 0;
         float prevMaxWarpSpeed = 0;
         bool wentInterstellar = false;
         string targetDistanceUnits = string.Empty;
+        bool lockedCourseAndSpeed = false;
+        bool isTimewarping = false;
+        Vector3d warpCruiseVector;
+        Vector3d preCruiseVelocity;
+        bool needsVelocityUpdate = false;
+        double resumeUpdateTimestamp = -1f;
         #endregion
 
         #region Actions And Events
@@ -592,6 +592,10 @@ namespace Blueshift
             {
                 GameEvents.onEditorShipModified.Remove(onEditorShipModified);
             }
+            else if (HighLogic.LoadedSceneIsFlight)
+            {
+                GameEvents.onVesselSOIChanged.Remove(onVesselSOIChanged);
+            }
 
             disableGeneratorBypass();
         }
@@ -602,17 +606,54 @@ namespace Blueshift
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
+            // Get timewarping state.
+            isTimewarping = TimeWarping();
+
             // Update spatial location.
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
             if (prevSpatialLocation == WBISpatialLocations.Unknown)
                 prevSpatialLocation = spatialLocation;
 
-            // Calcuate consumption multiplier
+            // Update throttle level
             throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
-            consumptionRateMultiplier = spatialLocation != WBISpatialLocations.Interstellar ? 1.0 : Mathf.Clamp(interstellarPowerMultiplier * throttleLevel, 1, interstellarPowerMultiplier);
 
-            // Vessel course - just the selected target.
-            updateVesselCourse();
+            // If ship's course and speed are locked, then we're timewarping and we need to:
+            // Update throttleLevel based solely on thrustPercentage.
+            // Update the engine FX.
+            // If player hits the cut throttle key, then drop out of timewarp.
+            if (lockedCourseAndSpeed)
+            {
+
+                throttleLevel = thrustPercentage / 100.0f;
+
+                if (this.EngineIgnited)
+                    this.UpdatePropellantStatus(true);
+
+                requestedThrottle = throttleLevel;
+                currentThrottle = throttleLevel;
+                UpdateThrottle();
+                if (EngineIgnited)
+                    UpdatePropellantStatus(true);
+                ThrustUpdate();
+                FXUpdate();
+
+                // Kill timewarp if user taps on cut throttle.
+                if (UnityEngine.Input.GetKeyDown(GameSettings.THROTTLE_CUTOFF.primary.code) || 
+                    UnityEngine.Input.GetKeyDown(GameSettings.THROTTLE_CUTOFF.secondary.code) || 
+                    UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.primary.code) || 
+                    UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.secondary.code)
+                    )
+                { 
+                    TimeWarp.SetRate(0, false);
+                }
+            }
+
+            // If we're not timewapring and the user taps on the brakes then cut the throttle.
+            else if (!isTimewarping && (UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.primary.code) || UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.secondary.code)))
+            {
+                FlightInputHandler.state.mainThrottle = 0f;
+                throttleLevel = 0f;
+            }
 
             // Make sure the engine is running
             // Make sure that we should apply warp.
@@ -632,11 +673,16 @@ namespace Blueshift
             if (IsFlamedOut())
             {
                 resetWarpParameters();
+
+                if (lockedCourseAndSpeed)
+                {
+                    cancelWarpCruiseVelocity();
+                    lockedCourseAndSpeed = false;
+                    TimeWarp.SetRate(0, false);
+                }
+
                 return;
             }
-
-            // Update warp spedometer
-            updateWarpSpedometer();
 
             // Reset warp speed exceeded flag.
             if (warpSpeed < 1f)
@@ -649,10 +695,20 @@ namespace Blueshift
         public override void OnUpdate()
         {
             base.OnUpdate();
+
+            // Update warp spedometer
+            updateWarpSpedometer();
+
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
             getCoilsAndGenerators();
+
+            // Vessel course - just the selected target.
+            updateVesselCourseUI();
+
+            // Update preflight status
             updateFTLPreflightStatus();
+
             if (!isOperational && !EngineIgnited)
             {
                 fadeOutEffects();
@@ -663,8 +719,10 @@ namespace Blueshift
                 fadeOutEffects();
             }
 
+            // Update warp engine status
             UpdateWarpStatus();
 
+            // Update auto-circularization display
             bool enableCircularizeOrbit = BlueshiftScenario.autoCircularize && spatialLocation != WBISpatialLocations.Interstellar && throttleLevel <= 0;
             Events["CircularizeOrbit"].active = enableCircularizeOrbit && isOperational;
             Fields["autoCircularizeInclination"].guiActive = enableCircularizeOrbit && isOperational;
@@ -718,7 +776,7 @@ namespace Blueshift
             Fields["minPlanetaryRadius"].guiActive = debugMode;
             Fields["effectiveWarpCapacity"].guiActive = debugMode;
             Fields["warpDistance"].guiActive = debugMode;
-            Fields["effectsThrottle"].guiActive = debugMode;
+            Fields["waterfallEffectsLevel"].guiActive = debugMode;
             Fields["warpResourceProduced"].guiActive = debugMode;
             Fields["warpResourceRequired"].guiActive = debugMode;
             Fields["warpResourceAmount"].guiActive = debugMode;
@@ -736,6 +794,12 @@ namespace Blueshift
                 Fields["superchargerMultiplier"].uiControlEditor.onSymmetryFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
                 Fields["thrustPercentage"].uiControlEditor.onFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
                 Fields["thrustPercentage"].uiControlEditor.onSymmetryFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
+            }
+
+            // In flight events
+            else if (HighLogic.LoadedSceneIsFlight)
+            {
+                GameEvents.onVesselSOIChanged.Add(onVesselSOIChanged);
             }
         }
 
@@ -815,28 +879,51 @@ namespace Blueshift
             onWarpEngineShutdown.Fire(part.vessel, this);
         }
 
+        public override void DeactivatePowerFX()
+        {
+            if (!lockedCourseAndSpeed)
+                base.DeactivatePowerFX();
+        }
+
+        public override void DeactivateRunningFX()
+        {
+            if (!lockedCourseAndSpeed)
+                base.DeactivateRunningFX();
+        }
+
         public override void FXUpdate()
         {
             base.FXUpdate();
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
-            bool isOperational = false;
+            // Set operational status
             if (EngineIgnited && isEnabled && !flameout && !warpFlameout)
             {
-                this.part.Effect(runningEffectName, 1f);
-                isOperational = true;
+                part.Effect(runningEffectName, 1f);
+            }
+
+            // Setup throttle
+            int count = 0;
+            float effectsPowerLevel = FlightInputHandler.state.mainThrottle;
+            if (lockedCourseAndSpeed)
+            {
+                effectsPowerLevel = 1f;
+
+                // Manually drive the FX, UpdateFX will disable the effects during timewarp.
+                part.Effect(powerEffectName, effectsPowerLevel);
+            }
+            else if (!isOperational)
+            {
+                effectsPowerLevel = 0;
             }
 
             // Update our animated texture module, if any.
-            float throttle = FlightInputHandler.state.mainThrottle;
-            if (!isOperational)
-                throttle = 0;
-            int count = warpEngineTextures.Count;
+            count = warpEngineTextures.Count;
             for (int index = 0; index < count; index++)
             {
                 warpEngineTextures[index].isActivated = EngineIgnited;
-                warpEngineTextures[index].animationThrottle = throttle > 0f ? throttle : 0.1f;
+                warpEngineTextures[index].animationThrottle = effectsPowerLevel > 0f ? effectsPowerLevel : 0.1f;
             }
 
             // If we aren't supposed to apply warp translation then there's nothing more to do.
@@ -847,12 +934,17 @@ namespace Blueshift
             count = warpCoils.Count;
             for (int index = 0; index < count; index++)
             {
-                warpCoils[index].animationThrottle = !warpFlameout ? throttle : 0f;
+                warpCoils[index].animationThrottle = !warpFlameout ? effectsPowerLevel : 0f;
             }
 
             // Update warp effects
             if (bowShockTransform != null)
-                bowShockTransform.position = this.part.vessel.transform.position;
+            {
+                if (part.vessel.vesselSize == Vector3.zero)
+                    part.vessel.UpdateVesselSize();
+                Vector3 localPosition = new Vector3(0, part.vessel.vesselSize.y, 0);
+                bowShockTransform.localPosition = localPosition;
+            }
 
             if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
             {
@@ -860,16 +952,16 @@ namespace Blueshift
                 if (throttleLevel > 0)
                     targetValue = waterfallWarpEffectsCurve.Evaluate(warpSpeed);
 
-                effectsThrottle = Mathf.Lerp(effectsThrottle, targetValue, engineSpoolTime);
+                waterfallEffectsLevel = Mathf.Lerp(waterfallEffectsLevel, targetValue, engineSpoolTime);
 
-                if (effectsThrottle <= 0.001 && targetValue <= 0f)
-                    effectsThrottle = 0;
-                else if (targetValue > 0f && targetValue >= effectsThrottle && (effectsThrottle / targetValue >= 0.99f))
-                    effectsThrottle = targetValue;
-                else if (targetValue > 0f && effectsThrottle > targetValue && targetValue / effectsThrottle >= 0.99f)
-                    effectsThrottle = targetValue;
+               if (waterfallEffectsLevel <= 0.001 && targetValue <= 0f)
+                    waterfallEffectsLevel = 0;
+                else if (targetValue > 0f && targetValue >= waterfallEffectsLevel && (waterfallEffectsLevel / targetValue >= 0.99f))
+                    waterfallEffectsLevel = targetValue;
+                else if (targetValue > 0f && waterfallEffectsLevel > targetValue && targetValue / waterfallEffectsLevel >= 0.99f)
+                    waterfallEffectsLevel = targetValue;
 
-                waterfallFXModule.SetControllerValue(waterfallEffectController, effectsThrottle);
+                waterfallFXModule.SetControllerValue(waterfallEffectController, waterfallEffectsLevel);
             }
 
             if (!hasExceededLightSpeed && warpSpeed >= 1f)
@@ -878,7 +970,7 @@ namespace Blueshift
                 this.part.Effect(photonicBoomEffectName, 1);
             }
 
-            onWarpEffectsUpdated.Fire(part.vessel, this, throttle);
+            onWarpEffectsUpdated.Fire(part.vessel, this, effectsPowerLevel);
         }
         #endregion
 
@@ -898,12 +990,6 @@ namespace Blueshift
         /// <returns>true if the engine is flamed out, false if not.</returns>
         public bool IsFlamedOut()
         {
-            // Can't flame out if the throttle is zeroed.
-            if (throttleLevel <= 0)
-            {
-                return false;
-            }
-
             // If our power multiplier is below the ignition threshold then we are flamed out.
             if (powerMultiplier < warpIgnitionThreshold)
             {
@@ -913,7 +999,7 @@ namespace Blueshift
             }
 
             // Must be in space, at or above orbital altitude, have a running engine, and not be flamed out.
-            else if (!isInSpace || !meetsWarpAltitude || !hasWarpCapacity && EngineIgnited && isOperational && !warpFlameout)
+            else if (!isInSpace || !meetsWarpAltitude || !hasWarpCapacity && EngineIgnited && !flameout && !warpFlameout)
             {
                 warpFlameout = true;
                 if (!isInSpace)
@@ -1061,12 +1147,12 @@ namespace Blueshift
         /// </summary>
         protected void fadeOutEffects()
         {
-            if (waterfallFXModule != null && effectsThrottle > 0f)
+            if (waterfallFXModule != null && waterfallEffectsLevel > 0f)
             {
-                effectsThrottle = Mathf.Lerp(effectsThrottle, 0, engineSpoolTime);
+                waterfallEffectsLevel = Mathf.Lerp(waterfallEffectsLevel, 0, engineSpoolTime);
 
-                if (effectsThrottle <= 0.001f)
-                    effectsThrottle = 0f;
+                if (waterfallEffectsLevel <= 0.001f)
+                    waterfallEffectsLevel = 0f;
 
                 waterfallFXModule.SetControllerValue(waterfallEffectController, 0);
             }
@@ -1178,23 +1264,25 @@ namespace Blueshift
             // Give generators a chance to build up a charge whenever we change the throttle or cross a spatial boundary or the ship is nearly out of gravity waves.
             float diff = Mathf.Abs(prevThrottle * 0.0001f);
             bool throttlesEqual = Mathf.Abs(prevThrottle - throttleLevel) <= diff;
-            bool crossedSpatialBoundary = prevSpatialLocation != spatialLocation;
-            double warpResourceProducedPerTick = warpResourceProduced * TimeWarp.fixedDeltaTime;
 
             // If we crossed a spatial boundary then skip frames.
+            bool crossedSpatialBoundary = prevSpatialLocation != spatialLocation;
             if (crossedSpatialBoundary)
             {
-                if (spatialLocation == WBISpatialLocations.Interstellar)
-                    wentInterstellar = true;
+                wentInterstellar = spatialLocation == WBISpatialLocations.Interstellar;
 
                 prevSpatialLocation = spatialLocation;
-                skipFrames = kFrameSkipCount;
+
+                if (isTimewarping && lockedCourseAndSpeed && !needsVelocityUpdate)
+                    needsVelocityUpdate = true;
+
+                resumeUpdateTimestamp = Planetarium.GetUniversalTime() + kFrameSkipTime;
             }
 
             // If throttle changed then skip frames.
             else if (!throttlesEqual)
             {
-                skipFrames = kFrameSkipCount;
+                resumeUpdateTimestamp = Planetarium.GetUniversalTime() + kFrameSkipTime;
 
                 // If we were throttled down and we had no warp capacity, then set a small amount of warp capacity to prevent flameout.
                 if (prevThrottle <= 0 && totalWarpCapacity <= 0)
@@ -1203,20 +1291,8 @@ namespace Blueshift
                 prevThrottle = throttleLevel;
             }
 
-            // Decrement skipped frames. If we hit 0 then calculate warp capacity and best speed.
-            else if (skipFrames > 0)
-            {
-                skipFrames -= 1;
-                if (skipFrames <= 0)
-                {
-                    skipFrames = 0;
-                    getTotalWarpCapacity();
-                    calculateBestWarpSpeed();
-                }
-            }
-
             // Calculate the best warp curve to get maximum FTL speed.
-            else
+            else if (Planetarium.GetUniversalTime() >= resumeUpdateTimestamp || resumeUpdateTimestamp <= 0)
             {
                 getTotalWarpCapacity();
                 calculateBestWarpSpeed();
@@ -1300,43 +1376,13 @@ namespace Blueshift
             if (throttleLevel <= 0 || maxWarpSpeed <= 0)
             {
                 warpSpeed = 0;
-                prevInterstellarAcceleration = 0;
                 if (spatialLocation == WBISpatialLocations.Interstellar)
                     speedStartTime = Planetarium.GetUniversalTime();
                 return;
             }
 
-            // If we've transitioned from interplanetary to interstellar, then transition to the appropriate speed.
-            else if (wentInterstellar)
-            {
-                wentInterstellar = false;
-                prevInterstellarAcceleration = 0;
-                speedStartTime = Planetarium.GetUniversalTime();
-            }
-
-            // Still in same spatial location, but we may need to accelerate
-            if (speedStartTime > 0)
-            {
-                float elapsedTime = (float)(Planetarium.GetUniversalTime() - speedStartTime);
-                float curveSpeed = Mathf.Abs(interstellarAccelerationCurve.Evaluate(elapsedTime));
-
-                // For reasons unknown the float curve can go negative in its evaluation, so we skip any evaluations that are less than the previous evaluation.
-                if (curveSpeed > prevInterstellarAcceleration)
-                {
-                    prevInterstellarAcceleration = curveSpeed;
-                    warpSpeed = maxWarpSpeed * curveSpeed * throttleLevel;
-                }
-
-                // Stop accelerating if we've hit our end time.
-                if (elapsedTime >= interstellarAccelerationCurve.maxTime)
-                    speedStartTime = 0;      
-            }
-
-            // No acceleration, just cruising...
-            else
-            {
-                warpSpeed = maxWarpSpeed * throttleLevel;
-            }
+            // Finalize warp speed.
+            warpSpeed = maxWarpSpeed * throttleLevel;
         }
 
         /// <summary>
@@ -1347,7 +1393,7 @@ namespace Blueshift
             int count = warpCoils.Count;
             WBIWarpCoil warpCoil;
             WBIModuleGeneratorFX generator;
-            float vesselMass = 0;// part.vessel.GetTotalMass();
+            float vesselMass = 0;
             double totalResourceRequired = 0;
             double totalResourceProduced = 0;
             float totalDisplacement = 0;
@@ -1428,7 +1474,7 @@ namespace Blueshift
             }
 
             // Calculate the consumption multiplier and update the EVA Repairs module (if any)
-            consumptionMultiplier = powerMultiplier * consumptionRateMultiplier;
+            consumptionMultiplier = powerMultiplier;
 
             // Calculate displacement impulse and warp capacity for the active coils that are powered up.
             count = warpCoils.Count;
@@ -1478,14 +1524,7 @@ namespace Blueshift
             }
 
             // Consume resource
-            warpCoil.resHandler.UpdateModuleResourceInputs(ref errorStatus, rateMultiplier, 0.1, true, true);
-            for (int index = 0; index < count; index++)
-            {
-                if (!warpCoil.resHandler.inputResources[index].available)
-                    return false;
-            }
-
-            return true;
+            return warpCoil.ConsumeResources(rateMultiplier, isTimewarping);
         }
 
         /// <summary>
@@ -1499,31 +1538,6 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 generator = warpGenerators[index];
-
-                if (!generator.isEnabled || !generator.IsActivated || generator.isMissingResources)
-                {
-                    if (generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
-                    {
-                        generator.EfficiencyModifiers.Remove(kInterstellarEfficiencyModifier);
-                        generator.TallyEfficiencyModifiers();
-                    }
-                    generator.bypassRunCycle = false;
-                    continue;
-                }
-
-                if (spatialLocation == WBISpatialLocations.Interstellar)
-                {
-                    if (!generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
-                        generator.EfficiencyModifiers.Add(kInterstellarEfficiencyModifier, 0);
-                    generator.EfficiencyModifiers[kInterstellarEfficiencyModifier] = Mathf.Clamp(interstellarPowerMultiplier * throttleLevel, 1, interstellarPowerMultiplier);
-                    generator.TallyEfficiencyModifiers();
-                }
-                else if (spatialLocation != WBISpatialLocations.Interstellar && generator.EfficiencyModifiers.ContainsKey(kInterstellarEfficiencyModifier))
-                {
-                    generator.EfficiencyModifiers.Remove(kInterstellarEfficiencyModifier);
-                    generator.TallyEfficiencyModifiers();
-                }
-
                 generator.bypassRunCycle = true;
                 generator.RunGeneratorCycle();
             }
@@ -1748,23 +1762,68 @@ namespace Blueshift
             circularizationState = WBICircularizationStates.doNotCircularize;
         }
 
-        private void travelAtWarp()
+        private void cancelWarpCruiseVelocity()
         {
-            if (throttleLevel <= 0f)
-                return;
+            // Concept courtesy of KSPIE.
+            // Create a reverse vector to slow down.
+            Vector3 warpVector = new Vector3d(-warpCruiseVector.x, -warpCruiseVector.y, -warpCruiseVector.z);
 
-            // Calculate offset position
+            // Account for pre-cruise velocity.
+            warpVector += new Vector3d(-preCruiseVelocity.x, -preCruiseVelocity.y, -preCruiseVelocity.z);
+
+            // Account for current body's velocity
+            if (vessel.mainBody.orbit != null)
+                warpVector += vessel.mainBody.orbit.GetFrameVel();
+
+            // Now update the vessel's velocity.
+            part.vessel.IgnoreGForces(2);
+
+            if (!vessel.packed)
+                vessel.GoOnRails();
+
+            vessel.orbit.UpdateFromStateVectors(vessel.orbit.pos, vessel.orbit.vel + warpVector, vessel.orbit.referenceBody, Planetarium.GetUniversalTime());
+
+            if (!vessel.packed)
+                vessel.GoOffRails();
+        }
+
+        private void addWarpCruiseVelocity()
+        {
+            Transform refTransform = part.vessel.ReferenceTransform;
+
+            // Concept courtesy of KSPIE.
+            // Get the current velocity, we'll need to restore it when we're done with timewarp.
+            preCruiseVelocity = vessel.orbit.GetFrameVel();
+
+            // Calculate the cruise velocity. We're about to go very fast.
+            warpCruiseVector = new Vector3d(refTransform.up.x, refTransform.up.z, refTransform.up.y) * warpSpeed * kLightSpeed;
+
+            // Now adjust the orbit with the new velocity.
+            part.vessel.IgnoreGForces(2);
+            if (!vessel.packed)
+                vessel.GoOnRails();
+
+            vessel.orbit.UpdateFromStateVectors(vessel.orbit.pos, vessel.orbit.vel + warpCruiseVector, vessel.orbit.referenceBody, Planetarium.GetUniversalTime());
+
+            if (!vessel.packed)
+                vessel.GoOffRails();
+        }
+
+        private void updateVesselPosition()
+        {
+            // First, calculate offset position.
             warpDistance = kLightSpeed * warpSpeed * TimeWarp.fixedDeltaTime;
             Transform refTransform = part.vessel.ReferenceTransform;
             Vector3 warpVector = refTransform.up * warpDistance;
             Vector3d offsetPosition = refTransform.position + warpVector;
 
-            // Make sure that we won't run into a celestial body.
+            // Next, make sure that we won't run into a celestial body.
             if (previousBody != part.orbit.referenceBody)
             {
                 previousBody = part.orbit.referenceBody;
                 bodyBounds = previousBody.getBounds();
             }
+
             if (bodyBounds.Contains(offsetPosition))
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_terrainWarning"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
@@ -1772,14 +1831,70 @@ namespace Blueshift
                 return;
             }
 
-            // Apply translation.
+            // We aren't going to run into anything, so update the vessel's position.
             if (FlightGlobals.VesselsLoaded.Count > 1)
                 part.vessel.SetPosition(offsetPosition);
             else
                 FloatingOrigin.SetOutOfFrameOffset(offsetPosition);
         }
 
-        private void updateVesselCourse()
+        private void travelAtWarp()
+        {
+            if (Planetarium.GetUniversalTime() < resumeUpdateTimestamp)
+                return;
+
+            // If we're not timewarping but our course and speed was locked, then cancel our warp cruise velocity.
+            if (!isTimewarping && lockedCourseAndSpeed)
+            {
+                // Unlock course and speed.
+                lockedCourseAndSpeed = false;
+                ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_courseUnlocked"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
+
+                // Cancel the warp cruise velocity
+                cancelWarpCruiseVelocity();
+
+                // Give the game time to catch up
+                resumeUpdateTimestamp = Planetarium.GetUniversalTime() + kFrameSkipTime;
+            }
+
+            // If we're timewarping and we haven't locked our course and speed, then do so now.
+            else if (isTimewarping && !lockedCourseAndSpeed && throttleLevel > 0)
+            {
+                // Lock the course and speed.
+                lockedCourseAndSpeed = true;
+                ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_courseLocked"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
+
+                // Add the timewarp cruise velocity
+                addWarpCruiseVelocity();
+
+                // Give the game time to catch up
+                resumeUpdateTimestamp = Planetarium.GetUniversalTime() + kFrameSkipTime;
+            }
+
+            // If we've locked our course and speed, we're timewarping, and we need a velocity update, then redo our warp cruise velocity.
+            else if (isTimewarping && lockedCourseAndSpeed && needsVelocityUpdate)
+            {
+                // Reset the flag
+                needsVelocityUpdate = false;
+
+                // Cancel current cruise velocity
+                cancelWarpCruiseVelocity();
+
+                // Unlock course and speed. This will force the warp engine to recalcuate and reset cruising velocity.
+                lockedCourseAndSpeed = false;
+
+                // Give the game time to catch up
+                resumeUpdateTimestamp = Planetarium.GetUniversalTime() + kFrameSkipTime;
+            }
+
+            // If we aren't timewarping and our throttle level > 0, then update the vessel's position.
+            else if (!isTimewarping && throttleLevel > 0)
+            {
+                updateVesselPosition();
+            }
+        }
+
+        private void updateVesselCourseUI()
         {
             string units = string.Empty;
 
@@ -1797,6 +1912,16 @@ namespace Blueshift
                 Fields["vesselCourse"].guiActive = false;
                 Fields["targetDistance"].guiActive = false;
             }
+        }
+
+        private void onVesselSOIChanged(GameEvents.HostedFromToAction<Vessel, CelestialBody> vesselCelestialBody)
+        {
+            if (vesselCelestialBody.host != part.vessel || !lockedCourseAndSpeed)
+                return;
+
+            // If we went from interstellar space to non-interstellar space then kill timewarp.
+            if (prevSpatialLocation == WBISpatialLocations.Interstellar && !BlueshiftScenario.shared.IsInInterstellarSpace(part.vessel))
+                TimeWarp.SetRate(0, false);
         }
         #endregion
     }

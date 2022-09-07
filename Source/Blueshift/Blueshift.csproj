@@ -81,6 +81,7 @@
   <ItemGroup>
     <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
     <Compile Include="JumpTech\WBIGateAssembler.cs" />
+    <Compile Include="JumpTech\WBIJumpEngine.cs" />
     <Compile Include="SettingsAndScenario\BlueshiftSettings.cs" />
     <Compile Include="GUI\JumpgateSelector.cs" />
     <Compile Include="GUI\PotatoScannerInfo.cs" />

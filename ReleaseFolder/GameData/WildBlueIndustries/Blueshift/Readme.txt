@@ -8,11 +8,11 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-Fixes
+Changes
 
-- Hid deprecated parts from Community Category Kit.
-- Fixed Effects issues on the mini jumpgate.
-- If the graviolium toll is set to be paid by the jumpgate, and it can't be paid by the jumpgate, then the jumpgate will check to see if the traveler can pay the toll instead.
+- Enabled warp engines to function even during timewarp. The caveat being that you cannot change your vessel's course during timewarp.
+- With EVA Repairs installed, increased the MTBF ratings on all the warp tech parts to support warping during timewarp.
+- Added new 3.75m Graviolium tank.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.

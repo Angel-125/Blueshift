@@ -35,8 +35,6 @@ Distance to the vessel's target
 Limits top speed while in a planetary or munar SOI so we don't zoom past the celestial body. Out in interplanetary space we don't have a speed limit. The first number represents how close to the SOI edge the vessel is (1 = right at the edge, 0.1 = 10% of the distance to the SOI edge) The second number is the top speed multiplier.
 ### interstellarAccelerationCurve
 Whenever you cross into interstellar space, or are already in interstellar space and throttled down, then apply this acceleration curve. The warp speed will be max warp speed * curve's speed modifier. The first number represents the time since crossing the boundary/throttling up, and the second number is the multiplier. We don't apply this curve when going from interstellar to interplanetary space.
-### interstellarPowerMultiplier
-Multiplies resource consumption and production rates by this multiplier when in interstellar space. Generators identified by warpPowerGeneratorID will be affected by this multiplier. Default multiplier is 10.
 ### warpCurve
 In addition to any specified PROPELLANT resources, warp engines require warpCapacity. Only parts with a WBIWarpCoil part module can generate warpCapacity. The warp curve controls how much warpCapacity is neeeded to go light speed or faster. The first number represents the available warpCapacity, while the second number gives multiples of C. You can apply any kind of warp curve you want, but the baseline uses the Fibonacci sequence * 10. It may seem steep, but in KSP's small scale, 1C is plenty fast. This curve is modified by the engine's displacementImpulse and current vessel mass. effectiveWarpCapacity = warpCapacity * (displacementImpulse / vessel mass)
 ### waterfallEffectController
@@ -83,7 +81,7 @@ Name of optional bow shock transform.
 (Debug visible) Effective warp capacity after accounting for vessel mass
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
-### effectsThrottle
+### waterfallEffectsLevel
 (Debug visible) Current throttle level for the warp effects.
 ### warpResourceProduced
 (Debug visible) amount of simulation resource produced.
@@ -115,8 +113,10 @@ Due to the way engines work on FixedUpdate, the engine can determine that it is 
 Optional (but highly recommended) Waterfall effects module
 ### hasExceededLightSpeed
 Flag to indicate whether or not the vessel has exceeded light speed.
-### consumptionRateMultiplier
-Multiplier used for consumption of resources and MTBF/heat.
+### warpSpeed
+Current speed of the ship in terms of C.
+### consumptionMultiplier
+Current multiplier used for the consumption of resources.
 ## Methods
 
 
