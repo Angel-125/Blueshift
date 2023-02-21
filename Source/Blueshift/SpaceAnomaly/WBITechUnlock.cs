@@ -38,7 +38,7 @@ namespace Blueshift
         /// <summary>
         /// Target number to unlock a tech tree node
         /// </summary>
-        public int unlockTargetNumber = 97;
+        public int unlockTargetNumber = 1;
 
         /// <summary>
         /// Tech unlock message
@@ -115,11 +115,24 @@ namespace Blueshift
             // Get our config node
             ConfigNode partNode = getPartConfigNode();
             string[] unlockedNodes = new string[0];
+            ProtoTechNode techNode = null;
 
             // Get the list of unlocked tech nodes (if any).
             if (partNode != null && partNode.HasValue("unlockedTechNode"))
             {
                 unlockedNodes = partNode.GetValues("unlockedTechNode");
+
+                // Cull nodes that have already been unlocked.
+                List<string> candidates = new List<string>();
+                for (int index = 0; index < unlockedNodes.Length; index++)
+                {
+                    techNode = AssetBase.RnDTechTree.FindTech(unlockedNodes[index]);
+                    if (techNode == null || techNode.state == RDTech.State.Available)
+                        continue;
+
+                    candidates.Add(unlockedNodes[index]);
+                }
+                unlockedNodes = candidates.ToArray();
             }
             else
             {
@@ -129,29 +142,30 @@ namespace Blueshift
                     return;
             }
 
-            //Get the list of unavailable nodes and their tech IDs
-            List<ProtoTechNode> unavailableNodes = AssetBase.RnDTechTree.GetNextUnavailableNodes();
-            if (unavailableNodes.Count <= 0)
-                return;
-
-            ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
-
             // If we have a specific list of nodes to unlock, then do so now.
             ProtoTechNode node;
             if (unlockedNodes.Length > 0)
             {
-                int count = unavailableNodes.Count;
-                for (int nodeIndex = 0; nodeIndex < count; nodeIndex++)
+                ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+
+                for (int nodeIndex = 0; nodeIndex < unlockedNodes.Length; nodeIndex++)
                 {
-                    if (unlockedNodes.Contains(unavailableNodes[nodeIndex].techID))
-                        unlockTechNode(unavailableNodes[nodeIndex]);
+                    techNode = AssetBase.RnDTechTree.FindTech(unlockedNodes[nodeIndex]);
+                    unlockTechNode(techNode);
                 }
             }
             else
             {
+                //Get the list of unavailable nodes and their tech IDs
+                ProtoTechNode[] unlockCandidates = getTechUnlockCandidates();
+                if (unlockCandidates.Length <= 0)
+                    return;
+
+                ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+
                 // Unlock a random node.
-                int index = UnityEngine.Random.Range(0, unavailableNodes.Count);
-                node = unavailableNodes[index];
+                int index = UnityEngine.Random.Range(0, unlockedNodes.Length);
+                node = unlockCandidates[index];
                 unlockTechNode(node);
             }
         }
@@ -162,6 +176,47 @@ namespace Blueshift
             ResearchAndDevelopment.RefreshTechTreeUI();
 
             ScreenMessages.PostScreenMessage(ResearchAndDevelopment.GetTechnologyTitle(node.techID) + kUnlockTechNodeMsg, kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+        }
+
+        ProtoTechNode[] getTechUnlockCandidates()
+        {
+            ProtoTechNode[] unavailableNodes = AssetBase.RnDTechTree.GetTreeTechs();
+            Dictionary<string, ProtoTechNode> techNodesMap = new Dictionary<string, ProtoTechNode>();
+            for (int index = 0; index < unavailableNodes.Length; index++)
+            {
+                if (unavailableNodes[index].state == RDTech.State.Unavailable)
+                    techNodesMap.Add(unavailableNodes[index].techID, unavailableNodes[index]);
+            }
+
+            // Get the parts list.
+            List<ProtoTechNode> unlockCandidates = new List<ProtoTechNode>();
+            List<AvailablePart> partsList = null;
+            if (PartLoader.Instance)
+                partsList = PartLoader.LoadedPartsList;
+            if (partsList == null)
+                return unavailableNodes;
+
+            int count = partsList.Count;
+            AvailablePart availablePart;
+            for (int index = 0; index < count; index++)
+            {
+                // Get the available part
+                availablePart = partsList[index];
+
+                // Skip if the part is hidden
+                if (availablePart.TechHidden)
+                    continue;
+
+                // Skip if the tech required isn't in our map.
+                if (!(techNodesMap.ContainsKey(availablePart.TechRequired)))
+                    continue;
+
+                // If we haven't already added the tech node to our list, add it now.
+                if (!unlockCandidates.Contains(techNodesMap[availablePart.TechRequired]))
+                    unlockCandidates.Add(techNodesMap[availablePart.TechRequired]);
+            }
+
+            return unlockCandidates.ToArray();
         }
         #endregion
     }
