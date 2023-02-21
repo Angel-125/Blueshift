@@ -10,9 +10,7 @@ GameData
 
 Changes
 
-- Enabled warp engines to function even during timewarp. The caveat being that you cannot change your vessel's course during timewarp.
-- With EVA Repairs installed, increased the MTBF ratings on all the warp tech parts to support warping during timewarp.
-- Added new 3.75m Graviolium tank.
+- Hotfix to auto-deactivate generators that are integrated with warp engines when the warp engine is shut down. Similarly, integrated warp coils will auto-enable/disable upon engine activation and shutdown.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.

@@ -841,19 +841,20 @@ namespace Blueshift
             // Auto-start any inactive converters that aren't broken. Because people are too damn lazy...
             List<ModuleResourceConverter> powerPlants = part.FindModulesImplementing<ModuleResourceConverter>();
             ModuleResourceConverter powerPlant;
-            if (powerPlants != null && powerPlants.Count > 0)
             count = powerPlants.Count;
+            for (int index = 0; index < count; index++)
             {
-                count = powerPlants.Count;
-                for (int index = 0; index < count; index++)
-                {
-                    powerPlant = powerPlants[index];
-                    if (!powerPlant.enabled || powerPlant.IsActivated)
-                        continue;
-
-                    powerPlant.StartResourceConverter();
-                }
+                powerPlant = powerPlants[index];
+                if (!powerPlant.enabled)
+                    continue;
+                powerPlant.StartResourceConverter();
             }
+
+            // Auto-start any integrated warp coils
+            List<WBIWarpCoil> coils = part.FindModulesImplementing<WBIWarpCoil>();
+            count = coils.Count;
+            for (int index = 0; index < count; index++)
+                coils[index].isActivated = true;
 
             onWarpEngineStart.Fire(part.vessel, this);
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
@@ -877,6 +878,24 @@ namespace Blueshift
             }
 
             disableGeneratorBypass();
+
+            // Auto-stop any converters that aren't broken
+            List<ModuleResourceConverter> powerPlants = part.FindModulesImplementing<ModuleResourceConverter>();
+            ModuleResourceConverter powerPlant;
+            count = powerPlants.Count;
+            for (int index = 0; index < count; index++)
+            {
+                powerPlant = powerPlants[index];
+                if (!powerPlant.enabled)
+                    continue;
+                powerPlant.StopResourceConverter();
+            }
+
+            // Auto-stop any integrated warp coils
+            List<WBIWarpCoil> coils = part.FindModulesImplementing<WBIWarpCoil>();
+            count = coils.Count;
+            for (int index = 0; index < count; index++)
+                coils[index].isActivated = false;
 
             onWarpEngineShutdown.Fire(part.vessel, this);
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
