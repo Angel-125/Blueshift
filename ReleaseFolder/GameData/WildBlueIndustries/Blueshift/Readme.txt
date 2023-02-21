@@ -10,7 +10,7 @@ GameData
 
 Changes
 
-- Hotfix to auto-deactivate generators that are integrated with warp engines when the warp engine is shut down. Similarly, integrated warp coils will auto-enable/disable upon engine activation and shutdown.
+- Bug fixes
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.
