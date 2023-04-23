@@ -308,6 +308,11 @@
             the resources aren't produced in time for the warp engine to handle resource consumption. To get around that problem, the active warp engine handles resource conversion during its fixed update.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.resourceConsumptionModifier">
+            <summary>
+            Multiplier to adjust consumption of input resources.
+            </summary>
+        </member>
         <member name="M:Blueshift.WBIModuleGeneratorFX.RunGeneratorCycle">
             <summary>
             This is a helper function to avoid issues where a warp engine needs a certain amount of resources in order to operate, the system should have them,
@@ -768,6 +773,13 @@
             Planetary Speed Brake
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpEngine.interstellarResourceConsumptionModifier">
+            <summary>
+            Consumption modifier to apply to resource consumption rates when warping in interstellar space.
+            This is a percentage value between 0 and 99.999. Anything outside this range will be ignored.
+            Default is 10%, which reduces resource consumption by 10% while in interstellar space.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpEngineerSkill">
             <summary>
             The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -1148,6 +1160,12 @@
         <member name="F:Blueshift.BlueshiftScenario.rendezvousDistance">
             <summary>
             In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.interstellarResourceConsumptionModifier">
+            <summary>
+            This modifier reduces the resources required to power warp engines while in interstellar space. It is a percentage value between 0 and 99.999.
+            The default value is 10. You can override this global setting by specifying this value in the WBIWarpEngine config.
             </summary>
         </member>
         <member name="F:Blueshift.BlueshiftScenario.jumpGateSourceId">

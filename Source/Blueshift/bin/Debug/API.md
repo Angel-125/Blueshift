@@ -139,6 +139,8 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 Flag indicating whether or not we're missing resources needed to produce outputs.
 ### bypassRunCycle
 This flag lets an external part module bypass the converter's run cycle which is triggered by FixedUpdate. When this flag is set to true, then the base class's FixedUpdate won't be called. Without the base class' FixedUpdate getting called, no resources will be converted. The external part module is expected to call RunGeneratorCycle manually. This system was put in place to get around timing issues where gravitic generators should produce enough resources for warp coils to consume each time tick, but due to timing issues, the resources aren't produced in time for the warp engine to handle resource consumption. To get around that problem, the active warp engine handles resource conversion during its fixed update.
+### resourceConsumptionModifier
+Multiplier to adjust consumption of input resources.
 ## Methods
 
 
@@ -372,6 +374,8 @@ The ratio between the total mass displaced by the warp coils to the vessel's tot
 When the powerMultiplier drops below this value, the engine will flame out.
 ### planetarySpeedBrakeEnabled
 Planetary Speed Brake
+### interstellarResourceConsumptionModifier
+Consumption modifier to apply to resource consumption rates when warping in interstellar space. This is a percentage value between 0 and 99.999. Anything outside this range will be ignored. Default is 10%, which reduces resource consumption by 10% while in interstellar space.
 ### warpEngineerSkill
 The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
 ### warpSpeedBoostRank
@@ -551,6 +555,8 @@ In meters, minimum distance in planetary space that's required to rendezvous wit
 In meters, minimum distance in interplanetary space that's required to rendezvous with a vessel via auto-circularization.
 ### rendezvousDistance
 In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+### interstellarResourceConsumptionModifier
+This modifier reduces the resources required to power warp engines while in interstellar space. It is a percentage value between 0 and 99.999. The default value is 10. You can override this global setting by specifying this value in the WBIWarpEngine config.
 ### jumpGateSourceId
 The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
 ### destinationGateId

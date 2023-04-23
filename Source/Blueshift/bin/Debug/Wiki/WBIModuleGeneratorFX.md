@@ -29,6 +29,8 @@ Name of the Waterfall effects controller that controls the warp effects (if any)
 Flag indicating whether or not we're missing resources needed to produce outputs.
 ### bypassRunCycle
 This flag lets an external part module bypass the converter's run cycle which is triggered by FixedUpdate. When this flag is set to true, then the base class's FixedUpdate won't be called. Without the base class' FixedUpdate getting called, no resources will be converted. The external part module is expected to call RunGeneratorCycle manually. This system was put in place to get around timing issues where gravitic generators should produce enough resources for warp coils to consume each time tick, but due to timing issues, the resources aren't produced in time for the warp engine to handle resource consumption. To get around that problem, the active warp engine handles resource conversion during its fixed update.
+### resourceConsumptionModifier
+Multiplier to adjust consumption of input resources.
 ## Methods
 
 

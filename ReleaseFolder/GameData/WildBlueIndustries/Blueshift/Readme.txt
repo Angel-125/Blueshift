@@ -10,7 +10,11 @@ GameData
 
 Changes
 
-- Hotfix to auto-deactivate generators that are integrated with warp engines when the warp engine is shut down. Similarly, integrated warp coils will auto-enable/disable upon engine activation and shutdown.
+- Added new entry for settings.cfg: interstellarResourceConsumptionModifier. This modifier reduces the resources required to power warp engines while in interstellar space. It is a percentage value between 0 and 99.999. The default value is 10. You can override this global setting by specifying this value in the WBIWarpEngine config.
+
+- WBIWarpEngine: Added new interstellarResourceConsumptionModifier that will reduce the resource consumption of all WBIModuleGeneratorFX part modules when the vessel is in interstellar space. This is a percentage value between 0 and 99.999. The default is 10, meaning that all generators will reduce their input resource consumption by 10% while keeping the output rates the same.
+
+Bottom line: This reduction will enable ships to consume less graviolium while out in interstellar space.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.

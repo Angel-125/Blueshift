@@ -60,6 +60,7 @@ namespace Blueshift
         private static string kWarpSpeedSkillMultiplier = "warpSpeedSkillMultiplier";
         private static string kJumpGateSourceId = "jumpGateSourceId";
         private static string kDestinationGateId = "destinationGateId";
+        private static string kInterstellarResourceConsumptionModifier = "interstellarResourceConsumptionModifier";
         #endregion
 
         #region Housekeeping
@@ -143,6 +144,12 @@ namespace Blueshift
         /// In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
         /// </summary>
         public static float rendezvousDistance = 100;
+
+        /// <summary>
+        /// This modifier reduces the resources required to power warp engines while in interstellar space. It is a percentage value between 0 and 99.999.
+        /// The default value is 10. You can override this global setting by specifying this value in the WBIWarpEngine config.
+        /// </summary>
+        public static float interstellarResourceConsumptionModifier = 10f;
 
         /// <summary>
         /// The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
@@ -304,6 +311,9 @@ namespace Blueshift
 
             if (node.HasValue(kDestinationGateId))
                 destinationGateId = node.GetValue(kDestinationGateId);
+
+            if (node.HasValue(kInterstellarResourceConsumptionModifier))
+                float.TryParse(node.GetValue(kInterstellarResourceConsumptionModifier), out interstellarResourceConsumptionModifier);
         }
 
         public override void OnSave(ConfigNode node)

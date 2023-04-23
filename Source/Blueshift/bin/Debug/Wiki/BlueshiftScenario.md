@@ -43,6 +43,8 @@ In meters, minimum distance in planetary space that's required to rendezvous wit
 In meters, minimum distance in interplanetary space that's required to rendezvous with a vessel via auto-circularization.
 ### rendezvousDistance
 In meters, how close to the targed vessel should you end up at when you rendezvous with it during auto-circularization or a jump.
+### interstellarResourceConsumptionModifier
+This modifier reduces the resources required to power warp engines while in interstellar space. It is a percentage value between 0 and 99.999. The default value is 10. You can override this global setting by specifying this value in the WBIWarpEngine config.
 ### jumpGateSourceId
 The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
 ### destinationGateId

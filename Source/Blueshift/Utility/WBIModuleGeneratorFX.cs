@@ -108,6 +108,11 @@ namespace Blueshift
         /// </summary>
         public bool bypassRunCycle = false;
 
+        /// <summary>
+        /// Multiplier to adjust consumption of input resources.
+        /// </summary>
+        public double resourceConsumptionModifier = 1.0f;
+
         WBIAnimatedTexture[] animatedTextures = null;
         List<ResourceRatio> drainedResources = new List<ResourceRatio>();
         WFModuleWaterfallFX waterfallFXModule = null;
@@ -329,7 +334,21 @@ namespace Blueshift
 
             isMissingResources = false;
             status = "Nominal";
-            return base.PrepareRecipe(deltatime);
+            ConversionRecipe recipe = base.PrepareRecipe(deltatime);
+            if (recipe == null)
+                return null;
+
+            // Apply input modifiers to the recipe
+            count = recipe.Inputs.Count;
+            ResourceRatio ratio;
+            for (int index = 0; index < count; index++)
+            {
+                ratio = recipe.Inputs[index];
+                ratio.Ratio *= resourceConsumptionModifier;
+                recipe.Inputs[index] = ratio;
+            }
+
+            return recipe;
         }
         #endregion
 

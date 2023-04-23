@@ -286,6 +286,14 @@ namespace Blueshift
         [UI_Toggle(enabledText = "#LOC_BLUESHIFT_stateOn", disabledText = "#LOC_BLUESHIFT_stateOff")]
         public bool planetarySpeedBrakeEnabled = true;
 
+        /// <summary>
+        /// Consumption modifier to apply to resource consumption rates when warping in interstellar space.
+        /// This is a percentage value between 0 and 99.999. Anything outside this range will be ignored.
+        /// Default is 10%, which reduces resource consumption by 10% while in interstellar space.
+        /// </summary>
+        [KSPField]
+        public float interstellarResourceConsumptionModifier = -1f;
+
         #region SkillBoost
         /// <summary>
         /// The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -800,6 +808,12 @@ namespace Blueshift
             else if (HighLogic.LoadedSceneIsFlight)
             {
                 GameEvents.onVesselSOIChanged.Add(onVesselSOIChanged);
+            }
+
+            // Other
+            if (interstellarResourceConsumptionModifier < 0)
+            {
+                interstellarResourceConsumptionModifier = BlueshiftScenario.interstellarResourceConsumptionModifier;
             }
         }
 
@@ -1553,11 +1567,17 @@ namespace Blueshift
         {
             int count = warpGenerators.Count;
             WBIModuleGeneratorFX generator;
+            double resourceModifier = 1.0f;
 
+            // Calculate interstellar resource consumption modifier
+            resourceModifier = 1f - (Mathf.Clamp(interstellarResourceConsumptionModifier, 0f, 99.999f) / 100.0f);
+
+            // Run cycle for each generator
             for (int index = 0; index < count; index++)
             {
                 generator = warpGenerators[index];
                 generator.bypassRunCycle = true;
+                generator.resourceConsumptionModifier = spatialLocation == WBISpatialLocations.Interstellar ? resourceModifier : 1.0f;
                 generator.RunGeneratorCycle();
             }
         }

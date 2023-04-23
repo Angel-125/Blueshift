@@ -57,6 +57,8 @@ The ratio between the total mass displaced by the warp coils to the vessel's tot
 When the powerMultiplier drops below this value, the engine will flame out.
 ### planetarySpeedBrakeEnabled
 Planetary Speed Brake
+### interstellarResourceConsumptionModifier
+Consumption modifier to apply to resource consumption rates when warping in interstellar space. This is a percentage value between 0 and 99.999. Anything outside this range will be ignored. Default is 10%, which reduces resource consumption by 10% while in interstellar space.
 ### warpEngineerSkill
 The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
 ### warpSpeedBoostRank
