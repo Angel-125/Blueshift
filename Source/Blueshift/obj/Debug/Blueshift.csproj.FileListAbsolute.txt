@@ -72,5 +72,5 @@ C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshif
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.CopyComplete
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.pdb
-C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.AssemblyReference.cache
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\Blueshift.xml
+C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.AssemblyReference.cache

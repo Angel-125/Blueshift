@@ -720,6 +720,7 @@ namespace Blueshift
             if (!isOperational && !EngineIgnited)
             {
                 fadeOutEffects();
+                spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
                 return;
             }
             else if (flameout || warpFlameout)
@@ -870,6 +871,7 @@ namespace Blueshift
                 coils[index].isActivated = true;
 
             onWarpEngineStart.Fire(part.vessel, this);
+            spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
         }
 
         public override void Shutdown()
@@ -910,6 +912,8 @@ namespace Blueshift
                 coils[index].isActivated = false;
 
             onWarpEngineShutdown.Fire(part.vessel, this);
+            spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
+            resetWarpParameters();
         }
 
         public override void DeactivatePowerFX()
