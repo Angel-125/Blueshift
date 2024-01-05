@@ -40,6 +40,10 @@ namespace Blueshift
     /// </summary>
     public class WBIWarpCoil: WBIPartModule, IModuleInfo
     {
+        #region Constants
+        const string kCapacityMultiplier = "capacityMultiplier";
+        #endregion
+
         #region Fields
         /// <summary>
         /// A flag to enable/disable debug mode.
@@ -108,6 +112,8 @@ namespace Blueshift
 
         #region Housekeeping
         public WBIAnimatedTexture[] animatedTextures = null;
+        private float capacityMultiplier = 1.0f;
+        private Dictionary<String, double> resourceMaxAmounts = null;
 
         /// <summary>
         /// Optional (but highly recommended) Waterfall effects module
@@ -152,6 +158,17 @@ namespace Blueshift
 
         #region API
         /// <summary>
+        /// Returns the total modified warp capacity, accounting for multi-coil segment variants
+        /// </summary>
+        public float totalWarpCapacity
+        {
+            get
+            {
+                return warpCapacity * capacityMultiplier;
+            }
+        }
+
+        /// <summary>
         /// Updates the MTBF rate multiplier with the new rate.
         /// </summary>
         /// <param name="rateMultiplier">A double containing the new multiplier.</param>
@@ -187,7 +204,7 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 vessel.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
-                consumptionRate = resHandler.inputResources[index].rate * rateMultiplier * TimeWarp.fixedDeltaTime;
+                consumptionRate = resHandler.inputResources[index].rate * rateMultiplier * capacityMultiplier * TimeWarp.fixedDeltaTime;
 
                 if (amount < consumptionRate)
                     return false;
@@ -207,7 +224,7 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 if (resHandler.inputResources[index].name == resourceName)
-                    return resHandler.inputResources[index].rate;
+                    return resHandler.inputResources[index].rate * capacityMultiplier;
             }
 
             return 0;
@@ -221,7 +238,7 @@ namespace Blueshift
                 string errorStatus = string.Empty;
                 int count = resHandler.inputResources.Count;
 
-                resHandler.UpdateModuleResourceInputs(ref errorStatus, rateMultiplier, 0.1, true, true);
+                resHandler.UpdateModuleResourceInputs(ref errorStatus, rateMultiplier * capacityMultiplier, 0.1, true, true);
                 for (int index = 0; index < count; index++)
                 {
                     if (!resHandler.inputResources[index].available)
@@ -246,7 +263,7 @@ namespace Blueshift
                     part.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
 
                     // Determine how many units per second we require.
-                    demand = resHandler.inputResources[index].rate;
+                    demand = resHandler.inputResources[index].rate * capacityMultiplier;
 
                     // Cap demand to maxAmount if the timewarp-adjusted demand exceeds the maxAmount.
                     if (demand * TimeWarp.fixedDeltaTime > maxAmount)
@@ -310,11 +327,18 @@ namespace Blueshift
             // Get EVA Repairs module (if any)
             evaRepairs = BSModuleEVARepairs.GetPartModule(part);
 
+            // Get resources for multi-segment coil support
+            resourceMaxAmounts = new Dictionary<string, double>();
+            int count = part.Resources.Count;
+            for (int index = 0; index < count; index++)
+                resourceMaxAmounts.Add(part.Resources[index].resourceName, part.Resources[index].maxAmount);
+
             // Game events
             if (HighLogic.LoadedSceneIsFlight)
             {
                 GameEvents.onPartRepaired.Add(onPartRepaired);
                 GameEvents.onPartFailure.Add(onPartFailure);
+                GameEvents.onVariantApplied.Add(onVariantApplied);
             }
         }
 
@@ -324,11 +348,44 @@ namespace Blueshift
             {
                 GameEvents.onPartRepaired.Remove(onPartRepaired);
                 GameEvents.onPartFailure.Remove(onPartFailure);
+                GameEvents.onVariantApplied.Remove(onVariantApplied);
             }
         }
         #endregion
 
         #region Helpers
+        private void onVariantApplied(Part variantPart, PartVariant variant)
+        {
+            if (variantPart != part)
+                return;
+
+            // Get the capacityMultiplier entry
+            string multiplier = variant.GetExtraInfoValue(kCapacityMultiplier);
+            if (String.IsNullOrEmpty(multiplier))
+            {
+                capacityMultiplier = 1.0f;
+                return;
+            }
+
+            // process the capacity multiplier
+            if (float.TryParse(multiplier, out capacityMultiplier))
+            {
+                int count = part.Resources.Count;
+                string resourceName = string.Empty;
+                for (int index = 0; index < count; index++)
+                {
+                    resourceName = part.Resources[index].resourceName;
+                    if (!resourceMaxAmounts.ContainsKey(resourceName))
+                        resourceMaxAmounts.Add(resourceName, part.Resources[index].maxAmount);
+
+                    part.Resources[index].maxAmount = resourceMaxAmounts[resourceName] * capacityMultiplier;
+                }
+            }
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
+        }
+
         void onPartFailure(Part failedPart)
         {
             if (failedPart != part)

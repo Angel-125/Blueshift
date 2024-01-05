@@ -8,13 +8,64 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
+New Parts
+
+- S1 Multi-Segment Warp Coil: This part combines multiple S1 warp coil segments into one part variant to reduce warp coil part spamming. It offers 2, 4, 6, 8, and 10 segment variants, with appropriate increases in mass, cost, and performance. There are also "Midsection" versions to combine with other coils for truly long warp nacelles.
+
+
+Bug Fixes
+
+- Fixed issue with WBIModuleGeneratorFX that prevented it from setting Action Groups.
+
 Changes
 
-- Added new entry for settings.cfg: interstellarResourceConsumptionModifier. This modifier reduces the resources required to power warp engines while in interstellar space. It is a percentage value between 0 and 99.999. The default value is 10. You can override this global setting by specifying this value in the WBIWarpEngine config.
+- WBIWarpCoil: Now supports the ability to multiply the warp capacity (and the corresponding resource requirements) based on the selected part variant. This is done by adding an EXTRA_INFO node to the appropriate variant. Example:
 
-- WBIWarpEngine: Added new interstellarResourceConsumptionModifier that will reduce the resource consumption of all WBIModuleGeneratorFX part modules when the vessel is in interstellar space. This is a percentage value between 0 and 99.999. The default is 10, meaning that all generators will reduce their input resource consumption by 10% while keeping the output rates the same.
+	VARIANT
+	{
+		name = Short
+		displayName =  #autoLOC_8005067 //#autoLOC_8005067 = Short
+		primaryColor = #3a562a
+		secondaryColor = #9e7100
+		GAMEOBJECTS
+		{
+			yadaYada = true
+		}
 
-Bottom line: This reduction will enable ships to consume less graviolium while out in interstellar space.
+		EXTRA_INFO
+		{
+			// Capacity Multiplier specifies how much to multiply the base capacity
+			capacityMultiplier = 1
+		}
+	}
+
+- WBIAnimatedTexture: Texture & emission animation now supports multiple transformed with the same name specified by the textureTransformName field. Additionally, you can now specify a TEXTURE_TRANSFORMS config node with one or more textureTransformName fields that will also be animated. Example:
+	MODULE
+	{
+		name = WBIAnimatedTexture
+
+		// ID of the module so we can distinguish between several animated textures in one part.
+		// This one is controlled by the warp coil.
+		moduleID = WarpCoil
+
+		// The 3D model can have multiple transforms with this name.
+		textureTransformName = plasmaCoil
+
+		// These will also be animated
+		TEXTURE_TRANSFORMS
+		{
+			textureTransformName = plasmaCoil2
+			textureTransformName = plasmaCoil3
+			textureTransformName = plasmaCoil4
+			textureTransformName = plasmaCoil5
+		}
+
+		animatedEmissiveTexture = WildBlueIndustries/Blueshift/Parts/Engine/WarpTech/WarpPlasma
+		minFramesPerSecond = 15
+		maxFramesPerSecond = 50
+		fadesAtMinThrottle = true
+		emissiveFadeTime = 0.5
+	}
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.

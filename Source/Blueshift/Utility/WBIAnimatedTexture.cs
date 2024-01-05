@@ -103,10 +103,10 @@ namespace Blueshift
         private int emissiveTextureIndex = 0;
         private string[] diffuseURLs = null;
         private int diffuseTextureIndex = 0;
-        private Renderer rendererMaterial;
         private double imageSwitchTime = 0;
         private float emissiveFadeLevel = 0;
         private float framesPerSecond = 1f;
+        private List<Renderer> rendererMaterials = null;
         #endregion
 
         #region Overrides
@@ -121,23 +121,26 @@ namespace Blueshift
             diffuseURLs = getTextures("animatedDiffuseTexture");
 
             // Setup rendererMaterial
-            Transform target = this.part.FindModelTransform(textureTransformName);
-            if (target == null)
-                return;
-            rendererMaterial = target.GetComponent<Renderer>();
-            if (rendererMaterial == null)
+            setupRenderMaterials();
+            if (rendererMaterials.Count <= 0)
                 return;
 
             // Setup emissive visibility
-            if (isActivated)
+            int count = rendererMaterials.Count;
+            Renderer renderer = null;
+            for (int index = 0; index < count; index++)
             {
-                emissiveFadeLevel = 1f;
-                rendererMaterial.material.SetColor("_EmissiveColor", new Color(1, 1, 1, 1));
-            }
-            else
-            {
-                emissiveFadeLevel = 0f;
-                rendererMaterial.material.SetColor("_EmissiveColor", new Color(0, 0, 0, 0));
+                renderer = rendererMaterials[index];
+                if (isActivated)
+                {
+                    emissiveFadeLevel = 1f;
+                    renderer.material.SetColor("_EmissiveColor", new Color(1, 1, 1, 1));
+                }
+                else
+                {
+                    emissiveFadeLevel = 0f;
+                    renderer.material.SetColor("_EmissiveColor", new Color(0, 0, 0, 0));
+                }
             }
 
             // Calculate imageSwitchTime
@@ -182,31 +185,92 @@ namespace Blueshift
                 return;
             }
 
-            // Switch images if it's time to do so.
-            if (Planetarium.GetUniversalTime() >= imageSwitchTime)
+            // Calculate next switch time
+            double currentTime = Planetarium.GetUniversalTime();
+            bool updateAnimatedTextures = false;
+            if (currentTime >= imageSwitchTime)
             {
+                updateAnimatedTextures = true;
+
                 // Calculate next switch time
                 imageSwitchTime = Planetarium.GetUniversalTime() + (1 / framesPerSecond);
+            }
 
-                // Update diffuse if needed
-                if (diffuseURLs != null && diffuseURLs.Length > 2)
-                {
-                    diffuseTextureIndex = (diffuseTextureIndex + 1) % diffuseURLs.Length;
-                    rendererMaterial.material.SetTexture("_MainTex", GameDatabase.Instance.GetTexture(diffuseURLs[diffuseTextureIndex], false));
-                }
+            // Update emissions and animated textures
+            int count = rendererMaterials.Count;
+            Renderer renderer = null;
+            for (int index = 0; index < count; index++)
+            {
+                renderer = rendererMaterials[index];
+                if (!renderer.enabled || !renderer.isVisible)
+                    continue;
 
-                // Update emisssive if needed
-                if (emissiveURLs != null && emissiveURLs.Length > 2)
+                // Set emission
+                renderer.material.SetColor("_EmissiveColor", new Color(emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel));
+
+                // Switch images if it's time to do so.
+                if (updateAnimatedTextures)
                 {
-                    emissiveTextureIndex = (emissiveTextureIndex + 1) % emissiveURLs.Length;
-                    rendererMaterial.material.SetTexture("_Emissive", GameDatabase.Instance.GetTexture(emissiveURLs[emissiveTextureIndex], false));
+                    // Update diffuse if needed
+                    if (diffuseURLs != null && diffuseURLs.Length > 2)
+                    {
+                        diffuseTextureIndex = (diffuseTextureIndex + 1) % diffuseURLs.Length;
+                        renderer.material.SetTexture("_MainTex", GameDatabase.Instance.GetTexture(diffuseURLs[diffuseTextureIndex], false));
+                    }
+
+                    // Update emisssive if needed
+                    if (emissiveURLs != null && emissiveURLs.Length > 2)
+                    {
+                        emissiveTextureIndex = (emissiveTextureIndex + 1) % emissiveURLs.Length;
+                        renderer.material.SetTexture("_Emissive", GameDatabase.Instance.GetTexture(emissiveURLs[emissiveTextureIndex], false));
+                    }
                 }
             }
-            rendererMaterial.material.SetColor("_EmissiveColor", new Color(emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel));
         }
         #endregion
 
         #region Helpers
+        private void setupRenderMaterials()
+        {
+            // Get all the transforms for the original textureTransformName
+            Transform[] textureTransforms = part.FindModelTransforms(textureTransformName);
+            List<Transform> transforms = new List<Transform>();
+            if (textureTransforms != null && textureTransforms.Length > 0)
+                transforms.AddRange(textureTransforms);
+            Debug.Log("[WBIAnimatedTexture] - transforms found: " + transforms.Count);
+
+            // Get the other model transforms, if any
+            ConfigNode node = getPartConfigNode();
+            if (node.HasNode("TEXTURE_TRANSFORMS"))
+            {
+                node = node.GetNode("TEXTURE_TRANSFORMS");
+                if (node.HasValue("textureTransformName"))
+                {
+                    string[] transformNames = node.GetValues("textureTransformName");
+                    for (int index = 0; index < transformNames.Length; index++)
+                    {
+                        textureTransforms = part.FindModelTransforms(transformNames[index]);
+                        if (textureTransforms != null && textureTransforms.Length > 0)
+                            transforms.AddRange(textureTransforms);
+                    }
+                }
+            }
+
+            // Now add the renderers
+            rendererMaterials = new List<Renderer>();
+            Renderer renderer = null;
+            int count = transforms.Count;
+            for (int index = 0; index < count; index++)
+            {
+                renderer = transforms[index].GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    rendererMaterials.Add(renderer);
+                }
+            }
+            Debug.Log("[WBIAnimatedTexture] - rendererMaterials added: " + rendererMaterials.Count);
+        }
+
         /// <summary>
         /// Blends two textures together and stores the result in an output texture. Curtesy of stupid_chris
         /// </summary>

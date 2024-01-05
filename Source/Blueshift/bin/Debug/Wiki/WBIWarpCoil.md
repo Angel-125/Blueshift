@@ -25,6 +25,10 @@ Warp coils can efficiently move a certain amount of mass to light speed and beyo
 Flag to indicate that the part needs maintenance in order to function.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
+## Properties
+
+### totalWarpCapacity
+Returns the total modified warp capacity, accounting for multi-coil segment variants
 ## Methods
 
 

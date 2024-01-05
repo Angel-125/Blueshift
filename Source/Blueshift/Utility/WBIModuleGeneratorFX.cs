@@ -205,10 +205,9 @@ namespace Blueshift
         {
             base.OnStart(state);
             GameEvents.OnResourceConverterOutput.Add(onResourceConverterOutput);
+            // Fix for action groups in editor
             if (HighLogic.LoadedSceneIsEditor)
-                this.DisableModule();
-            else if (HighLogic.LoadedSceneIsFlight)
-                this.EnableModule();
+                EnableModule();
 
             // Setup GUI
             debugMode = BlueshiftScenario.debugMode;

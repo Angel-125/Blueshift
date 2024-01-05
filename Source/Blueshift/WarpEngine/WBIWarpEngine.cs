@@ -839,6 +839,8 @@ namespace Blueshift
         public override void Activate()
         {
             base.Activate();
+            if (HighLogic.LoadedSceneIsEditor)
+                return;
             if (!staged)
                 part.force_activate();
 
@@ -877,6 +879,8 @@ namespace Blueshift
         public override void Shutdown()
         {
             base.Shutdown();
+            if (HighLogic.LoadedSceneIsEditor)
+                return;
             hasExceededLightSpeed = false;
             spatialLocation = WBISpatialLocations.Unknown;
 
@@ -1523,7 +1527,7 @@ namespace Blueshift
 
                 if (consumeCoilResources(warpCoil, consumptionMultiplier))
                 {
-                    totalWarpCapacity += warpCoil.warpCapacity;
+                    totalWarpCapacity += warpCoil.totalWarpCapacity;
                     totalDisplacement += warpCoil.displacementImpulse;
                 }
             }

@@ -526,6 +526,11 @@
             Optional (but highly recommended) Waterfall effects module
             </summary>
         </member>
+        <member name="P:Blueshift.WBIWarpCoil.totalWarpCapacity">
+            <summary>
+            Returns the total modified warp capacity, accounting for multi-coil segment variants
+            </summary>
+        </member>
         <member name="M:Blueshift.WBIWarpCoil.UpdateMTBFRateMultiplier(System.Double)">
             <summary>
             Updates the MTBF rate multiplier with the new rate.
