@@ -157,7 +157,6 @@ namespace Blueshift
             base.OnStart(state);
 
             setupAnimations();
-            showGui(guiIsVisible);
             findEmissiveRenderers();
             converters = part.FindModulesImplementing<BaseConverter>();
             lights = this.part.gameObject.GetComponentsInChildren<Light>();
@@ -170,7 +169,10 @@ namespace Blueshift
             WBIWarpEngine.onWarpEngineFlameout.Add(onWarpEngineFlameout);
             WBIWarpEngine.onWarpEngineUnFlameout.Add(onWarpEngineUnFlameout);
 
+            debugMode = BlueshiftScenario.debugMode;
+            showGui(guiIsVisible || debugMode);
             Events["ToggleAnimationDirection"].active = animation != null;
+            Events["ToggleAnimationDirection"].guiActive = debugMode || guiIsVisible;
             Actions["ToggleAnimationAction"].guiName = actionGUIName;
             if (defaultActionGroup > 0)
                 Actions["ToggleAnimationAction"].actionGroup = defaultActionGroup;
@@ -253,7 +255,7 @@ namespace Blueshift
         void showGui(bool isVisible)
         {
             guiIsVisible = isVisible;
-            Events["ToggleAnimation"].guiActive = isVisible && debugMode;
+            Events["ToggleAnimation"].guiActive = isVisible || debugMode;
         }
 
         void setupAnimations()

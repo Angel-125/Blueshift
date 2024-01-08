@@ -1,0 +1,207 @@
+// Custom asteroid part based on Oumuamua.
+PART
+{
+	name = wbiOumuamua
+	module = Part
+	author = Angel-125
+
+	// --- asset parameters ---
+
+	rescaleFactor = 1
+	
+	MODEL
+	{
+		model = Squad/Parts/FuelTank/Size3Tanks/Size3LargeTank
+	}
+
+	// --- node definitions ---
+	node_stack_top = 0.0, 3.75, 0.0, 0.0, 1.0, 0.0, 3
+	node_stack_bottom = 0.0, -3.75, 0.0, 0.0, -1.0, 0.0, 3
+	node_attach = 1.875, 0.0, 0.0, 1.0, 0.0, 0.0, 1
+
+	// --- editor parameters ---
+	TechRequired = Start
+	entryCost = 100
+	cost = 100
+	category = FuelTank
+	subcategory = 0
+	title = Oumuamua
+	manufacturer = Interstellar Solar System
+	description = This object of interstellar origin is most likely an asteroid.
+
+	// attachment rules: stack, srfAttach, allowStack, allowSrfAttach, allowCollision
+	attachRules = 1,1,1,1,0
+
+	// --- standard part parameters ---
+	mass = 100 //9698.08833
+	dragModelType = default
+	maximum_drag = 0.2
+	minimum_drag = 0.3
+	angularDrag = 1
+	crashTolerance = 16000 //160
+	breakingForce = 200
+	breakingTorque = 200
+	maxTemp = 2500 // way hotter than the melting point of "Ore" but oh well.
+	explosionPotential = 1.0
+	skipColliderIgnores = True
+	vesselType = Probe //SpaceObject
+	skinInternalConductionMult = 100
+	skinMassPerArea = 100
+	tags = #autoLOC_500645 //#autoLOC_500645 = asteroid roid spud
+
+	MODULE
+	{
+		// We need to use a custom asteroid module so that we can use our own 3D mesh and not a procedurally generated one.
+		name = ModuleCustomAsteroid // WBICustomAsteroid
+		density = 0.03
+		secondaryRate = 0.05
+		AsteroidName = Oumuamua
+	}
+
+	MODULE
+	{
+		name = ModuleAsteroidInfo
+	}
+
+	MODULE
+	{
+		name = ModuleAsteroidResource
+		highRange = 95
+		lowRange = 50
+		presenceChance = 100
+		resourceName = Ore
+	}
+
+	MODULE
+	{
+		name = ModuleAsteroidResource
+
+		resourceName = Graviolium
+		presenceChance = 45
+		lowRange = 5
+		highRange = 25
+	}
+
+	MODULE
+	{
+		// Persists the vessel's rotation through timewarp, going on/off rails, and scene changes.
+		// Future enhancement: Turn this into a VesselModule so that all vessels can have persisted rotation, 
+		// and make persisted rotation optional through a game setting. At that point this module would be used to
+		// setup the initial rotation.
+		name = ModulePersistedRotation
+
+		// Will display the debug debug information and helpers.
+		debugMode = true
+
+		// Imparts an initial rotation in degrees per second to the vessel along the pitch (x), roll (y), and yaw (z) axis.
+		// This value will become the first persisted rotation. External forces can alter the persisted rotation.
+		// The default is 0, which means the vessel won't initially be rotating but its rotation will still be persisted.
+		// Converting Dimorphos' rotation period of 42911.3800951945 seconds to degrees per second: 360 / 42911.3800951945 = 0.008389382938
+		// 0,0,-6 : tumbles towards prograde
+		// 0,0,6 : tumbles towards retrograde
+		initialRotationDegPerSec = 0,0,6 //0,0.008389382938,0
+	}
+
+	MODULE
+	{
+		name = ModuleCommand
+		minimumCrew = 0
+		RESOURCE
+		{
+			name = ElectricCharge
+			rate = 0.0
+		}
+	}
+	RESOURCE
+	{
+		name = ElectricCharge
+		amount = 10
+		maxAmount = 10
+	}
+	MODULE
+	{
+		name = ModuleSAS
+	}
+
+	MODULE
+	{
+		name = ModuleDataTransmitter
+		antennaType = INTERNAL
+		packetInterval = 1.0
+		packetSize = 2
+		packetResourceCost = 12.0
+		requiredResource = ElectricCharge
+		antennaPower = 5000
+		optimumRange = 2500
+		packetFloor = .1
+		packetCeiling = 5
+	}	
+
+}
+
+SPACE_ANOMALY
+{
+	// Identifier for the space anomaly.
+	name = oumuamuaAnomaly
+
+	// Name of the part to spawn
+	partName = wbiOumuamua
+
+	// Normally an anomaly is something like UNK-UWN-474 and it is automatically generated.
+	// However, you can override the name by specifying the vesselName field.
+	// Warning: using this can lead to duplicate vessel names if maxInstances is > 1.
+	vesselName = Oumuamua
+
+	// Like asteroids, space anomalies have a size class that ranges from Size A (12 meters) to Size I (100+ meters).
+	// The default is A.
+	sizeClass = I
+
+	// How does an instance spawn. Default is randomOrbit.
+	// randomOrbit: Spawns in a random solar or planetary orbit.
+	// randomSolarOrbit: Spawns in a random solar orbit.
+	// randomPlanetOrbit: Spawns in a random planetary orbit.
+	// everyLastPlanet: Spawns in random orbit of every last planet in each star system. Ignores maxInstances.
+	// fixedOrbit: Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
+	spawnMode = randomSolarOrbit
+
+	// The type of orbit to create. Default is elliptical.
+	// elliptical: Garden variety elliptical orbit.
+	// flyBy: Fly-by orbit.
+	// random: Randomly pick either circular or flyBy.
+	orbitType = flyBy
+
+	// For flyBy orbits, the max number of days until the anomaly reaches the closest point in its orbit. Default is 30.
+	maxDaysToClosestApproach = 3000
+
+	// For orbitType = random, on a roll of 1 to 100, what is the chance that the orbit will be flyBy. Default is 50.
+//	flyByOrbitChance = 1
+
+	// For fixedOrbit, the celestial body to spawn around.
+	fixedBody = Sun
+	
+	// For fixedOrbit, the Semi-Major axis of the orbit.
+//	fixedSMA = 
+
+	// For fixedOrbit, the eccentrcity of the orbit.
+//	fixedEccentricity = 
+
+	// For fixedOrbit, the inclination of the orbit. Default is -1, which enables random inclination.
+//	fixedInclination = 
+
+	// For undiscovered objects, the minimum number of seconds that the anomaly can exist. Default is 86400 (1 day).
+	// Set to -1 to use maximum possible value. When set to -1, maxLifetime is ignored.
+	minLifetime = -1
+
+	// For undiscovered objects, the maximum number of seconds that the anomaly can exist. Default is 1728000 ( 20 days).
+	maxLifetime = -1
+
+	// Spawn chance in a roll between 1 and 1000
+	spawnTargetNumber = 1
+
+	// Maximum number of objects of this type that may exist at any given time. Default is 10.
+	// Set to -1 for unlimited number.
+	maxInstances = 1
+
+	// Ensures that the anomaly is tracked in the Tracking Station. For Jumpgates, it also adds the gate to the jumpgate network.
+	isKnown = true
+}

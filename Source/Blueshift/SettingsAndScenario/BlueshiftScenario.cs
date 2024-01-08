@@ -230,6 +230,7 @@ namespace Blueshift
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
+            debugMode = BlueshiftSettings.DebugModeEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
             GameEvents.onVesselWasModified.Add(onVesselWasModified);
 
@@ -758,6 +759,7 @@ namespace Blueshift
                     {
                         lastPlanets.Add(body);
                         lastPlanetByStar.Add(stars[index], body);
+                        Debug.Log("[Blueshift] - Overriding the last planet in the " + stars[index].bodyName + " system to be " + body.bodyName);
                     }
                 }
 
@@ -1141,6 +1143,7 @@ namespace Blueshift
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
             jumpgateStartupIsDestructive = BlueshiftSettings.JumpgateStartupIsDestructive;
+            debugMode = BlueshiftSettings.DebugModeEnabled;
 
             if (!spawnSpaceAnomalies)
             {

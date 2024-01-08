@@ -22,6 +22,9 @@ namespace Blueshift
 
         [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsDestructiveJumpgatesDesc", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableDestructiveGateStartup = false;
+
+        [GameParameters.CustomParameterUI("Debug Mode", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool debugMode = false;
         #region CustomParameterNode
 
         public override string DisplaySection
@@ -85,6 +88,15 @@ namespace Blueshift
             return true;
         }
         #endregion
+
+        public static bool DebugModeEnabled
+        {
+            get
+            {
+                BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
+                return settings.debugMode;
+            }
+        }
 
         public static bool JumpgateStartupIsDestructive
         {
