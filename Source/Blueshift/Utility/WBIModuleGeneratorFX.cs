@@ -157,6 +157,7 @@ namespace Blueshift
         public void OnDestroy()
         {
             GameEvents.OnResourceConverterOutput.Remove(onResourceConverterOutput);
+            GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
         }
 
         public override void OnLoad(ConfigNode node)
@@ -205,6 +206,8 @@ namespace Blueshift
         {
             base.OnStart(state);
             GameEvents.OnResourceConverterOutput.Add(onResourceConverterOutput);
+            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+
             // Fix for action groups in editor
             if (HighLogic.LoadedSceneIsEditor)
                 EnableModule();
@@ -464,6 +467,14 @@ namespace Blueshift
             }
 
             return partConfigNode;
+        }
+
+        private void onGameSettingsApplied()
+        {
+            debugMode = BlueshiftSettings.DebugModeEnabled;
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
         }
         #endregion
     }

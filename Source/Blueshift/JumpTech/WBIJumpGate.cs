@@ -412,6 +412,7 @@ namespace Blueshift
             {
                 GameEvents.onPartRepaired.Remove(onPartRepaired);
                 GameEvents.onPartFailure.Remove(onPartFailure);
+                GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
             }
         }
 
@@ -535,6 +536,7 @@ namespace Blueshift
             {
                 GameEvents.onPartRepaired.Add(onPartRepaired);
                 GameEvents.onPartFailure.Add(onPartFailure);
+                GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
             }
 
             // Rendezvous distance
@@ -753,6 +755,14 @@ namespace Blueshift
 
         void onPartRepaired(Part repairedPart)
         {
+        }
+
+        private void onGameSettingsApplied()
+        {
+            debugMode = BlueshiftSettings.DebugModeEnabled;
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
         }
 
         private void disablePortalTrigger()

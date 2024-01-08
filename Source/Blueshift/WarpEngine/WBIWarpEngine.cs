@@ -603,6 +603,7 @@ namespace Blueshift
             else if (HighLogic.LoadedSceneIsFlight)
             {
                 GameEvents.onVesselSOIChanged.Remove(onVesselSOIChanged);
+                GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
             }
 
             disableGeneratorBypass();
@@ -809,6 +810,7 @@ namespace Blueshift
             else if (HighLogic.LoadedSceneIsFlight)
             {
                 GameEvents.onVesselSOIChanged.Add(onVesselSOIChanged);
+                GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
             }
 
             // Other
@@ -1969,6 +1971,14 @@ namespace Blueshift
             // If we went from interstellar space to non-interstellar space then kill timewarp.
             if (prevSpatialLocation == WBISpatialLocations.Interstellar && !BlueshiftScenario.shared.IsInInterstellarSpace(part.vessel))
                 TimeWarp.SetRate(0, false);
+        }
+
+        private void onGameSettingsApplied()
+        {
+            debugMode = BlueshiftSettings.DebugModeEnabled;
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
         }
         #endregion
     }

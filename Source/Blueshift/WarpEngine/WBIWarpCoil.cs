@@ -339,6 +339,7 @@ namespace Blueshift
                 GameEvents.onPartRepaired.Add(onPartRepaired);
                 GameEvents.onPartFailure.Add(onPartFailure);
                 GameEvents.onVariantApplied.Add(onVariantApplied);
+                GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
             }
         }
 
@@ -349,11 +350,20 @@ namespace Blueshift
                 GameEvents.onPartRepaired.Remove(onPartRepaired);
                 GameEvents.onPartFailure.Remove(onPartFailure);
                 GameEvents.onVariantApplied.Remove(onVariantApplied);
+                GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
             }
         }
         #endregion
 
         #region Helpers
+        private void onGameSettingsApplied()
+        {
+            debugMode = BlueshiftSettings.DebugModeEnabled;
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
+        }
+
         private void onVariantApplied(Part variantPart, PartVariant variant)
         {
             if (variantPart != part)

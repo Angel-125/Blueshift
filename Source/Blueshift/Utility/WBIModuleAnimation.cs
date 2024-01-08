@@ -168,6 +168,7 @@ namespace Blueshift
             WBIWarpEngine.onWarpEngineShutdown.Add(onWarpEngineShutdown);
             WBIWarpEngine.onWarpEngineFlameout.Add(onWarpEngineFlameout);
             WBIWarpEngine.onWarpEngineUnFlameout.Add(onWarpEngineUnFlameout);
+            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
 
             debugMode = BlueshiftScenario.debugMode;
             showGui(guiIsVisible || debugMode);
@@ -191,6 +192,7 @@ namespace Blueshift
             WBIWarpEngine.onWarpEngineShutdown.Remove(onWarpEngineShutdown);
             WBIWarpEngine.onWarpEngineFlameout.Remove(onWarpEngineFlameout);
             WBIWarpEngine.onWarpEngineUnFlameout.Remove(onWarpEngineUnFlameout);
+            GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
         }
 
         public override void OnLoad(ConfigNode node)
@@ -523,6 +525,14 @@ namespace Blueshift
             Events["ToggleAnimationDirection"].guiName = playInReverse ? playDirectionForwardGUIName : playDirectionReverseGUIName;
 
             MonoUtilities.RefreshContextWindows(this.part);
+        }
+
+        private void onGameSettingsApplied()
+        {
+            debugMode = BlueshiftSettings.DebugModeEnabled;
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
         }
         #endregion
     }

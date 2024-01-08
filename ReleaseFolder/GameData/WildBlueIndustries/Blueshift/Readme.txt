@@ -19,6 +19,8 @@ Bug Fixes
 
 Changes
 
+- Added Debug Mode menu item to the Blueshift Settings menu. This supersedes the "debugMode" field found in settings.cfg and various part module files.
+
 - Added Sphere of Influence support for JNSQ's planet Nara.
 
 - WBIWarpCoil: Now supports the ability to multiply the warp capacity (and the corresponding resource requirements) based on the selected part variant. This is done by adding an EXTRA_INFO node to the appropriate variant. Example:

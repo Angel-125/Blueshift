@@ -155,6 +155,13 @@ namespace Blueshift
             Fields["isActivated"].guiActiveEditor = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
             Fields["fadesAtMinThrottle"].guiActiveEditor = debugMode;
+
+            GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+        }
+
+        public void Destroy()
+        {
+            GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
         }
 
         public void FixedUpdate()
@@ -334,6 +341,14 @@ namespace Blueshift
         protected float calculateFramesPerSecond()
         {
             return minFramesPerSecond + ((maxFramesPerSecond - minFramesPerSecond) * animationThrottle);
+        }
+
+        private void onGameSettingsApplied()
+        {
+            debugMode = BlueshiftSettings.DebugModeEnabled;
+
+            //Dirty the GUI
+            MonoUtilities.RefreshContextWindows(part);
         }
         #endregion
     }
