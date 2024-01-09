@@ -483,6 +483,7 @@ namespace Blueshift
         Vector3d preCruiseVelocity;
         bool needsVelocityUpdate = false;
         double resumeUpdateTimestamp = -1f;
+        float generatorInsterstellarResourceMultiplier = 1.0f;
         #endregion
 
         #region Actions And Events
@@ -818,6 +819,9 @@ namespace Blueshift
             {
                 interstellarResourceConsumptionModifier = BlueshiftScenario.interstellarResourceConsumptionModifier;
             }
+            generatorInsterstellarResourceMultiplier = 1f - (Mathf.Clamp(interstellarResourceConsumptionModifier, 0f, 99.999f) / 100.0f);
+            if (debugMode)
+                Debug.Log("[WBIWarpEngine] - generatorInsterstellarResourceMultiplier: " + generatorInsterstellarResourceMultiplier);
         }
 
         public override void Flameout(string message, bool statusOnly = false, bool showFX = true)
@@ -1577,17 +1581,13 @@ namespace Blueshift
         {
             int count = warpGenerators.Count;
             WBIModuleGeneratorFX generator;
-            double resourceModifier = 1.0f;
-
-            // Calculate interstellar resource consumption modifier
-            resourceModifier = 1f - (Mathf.Clamp(interstellarResourceConsumptionModifier, 0f, 99.999f) / 100.0f);
 
             // Run cycle for each generator
             for (int index = 0; index < count; index++)
             {
                 generator = warpGenerators[index];
                 generator.bypassRunCycle = true;
-                generator.resourceConsumptionModifier = spatialLocation == WBISpatialLocations.Interstellar ? resourceModifier : 1.0f;
+                generator.resourceConsumptionModifier = spatialLocation == WBISpatialLocations.Interstellar ? generatorInsterstellarResourceMultiplier : 1.0f;
                 generator.RunGeneratorCycle();
             }
         }

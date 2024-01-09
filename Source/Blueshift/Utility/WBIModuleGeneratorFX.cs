@@ -118,6 +118,7 @@ namespace Blueshift
         WFModuleWaterfallFX waterfallFXModule = null;
         bool drainedResourceProduced = false;
         string resourcesDrainedHash = string.Empty;
+        Dictionary<string, double> baseInputRatios = null;
         #endregion
 
         #region IModuleInfo
@@ -227,6 +228,13 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 resourcesDrainedHash += outputList[index].ResourceName;
+            }
+
+            baseInputRatios = new Dictionary<string, double>();
+            count = inputList.Count;
+            for (int index = 0; index < count; index++)
+            {
+                baseInputRatios.Add(inputList[index].ResourceName, inputList[index].Ratio);
             }
         }
 
@@ -342,12 +350,17 @@ namespace Blueshift
 
             // Apply input modifiers to the recipe
             count = recipe.Inputs.Count;
-            ResourceRatio ratio;
+            ResourceRatio recipeInput;
             for (int index = 0; index < count; index++)
             {
-                ratio = recipe.Inputs[index];
-                ratio.Ratio *= resourceConsumptionModifier;
-                recipe.Inputs[index] = ratio;
+                recipeInput = recipe.Inputs[index];
+
+                // Since recipes are reused, we need to compute the ratio based on the original input ratios before factoring in the resourceConsumptionModifier.
+                if (baseInputRatios.ContainsKey(recipeInput.ResourceName))
+                {
+                    recipeInput.Ratio = baseInputRatios[recipeInput.ResourceName] * resourceConsumptionModifier;
+                    recipe.Inputs[index] = recipeInput;
+                }
             }
 
             return recipe;

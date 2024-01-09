@@ -23,6 +23,8 @@ Bug Fixes
 
 - Fixed issue where space anomalies all had the same vessel name.
 
+- Fixed issue where generator resource consumption dropped to zero when flying in interstellar space.
+
 Changes
 
 - SPACE_ANOMALY entries can now specify "everyPlanet" as a spawnMode. Fair warning: This will spam a lot of anomalies, so use sparringly.
