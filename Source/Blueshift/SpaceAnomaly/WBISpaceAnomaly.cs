@@ -352,17 +352,27 @@ namespace Blueshift
             if (!canCreateNewInstance(spaceAnomalies))
                 return;
 
-            if (spawnMode != WBIAnomalySpawnModes.everyLastPlanet)
+            List<WBISpaceAnomaly> anomalies = null;
+            switch (spawnMode)
             {
-                WBISpaceAnomaly anomaly = createRandomAnomaly();
-                setupJumpgateNetwork(anomaly);
-                spaceAnomalies.Add(anomaly);
-            }
-            else
-            {
-                List<WBISpaceAnomaly> anomalies = createLastPlanetAnomalies(spaceAnomalies);
-                setupJumpgateNetwork(anomalies);
-                spaceAnomalies.AddRange(anomalies);
+                case WBIAnomalySpawnModes.everyLastPlanet:
+                    anomalies = createLastPlanetAnomalies(spaceAnomalies);
+                    setupJumpgateNetwork(anomalies);
+                    spaceAnomalies.AddRange(anomalies);
+                    break;
+
+                case WBIAnomalySpawnModes.everyPlanet:
+                    Debug.Log("[Blueshift] - Spawning anomaly " + name + " at each planet");
+                    anomalies = createEachPlanetAnomalies(spaceAnomalies);
+                    setupJumpgateNetwork(anomalies);
+                    spaceAnomalies.AddRange(anomalies);
+                    break;
+
+                default:
+                    WBISpaceAnomaly anomaly = createRandomAnomaly();
+                    setupJumpgateNetwork(anomaly);
+                    spaceAnomalies.Add(anomaly);
+                    break;
             }
         }
         #endregion
@@ -391,6 +401,42 @@ namespace Blueshift
             ConfigNode vesselNode = createAnomalyVessel(anomaly);
 
             return anomaly;
+        }
+
+        private List<WBISpaceAnomaly> createEachPlanetAnomalies(List<WBISpaceAnomaly> existingAnomalies)
+        {
+            // Filter the existing anomalies based on our parameters.
+            List<WBISpaceAnomaly> filteredAnomalies = existingAnomalies.FindAll(p => p.spawnMode == spawnMode && p.partName == partName);
+
+            List<WBISpaceAnomaly> anomalies = new List<WBISpaceAnomaly>();
+            WBISpaceAnomaly anomaly;
+            ConfigNode vesselNode;
+
+            // Get the list of planets
+            List<CelestialBody> planets = BlueshiftScenario.shared.GetPlanets();
+
+            // Build the string containing the names of the bodies with anomalies.
+            StringBuilder stringBuilder = new StringBuilder();
+            int count = filteredAnomalies.Count;
+            for (int index = 0; index < count; index++)
+                stringBuilder.Append(filteredAnomalies[index].fixedBody);
+            string bodiesWithAnomalies = stringBuilder.ToString();
+
+            // Now check the list of planets and see if the name of the body is in the string.
+            count = planets.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (!bodiesWithAnomalies.Contains(planets[index].name))
+                {
+                    anomaly = new WBISpaceAnomaly(this);
+                    anomaly.fixedBody = planets[index].name;
+                    vesselNode = createAnomalyVessel(anomaly);
+                    anomalies.Add(anomaly);
+                    Debug.Log("[Blueshift] - Spawning anomaly " + name + " at " + anomaly.fixedBody);
+                }
+            }
+
+            return anomalies;
         }
 
         private List<WBISpaceAnomaly> createLastPlanetAnomalies(List<WBISpaceAnomaly> existingAnomalies)
@@ -431,13 +477,13 @@ namespace Blueshift
         private ConfigNode createAnomalyVessel(WBISpaceAnomaly anomaly)
         {
             // Generate vessel name
-            if (string.IsNullOrEmpty(vesselName))
+            if (string.IsNullOrEmpty(anomaly.vesselName))
             {
-                vesselName = DiscoverableObjectsUtil.GenerateAsteroidName();
+                anomaly.vesselName = DiscoverableObjectsUtil.GenerateAsteroidName();
                 string prefix = Localizer.Format("#autoLOC_6001923");
                 prefix = prefix.Replace(" <<1>>", "");
-                vesselName = vesselName.Replace(prefix, kAnomalyPrefix);
-                vesselName = vesselName.Replace("- ", "-");
+                anomaly.vesselName = anomaly.vesselName.Replace(prefix, kAnomalyPrefix);
+                anomaly.vesselName = anomaly.vesselName.Replace("- ", "-");
             }
 
             // Generate orbit
@@ -465,7 +511,7 @@ namespace Blueshift
             ConfigNode[] additionalNodes = new ConfigNode[] { new ConfigNode("ACTIONGROUPS"), discoveryNode };
 
             // Create vessel node
-            ConfigNode vesselNode = ProtoVessel.CreateVesselNode(vesselName, VesselType.SpaceObject, orbit, 0, new ConfigNode[] { partNode }, additionalNodes);
+            ConfigNode vesselNode = ProtoVessel.CreateVesselNode(anomaly.vesselName, VesselType.SpaceObject, orbit, 0, new ConfigNode[] { partNode }, additionalNodes);
             Debug.Log("[WBISpaceAnomaly] - vesselNode: " + vesselNode.ToString());
 
             // Add vessel node to the game.
@@ -519,6 +565,7 @@ namespace Blueshift
                     break;
 
                 case WBIAnomalySpawnModes.everyLastPlanet:
+                case WBIAnomalySpawnModes.everyPlanet:
                     body = FlightGlobals.GetBodyByName(anomaly.fixedBody);
                     break;
             }

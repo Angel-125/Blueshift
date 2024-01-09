@@ -51,7 +51,12 @@ namespace Blueshift
         /// <summary>
         /// Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
         /// </summary>
-        fixedOrbit
+        fixedOrbit,
+
+        /// <summary>
+        /// Spawns in a random orbit of every planet in every star system. One per each planet. Ignores maxInstances. Given the spam, this is mostly for debug purposes.
+        /// </summary>
+        everyPlanet
         #endregion
     }
 

@@ -78,6 +78,8 @@ Spawns in a random planetary orbit.
 Spawns in random orbit of every last planet in each star system. One per each planet. Ignores maxInstances.
 ### fixedOrbit
 Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
+### everyPlanet
+Spawns in a random orbit of every planet in every star system. One per each planet. Ignores maxInstances. Given the spam, this is mostly for debug purposes.
 
 # WBIAnomalyOrbitTypes
             

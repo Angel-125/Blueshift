@@ -17,7 +17,15 @@ Bug Fixes
 
 - Fixed issue with WBIModuleGeneratorFX that prevented it from setting Action Groups.
 
+- Adjusted part costs for the Bussard Collectors and Plasma Vents.
+
+- Fixed negative Funds cost of the Mini Jumpgate Platform.
+
+- Fixed issue where space anomalies all had the same vessel name.
+
 Changes
+
+- SPACE_ANOMALY entries can now specify "everyPlanet" as a spawnMode. Fair warning: This will spam a lot of anomalies, so use sparringly.
 
 - Added Debug Mode menu item to the Blueshift Settings menu. This supersedes the "debugMode" field found in settings.cfg and various part module files.
 

@@ -185,6 +185,11 @@
             Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.everyPlanet">
+            <summary>
+            Spawns in a random orbit of every planet in every star system. One per each planet. Ignores maxInstances. Given the spam, this is mostly for debug purposes.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIAnomalyOrbitTypes">
             <summary>
             Describes the type of orbit to create when spawning a space anomaly.
