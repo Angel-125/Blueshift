@@ -144,13 +144,86 @@ namespace Blueshift
 
         public override string GetInfo()
         {
-            string info = base.GetInfo();
-
             StringBuilder builder = new StringBuilder();
+            ConversionRecipe conversionRecipe = this.LoadRecipe();
 
-            info = info.Replace(ConverterName, moduleDescription);
-            builder.AppendLine(info);
-            return info;
+            // Description
+            builder.Append(this.moduleDescription);
+
+            // Inputs
+            buildResourceSection("#autoLOC_259572", builder, conversionRecipe.Inputs);
+
+            // Outputs
+            buildResourceSection("#autoLOC_259594", builder, conversionRecipe.Outputs);
+
+            // Required
+            buildResourceSection("#autoLOC_259620", builder, conversionRecipe.Requirements);
+
+            // Drained
+            loadDrainedResources();
+            buildResourceSection("#LOC_BLUESHIFT_moduleGeneratorDrainedResources", builder, drainedResources);
+
+            return builder.ToString();
+        }
+
+        private void buildResourceSection(string sectionTitle, StringBuilder builder, List<ResourceRatio> resourceRatios)
+        {
+            int count = resourceRatios.Count;
+            if (count <= 0)
+                return;
+
+            PartResourceDefinition definition;
+            ResourceRatio resourceRatio;
+            string resourceDisplayName;
+            double ratio = 0f;
+            string unitsDisplay = string.Empty;
+
+            // Section title
+            builder.Append(Localizer.Format(sectionTitle));
+
+            for (int index = 0; index < count; index++)
+            {
+                resourceRatio = resourceRatios[index];
+
+                // Resource name
+                definition = PartResourceLibrary.Instance.GetDefinition(resourceRatio.ResourceName.GetHashCode());
+                resourceDisplayName = definition != null ? definition.displayName : resourceRatio.ResourceName;
+                builder.Append("\n - ");
+                builder.Append(resourceDisplayName);
+                builder.Append(": ");
+
+                // Ratio
+                ratio = resourceRatio.Ratio;
+                // Per Day
+                if (ratio < 0.0001)
+                {
+                    unitsDisplay = "#autoLOC_6001057";
+                    ratio *= (double)KSPUtil.dateTimeFormatter.Day;
+                }
+                // Per Hour
+                else if (ratio < 0.0275) // Shows up to 99 units per hour
+                {
+                    unitsDisplay = "#autoLOC_6001058";
+                    ratio *= (double)KSPUtil.dateTimeFormatter.Hour;
+                }
+                // Per Min
+                else if (ratio < 1.0f)
+                {
+                    unitsDisplay = "#LOC_BLUESHIFT_unitsPerMin";
+                    ratio *= (double)KSPUtil.dateTimeFormatter.Minute;
+                }
+                // Per second
+                else
+                {
+                    unitsDisplay = "#autoLOC_6001059";
+                }
+
+                // Account for EfficiencyBonus
+                ratio *= EfficiencyBonus;
+
+                // Build the string.
+                builder.Append(Localizer.Format(unitsDisplay, new string[1] { string.Format("{0:n2}", ratio) }));
+            }
         }
         #endregion
 
@@ -164,43 +237,7 @@ namespace Blueshift
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
-            ConfigNode configNode = getPartConfigNode();
-            if (configNode == null)
-                return;
-
-            if (configNode.HasNode("DRAINED_RESOURCE"))
-            {
-                ConfigNode[] nodes = configNode.GetNodes("DRAINED_RESOURCE");
-                double ratio = 0;
-                bool dumpExcess = true;
-                ResourceFlowMode flowMode = ResourceFlowMode.ALL_VESSEL;
-                for (int index = 0; index < nodes.Length; index++)
-                {
-                    configNode = nodes[index];
-                    if (!configNode.HasValue("ResourceName") && !configNode.HasValue("Ratio"))
-                        continue;
-
-                    ratio = 0;
-                    dumpExcess = true;
-                    double.TryParse(configNode.GetValue("Ratio"), out ratio);
-                    bool.TryParse(configNode.GetValue("DumpExcess"), out dumpExcess);
-
-                    ResourceRatio resource = new ResourceRatio(configNode.GetValue("ResourceName"), ratio, dumpExcess);
-
-                    flowMode = ResourceFlowMode.ALL_VESSEL;
-                    if (configNode.HasValue("FlowMode"))
-                    {
-                        flowMode = (ResourceFlowMode)Enum.Parse(typeof(ResourceFlowMode), configNode.GetValue("FlowMode"));
-                        resource.FlowMode = flowMode;
-                    }
-                    else
-                    {
-                        resource.FlowMode = ResourceFlowMode.ALL_VESSEL;
-                    }
-
-                    drainedResources.Add(resource);
-                }
-            }
+            loadDrainedResources();
         }
 
         public override void OnStart(StartState state)
@@ -488,6 +525,66 @@ namespace Blueshift
 
             //Dirty the GUI
             MonoUtilities.RefreshContextWindows(part);
+        }
+
+        private void loadDrainedResources()
+        {
+            if (drainedResources == null)
+                drainedResources = new List<ResourceRatio>();
+            else if (drainedResources.Count > 0)
+            {
+                if (debugMode)
+                    Debug.Log("[WBIModuleGeneratorFX] - " + ConverterName + " has no drained resources.");
+                return;
+            }
+
+            ConfigNode configNode = getPartConfigNode();
+            if (configNode == null)
+            {
+                if (debugMode)
+                {
+                    if (part.partInfo != null)
+                        Debug.Log("[WBIModuleGeneratorFX] - For part " + part.partInfo.name);
+                    else if (!string.IsNullOrEmpty(part.partName))
+                        Debug.Log("[WBIModuleGeneratorFX] - For part " + part.partName);
+                    Debug.Log("[WBIModuleGeneratorFX] - Cannot find part config node for " + ConverterName);
+                }
+                return;
+            }
+
+            if (configNode.HasNode("DRAINED_RESOURCE"))
+            {
+                ConfigNode[] nodes = configNode.GetNodes("DRAINED_RESOURCE");
+                double ratio = 0;
+                bool dumpExcess = true;
+                ResourceFlowMode flowMode = ResourceFlowMode.ALL_VESSEL;
+                for (int index = 0; index < nodes.Length; index++)
+                {
+                    configNode = nodes[index];
+                    if (!configNode.HasValue("ResourceName") && !configNode.HasValue("Ratio"))
+                        continue;
+
+                    ratio = 0;
+                    dumpExcess = true;
+                    double.TryParse(configNode.GetValue("Ratio"), out ratio);
+                    bool.TryParse(configNode.GetValue("DumpExcess"), out dumpExcess);
+
+                    ResourceRatio resource = new ResourceRatio(configNode.GetValue("ResourceName"), ratio, dumpExcess);
+
+                    flowMode = ResourceFlowMode.ALL_VESSEL;
+                    if (configNode.HasValue("FlowMode"))
+                    {
+                        flowMode = (ResourceFlowMode)Enum.Parse(typeof(ResourceFlowMode), configNode.GetValue("FlowMode"));
+                        resource.FlowMode = flowMode;
+                    }
+                    else
+                    {
+                        resource.FlowMode = ResourceFlowMode.ALL_VESSEL;
+                    }
+
+                    drainedResources.Add(resource);
+                }
+            }
         }
         #endregion
     }

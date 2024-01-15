@@ -25,6 +25,8 @@ Bug Fixes
 
 - Fixed issue where generator resource consumption dropped to zero when flying in interstellar space.
 
+- Fixed issue with wonky resource generator display in the VAB/SPH.
+
 Changes
 
 - SPACE_ANOMALY entries can now specify "everyPlanet" as a spawnMode. Fair warning: This will spam a lot of anomalies, so use sparringly.
