@@ -12,28 +12,23 @@ New Parts
 
 - S1 Multi-Segment Warp Coil: This part combines multiple S1 warp coil segments into one part variant to reduce warp coil part spamming. It offers 2, 4, 6, 8, and 10 segment variants, with appropriate increases in mass, cost, and performance. There are also "Midsection" versions to combine with other coils for truly long warp nacelles.
 
+- S2 Multi-Segment Warp Coil: This part combines multiple S2 warp coil segments into one part variant to reduce warp coil part spamming. It offers 2, 4, 6, 8, and 10 segment variants, with appropriate increases in mass, cost, and performance. There are also "Midsection" versions to combine with other coils for truly long warp nacelles.
 
-Bug Fixes
-
-- Fixed issue with WBIModuleGeneratorFX that prevented it from setting Action Groups.
-
-- Adjusted part costs for the Bussard Collectors and Plasma Vents.
-
-- Fixed negative Funds cost of the Mini Jumpgate Platform.
-
-- Fixed issue where space anomalies all had the same vessel name.
-
-- Fixed issue where generator resource consumption dropped to zero when flying in interstellar space.
-
-- Fixed issue with wonky resource generator display in the VAB/SPH.
+- Mk2 Multi-Segment Warp Coil: This part combines multiple mk2 warp coil segments into one part variant to reduce warp coil part spamming. It offers 2, 4, 6, 8, and 10 segment variants, with appropriate increases in mass, cost, and performance. There are also "Midsection" versions to combine with other coils for truly long warp nacelles.
 
 Changes
+
+- Warp Dragging: If enabled from Settings, warp engine can "drag" nearby vessels with them as they travel in warp. The dragged vessel masses are accounted for during the focused ship's warp performance calculations. 
+NOTE: Warp Dragging is NOT supported during timewarp!
+NOTE: Warp Dragging doesn't support auto-circulation.
 
 - SPACE_ANOMALY entries can now specify "everyPlanet" as a spawnMode. Fair warning: This will spam a lot of anomalies, so use sparringly.
 
 - Added Debug Mode menu item to the Blueshift Settings menu. This supersedes the "debugMode" field found in settings.cfg and various part module files.
 
 - Added Sphere of Influence support for JNSQ's planet Nara.
+
+- Refactored the tech tree to disperse parts across multiple tech nodes and to unify it with Kerbal Flying Saucers.
 
 - WBIWarpCoil: Now supports the ability to multiply the warp capacity (and the corresponding resource requirements) based on the selected part variant. This is done by adding an EXTRA_INFO node to the appropriate variant. Example:
 
@@ -83,15 +78,31 @@ Changes
 		emissiveFadeTime = 0.5
 	}
 
+Bug Fixes
+
+- Adjusted part costs for the Bussard Collectors and Plasma Vents.
+
+- Fixed issue with WBIModuleGeneratorFX that prevented it from setting Action Groups.
+
+- Fixed negative Funds cost of the Mini Jumpgate Platform.
+
+- Fixed issue where space anomalies all had the same vessel name.
+
+- Fixed issue where generator resource consumption dropped to zero when flying in interstellar space.
+
+- Fixed issue with wonky resource generator display in the VAB/SPH. EfficiencyBonus is also accounted for in the display.
+
+- Fixed issue where interstellarResourceConsumptionModifier wasn't properly reducing the interstellar resource consumption rates.
+
 ---LICENSE---
-Art Assets, including .mu, .png, and .dds files are copyright 2021-2022 by Michael Billard, All Rights Reserved.
+Art Assets, including .mu, .png, and .dds files are copyright 2021-2024 by Michael Billard, All Rights Reserved.
 
 Wild Blue Industries is trademarked by Michael Billard. All rights reserved.
 Note that Wild Blue Industries is a ficticious entity 
 created for entertainment purposes. It is in no way meant to represent a real entity.
 Any similarity to a real entity is purely coincidental.
 
-Source code copyright 2021-2022 by Michael Billard (Angel-125)
+Source code copyright 2021-2024 by Michael Billard (Angel-125)
 
     This source code is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

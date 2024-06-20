@@ -11,6 +11,9 @@ namespace Blueshift
 {
     public class BlueshiftSettings : GameParameters.CustomParameterNode
     {
+        [GameParameters.CustomParameterUI("Debug Mode", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool debugMode = false;
+
         [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsCircularizeDesc", toolTip = "#LOC_BLUESHIFT_settingsCircularizeTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool autoCircularize = false;
 
@@ -23,8 +26,8 @@ namespace Blueshift
         [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsDestructiveJumpgatesDesc", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableDestructiveGateStartup = false;
 
-        [GameParameters.CustomParameterUI("Debug Mode", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
-        public bool debugMode = false;
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsWarpDraggingDesc", toolTip = "#LOC_BLUESHIFT_settingsWarpDraggingTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool enableWarpDragging = false;
         #region CustomParameterNode
 
         public override string DisplaySection
@@ -131,6 +134,14 @@ namespace Blueshift
             {
                 BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
                 return settings.autoCircularize;
+            }
+        }
+        public static bool WarpDraggingEnabled
+        {
+            get
+            {
+                BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
+                return settings.enableWarpDragging;
             }
         }
     }

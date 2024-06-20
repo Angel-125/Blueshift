@@ -1,0 +1,119 @@
+Unified tech progression
+
+						Lenticular Vehicles 	  ->	Mothership Technologies ->	Advanced Mothership Tech
+Aerospace Tech ->	Saucer Technologies
+Experimental Science				Gravity Wave Applications ->	Warp Field Theory ->		Advanced Warp Technologies
+		
+									  ->	Jump Technologies ->		Miniaturized Jump Tech
+
+Both Aerospace Tech and Experimental Science are required for Saucer Technologies.
+
+Experimental Science
+ K2 Supercomputer
+
+Saucer Technologies wbiSaucerTechnologies
+- Blueshift
+ Contragravity Generator
+ Graviolium tanks
+- KFS
+ Plasma contactors
+ Stardust
+ A-51 Arc Wing
+ AVR0 "Coanda" Hover Jet
+ AVR1 "Nexus" Hover Jet
+ A-51-Mk2 Adapter
+ EP-M2 Engine Plate
+ Mk2 Decoupler
+ A-51 Structural Keel
+ A-51 Half Keel
+ A-51 "Flapjack" Cockpit
+ A-51 Linear Aerospike
+ A-51 Wing Tank
+ A-51-Mk2 Adapter
+ Small Tail Fin
+ Hydroscoop
+
+Lenticular Vehicles wbiLenticularVehicles
+ A-51 Docking Port
+ Small Body Flap
+ A-51 Cargo Bay
+ A-51 Conference Room
+ A-51 Crew Cabin
+ A-51 Landing Strut
+ IXS Cockpit
+
+Gravity Wave Applications wbiGravityWaveApplications
+- KFS
+ Linear Plasma RCS Port
+ 5-Way Plasma RCS Port
+ Gravitic Fusion Reactor
+ GND-00 "Beta" Gravitic Engine
+ A-51 Gravimetric Displacement Generator
+ A-51 Gravitic Engine
+- Blueshift
+ Mk2 Fusion Reactor
+ Mk2 FTL Propellant Tank
+ S-1 FTL Endcap Tank
+ Mk2 Plasma Vent
+ S1 Plasma Vent
+ Mk2 Bussard Collector
+ S1 Bussard Collector
+ Mk2 Gravimetric Displacement Generator
+ Mk2 Warp Coil (Multi)
+ Mk2 Warp Coil
+ Mk2 "Starflight" Warp Core
+ Mk2 Warp Ring
+ S-1 Warp Coil (Multi)
+ S-1 Warp Coil
+
+Mothership Technologies wbiMothershipTech
+- KFS
+ Large Body Flap
+ Large Tail Fin
+ S-4 "Excalibur" Cockpit
+ S-4 Engineering Core
+ S-4 Half Outer Storage Section
+ S-4 Inner Storage Section
+ S-4 Outer Storage Section
+
+Warp Field Theory wbiWarpTech
+- KFS
+ GND-02 "Quantum" Gravitic Engine
+ GND-02 "Lepton" Gravitic Engine
+ S-4 Gravitic Engine
+- Blueshift
+ S-2 Fusion Reactor
+ S-2 FTL Endcap Tank
+ S-2 FTL Propellant Tank
+ S2 Plasma Vent
+ S2 Bussard Collector
+ S-2 Gravimetric Displacement Generator
+ S-2 Warp Coil (Multi)
+ S-2 Warp Coil
+ S-2 "Planet's Edge" Warp Core
+ S3-2 Warp Ring
+ 
+Jump Technologies wbiJumpTech
+- Blueshift
+ Astria Porta
+ Astria Porta Accommodare
+ Astria Porta Auxilium
+
+Advanced Mothership Tech wbiAdvMothershipTech
+- KFS
+ S-4 Warp Core
+ S-4 Warp Coil Section
+
+Advanced Warp Technologies wbiAdvWarpTech
+- Blueshift
+ S-3 Fusion Reactor
+ Mk3-S3 Adapter Tank
+ S-3 FTL Propellant Tank
+ GR-50S Spherical Graviolium Tank
+ S-3 Gravimetric Displacement Generator
+ S-3 Heavy Warp Sustainer
+ S-3 "Trek" Warp Core
+ S-3 "Star Frontiers" Warp Engine
+ S-3 Warp Sustainer
+
+Miniature Jump Tech wbiMiniJumpTech

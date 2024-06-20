@@ -291,7 +291,7 @@ namespace Blueshift
         /// This is a percentage value between 0 and 99.999. Anything outside this range will be ignored.
         /// Default is 10%, which reduces resource consumption by 10% while in interstellar space.
         /// </summary>
-        [KSPField]
+        [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         public float interstellarResourceConsumptionModifier = -1f;
 
         #region SkillBoost
@@ -483,6 +483,8 @@ namespace Blueshift
         Vector3d preCruiseVelocity;
         bool needsVelocityUpdate = false;
         double resumeUpdateTimestamp = -1f;
+
+        [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         float generatorInsterstellarResourceMultiplier = 1.0f;
         #endregion
 
@@ -563,24 +565,27 @@ namespace Blueshift
                     return;
                 }
 
-                // Get current orbit.
-                Orbit orbit = this.part.vessel.orbitDriver.orbit;
-                double inclination = autoCircularizeInclination; // orbit.inclination;
-                double altitude = this.part.vessel.altitude;
-                double planetRadius = this.part.vessel.mainBody.Radius;
-                int planetIndex = this.part.vessel.mainBody.flightGlobalsIndex;
-                double currentTime = Planetarium.GetUniversalTime();
-                Orbit circlularOrbit = new Orbit(inclination, 0, planetRadius + altitude, 0, 0, 0, currentTime, this.part.vessel.mainBody);
-                Orbit.State state;
-
-                // Adjust the state vectors. This will shift the vessel's position, but the ship would've shifted around during normal gravity braking anyway.
-                circlularOrbit.GetOrbitalStateVectorsAtUT(currentTime, out state);
-                circlularOrbit.UpdateFromFixedVectors(orbit.pos, state.vel, this.part.vessel.mainBody.referenceBody, currentTime + 0.02);
-                FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
-
+                circularizeOrbit(part.vessel);
                 ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_orbitCircularized"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
                 circularizationState = WBICircularizationStates.hasBeenCircularized;
             }
+        }
+
+        void circularizeOrbit(Vessel vesselToCircularize)
+        {
+            Orbit orbit = vesselToCircularize.orbitDriver.orbit;
+            double inclination = autoCircularizeInclination; // orbit.inclination;
+            double altitude = vesselToCircularize.altitude;
+            double planetRadius = vesselToCircularize.mainBody.Radius;
+            int planetIndex = vesselToCircularize.mainBody.flightGlobalsIndex;
+            double currentTime = Planetarium.GetUniversalTime();
+            Orbit circlularOrbit = new Orbit(inclination, 0, planetRadius + altitude, 0, 0, 0, currentTime, vesselToCircularize.mainBody);
+            Orbit.State state;
+
+            // Adjust the state vectors. This will shift the vessel's position, but the ship would've shifted around during normal gravity braking anyway.
+            circlularOrbit.GetOrbitalStateVectorsAtUT(currentTime, out state);
+            circlularOrbit.UpdateFromFixedVectors(orbit.pos, state.vel, vesselToCircularize.mainBody.referenceBody, currentTime + 0.02);
+            FlightGlobals.fetch.SetShipOrbit(planetIndex, 0, planetRadius + altitude, inclination, circlularOrbit.LAN, circlularOrbit.meanAnomaly, circlularOrbit.argumentOfPeriapsis, circlularOrbit.ObT);
         }
 
         /// <summary>
@@ -792,6 +797,8 @@ namespace Blueshift
             Fields["warpResourceRequired"].guiActive = debugMode;
             Fields["warpResourceAmount"].guiActive = debugMode;
             Fields["warpResourceMaxAmount"].guiActive = debugMode;
+            Fields["generatorInsterstellarResourceMultiplier"].guiActive = debugMode;
+            Fields["interstellarResourceConsumptionModifier"].guiActive = debugMode;
 
             // Editor events
             if (HighLogic.LoadedSceneIsEditor)
@@ -819,7 +826,7 @@ namespace Blueshift
             {
                 interstellarResourceConsumptionModifier = BlueshiftScenario.interstellarResourceConsumptionModifier;
             }
-            generatorInsterstellarResourceMultiplier = 1f - (Mathf.Clamp(interstellarResourceConsumptionModifier, 0f, 99.999f) / 100.0f);
+            generatorInsterstellarResourceMultiplier = 1- (Mathf.Clamp(interstellarResourceConsumptionModifier, 0f, 99.999f) / 100.0f);
             if (debugMode)
                 Debug.Log("[WBIWarpEngine] - generatorInsterstellarResourceMultiplier: " + generatorInsterstellarResourceMultiplier);
         }
@@ -1456,9 +1463,13 @@ namespace Blueshift
 
             // Get ship mass
             if (HighLogic.LoadedSceneIsFlight)
-                vesselMass = part.vessel.GetTotalMass();
+            {
+                vesselMass = getTotalVesselMass();
+            }
             else if (HighLogic.LoadedSceneIsEditor)
+            {
                 vesselMass = EditorLogic.fetch.ship.GetTotalMass();
+            }
 
             // Get the ideal amount of resource produced by the generators.
             count = warpGenerators.Count;
@@ -1545,9 +1556,23 @@ namespace Blueshift
             effectiveWarpCapacity = totalWarpCapacity * displacementMultiplier * powerMultiplier;
         }
 
-        void clampMinimumSuperchageLevel()
+        private float getTotalVesselMass()
         {
+            if (!BlueshiftScenario.enableWarpDragging)
+            {
+                return part.vessel.GetTotalMass();
+            }
 
+            float totalVesselMass = 0f;
+            int count = FlightGlobals.VesselsLoaded.Count;
+            Vessel loadedVessel;
+            for (int index = 0; index < count; index++)
+            {
+                loadedVessel = FlightGlobals.VesselsLoaded[index];
+                totalVesselMass += loadedVessel.GetTotalMass();
+            }
+
+            return totalVesselMass;
         }
 
         bool consumeCoilResources(WBIWarpCoil warpCoil, double rateMultiplier)
@@ -1881,7 +1906,7 @@ namespace Blueshift
             }
 
             // We aren't going to run into anything, so update the vessel's position.
-            if (FlightGlobals.VesselsLoaded.Count > 1)
+            if (FlightGlobals.VesselsLoaded.Count > 1 && !BlueshiftScenario.enableWarpDragging)
                 part.vessel.SetPosition(offsetPosition);
             else
                 FloatingOrigin.SetOutOfFrameOffset(offsetPosition);
@@ -1909,6 +1934,15 @@ namespace Blueshift
             // If we're timewarping and we haven't locked our course and speed, then do so now.
             else if (isTimewarping && !lockedCourseAndSpeed && throttleLevel > 0)
             {
+                // No timewarp during warp dragging.
+                if (BlueshiftScenario.enableWarpDragging && isTimewarping && FlightGlobals.VesselsLoaded.Count > 0)
+                {
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_noTimewarpDuringWarpDragging"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
+                    isTimewarping = false;
+                    TimeWarp.SetRate(0, false);
+                    return;
+                }
+
                 // Lock the course and speed.
                 lockedCourseAndSpeed = true;
                 ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_courseLocked"), 3.0f, ScreenMessageStyle.UPPER_CENTER);

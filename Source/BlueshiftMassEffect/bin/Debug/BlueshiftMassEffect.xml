@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>BlueshiftMassEffect</name>
+    </assembly>
+    <members>
+        <member name="F:BlueshiftMassEffect.WBIMassEffectCore.maxMassReductionPercent">
+            <summary>
+            Maximum percentage of mass that the core can reduce. from 0-100%.
+            </summary>
+        </member>
+        <member name="F:BlueshiftMassEffect.WBIMassEffectCore.massReductionPercent">
+            <summary>
+            Reduction power - 0 - 100% of max possible
+            </summary>
+        </member>
+        <member name="M:BlueshiftMassEffect.WBIMassEffectCore.getEffectiveMassReduction">
+            <summary>
+            Returns the percentage of mass reduction
+            </summary>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

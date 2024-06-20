@@ -92,6 +92,12 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public string waterfallEffectController = string.Empty;
+
+        /// <summary>
+        /// Name of the group for the UI controls.
+        /// </summary>
+        [KSPField]
+        public string groupName = string.Empty;
         #endregion
 
         #region Housekeeping
@@ -254,6 +260,15 @@ namespace Blueshift
             debugMode = BlueshiftScenario.debugMode;
             Fields["animationThrottle"].guiActive = debugMode;
             Fields["animationThrottle"].guiActiveEditor = debugMode;
+            if (!string.IsNullOrEmpty(groupName))
+            {
+                Events["StartResourceConverter"].group.name = groupName;
+                Events["StartResourceConverter"].group.displayName = groupName;
+                Events["StopResourceConverter"].group.name = groupName;
+                Events["StopResourceConverter"].group.displayName = groupName;
+                Fields["status"].group.name = groupName;
+                Fields["status"].group.displayName = groupName;
+            }
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();
@@ -397,6 +412,10 @@ namespace Blueshift
                 {
                     recipeInput.Ratio = baseInputRatios[recipeInput.ResourceName] * resourceConsumptionModifier;
                     recipe.Inputs[index] = recipeInput;
+                    if (debugMode)
+                    {
+                        Debug.Log("[WWBIModuleGeneratorFX] - " + recipeInput.ResourceName + " consumes " + recipeInput.Ratio);
+                    }
                 }
             }
 

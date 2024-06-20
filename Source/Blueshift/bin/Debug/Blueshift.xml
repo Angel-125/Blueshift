@@ -300,6 +300,11 @@
             Name of the Waterfall effects controller that controls the warp effects (if any).
             </summary>
         </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.groupName">
+            <summary>
+            Name of the group for the UI controls.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIModuleGeneratorFX.isMissingResources">
             <summary>
             Flag indicating whether or not we're missing resources needed to produce outputs.
@@ -1127,6 +1132,11 @@
             Flag to indicate whether or not to auto-circularize the orbit.
             </summary>
         </member>
+        <member name="F:Blueshift.BlueshiftScenario.enableWarpDragging">
+            <summary>
+            Flag to indicate whether or not warp dragging is enabled.
+            </summary>
+        </member>
         <member name="F:Blueshift.BlueshiftScenario.circularizationResourceDef">
             <summary>
             It can cost resources to auto-circularize a ship after warp.
@@ -1789,6 +1799,11 @@
         <member name="M:Blueshift.WBICustomAsteroid.TargetCoM">
             <summary>
             Replacement event for ModuleAsteroid's event to target the asteroid's center of mass.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.maxGForceCancellation">
+            <summary>
+            A percentage value between 0 and 100, where 100% cancels all the local gravity.
             </summary>
         </member>
     </members>

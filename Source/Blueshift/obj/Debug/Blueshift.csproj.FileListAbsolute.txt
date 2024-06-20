@@ -1,6 +1,7 @@
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\MarkdownSeparator.exe
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\xmldoc2md.xsl
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\xmldoc2md.ps1
+C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\Blueshift.xml
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\Blueshift.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\Blueshift.pdb
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\Assembly-CSharp-firstpass.dll
@@ -68,9 +69,8 @@ C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\UnityEng
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\UnityEngine.XRModule.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\UnityEngine.InputModule.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\KSPAssets.XmlSerializers.dll
+C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.AssemblyReference.cache
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.CoreCompileInputs.cache
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.CopyComplete
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.dll
 C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.pdb
-C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\bin\Debug\Blueshift.xml
-C:\Projects\KSP\WildBlueIndustries\Blueshift\Source\Blueshift\obj\Debug\Blueshift.csproj.AssemblyReference.cache

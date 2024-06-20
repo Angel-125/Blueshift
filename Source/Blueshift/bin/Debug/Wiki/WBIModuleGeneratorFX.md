@@ -25,6 +25,8 @@ Generators can play a stop effect when the generator is deactivated.
 Generators can play a running effect while the generator is running.
 ### waterfallEffectController
 Name of the Waterfall effects controller that controls the warp effects (if any).
+### groupName
+Name of the group for the UI controls.
 ### isMissingResources
 Flag indicating whether or not we're missing resources needed to produce outputs.
 ### bypassRunCycle

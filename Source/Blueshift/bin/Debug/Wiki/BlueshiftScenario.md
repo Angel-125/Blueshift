@@ -25,6 +25,8 @@ Minimum skill rank required to improve warp engine performance.
 Skill multiplier to use when improving warp engine performance.
 ### autoCircularize
 Flag to indicate whether or not to auto-circularize the orbit.
+### enableWarpDragging
+Flag to indicate whether or not warp dragging is enabled.
 ### circularizationResourceDef
 It can cost resources to auto-circularize a ship after warp.
 ### circularizationCostPerTonne

@@ -101,6 +101,11 @@ namespace Blueshift
         public static bool autoCircularize = false;
 
         /// <summary>
+        /// Flag to indicate whether or not warp dragging is enabled.
+        /// </summary>
+        public static bool enableWarpDragging = false;
+
+        /// <summary>
         /// It can cost resources to auto-circularize a ship after warp.
         /// </summary>
         public static PartResourceDefinition circularizationResourceDef = null;
@@ -227,6 +232,7 @@ namespace Blueshift
             GetEveryLastPlanet();
             calculateSolarSOIs();
 
+            enableWarpDragging = BlueshiftSettings.WarpDraggingEnabled;
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
@@ -312,9 +318,6 @@ namespace Blueshift
 
             if (node.HasValue(kDestinationGateId))
                 destinationGateId = node.GetValue(kDestinationGateId);
-
-            if (node.HasValue(kInterstellarResourceConsumptionModifier))
-                float.TryParse(node.GetValue(kInterstellarResourceConsumptionModifier), out interstellarResourceConsumptionModifier);
         }
 
         public override void OnSave(ConfigNode node)
@@ -1139,6 +1142,7 @@ namespace Blueshift
 
         private void onGameSettingsApplied()
         {
+            enableWarpDragging = BlueshiftSettings.WarpDraggingEnabled;
             autoCircularize = BlueshiftSettings.AutoCircularize;
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
@@ -1223,6 +1227,16 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kWarpSpeedSkillMultiplier))
                     float.TryParse(nodeSettings.GetValue(kWarpSpeedSkillMultiplier), out warpSpeedSkillMultiplier);
+
+                if (nodeSettings.HasValue(kInterstellarResourceConsumptionModifier))
+                {
+                    float.TryParse(nodeSettings.GetValue(kInterstellarResourceConsumptionModifier), out interstellarResourceConsumptionModifier);
+                    Debug.Log("[BlueshiftScenario] - interstellarResourceConsumptionModifier: " + interstellarResourceConsumptionModifier);
+                }
+                else
+                {
+                    Debug.Log("[BlueshiftScenario] - interstellarResourceConsumptionModifier not found in settings, using value: " + interstellarResourceConsumptionModifier);
+                }
             }
         }
 

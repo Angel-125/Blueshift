@@ -113,6 +113,7 @@
     <Compile Include="Utility\WBIDockingAlignmentLock.cs" />
     <Compile Include="JumpTech\WBIGateAssemblyChecker.cs" />
     <Compile Include="SpaceAnomaly\WBICustomAsteroid.cs" />
+    <Compile Include="GravTech\WBIContragravityGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="MarkdownSeparator.exe">
@@ -127,6 +128,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /Y "$(TargetPath)" "C:\KSPDev\GameData\WildBlueIndustries\Blueshift\Plugins\"﻿
