@@ -294,6 +294,13 @@ namespace Blueshift
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         public float interstellarResourceConsumptionModifier = -1f;
 
+        /// <summary>
+        /// This is a speed limiter that will prevent spacecraft from going past this limit. It is measured in multiples of C if the
+        /// value is > 1, and fractions of C if the value is < 1.
+        /// </summary>
+        [KSPField]
+        public float absoluteMaxSpeed = -1f;
+
         #region SkillBoost
         /// <summary>
         /// The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -750,6 +757,11 @@ namespace Blueshift
             StringBuilder info = new StringBuilder();
             info.Append(base.GetInfo());
             info.AppendLine(Localizer.Format("#LOC_BLUESHIFT_warpEngineDesc"));
+            if (absoluteMaxSpeed > 0)
+            {
+                string message = Localizer.Format("#LOC_BLUESHIFT_warpEngineMaxSpeed", new string[1] { string.Format("{0:n2}", absoluteMaxSpeed) });
+                info.AppendLine(message);
+            }
             return info.ToString();
         }
 
@@ -1174,7 +1186,9 @@ namespace Blueshift
                 {
                     preflightCheck = spatialLocation != WBISpatialLocations.Planetary ? Localizer.Format("#LOC_BLUESHIFT_IncreaseThrottle") : Localizer.Format("#LOC_BLUESHIFT_planetarySpeedLimit");
                 }
-                else
+
+                // if absoluteMaxSpeed is enabled and allows FTL travel (absoluteMaxSpeed >= 1), or absoluteMaxSpeed is disabled (<0) then the ship needs more warp capacity.
+                else if (absoluteMaxSpeed < 0 || (absoluteMaxSpeed >= 1))
                 {
                     preflightCheck = Localizer.Format("#LOC_BLUESHIFT_addWarpCapacity", new string[2] { string.Format("{0:n2}", effectiveWarpCapacity), string.Format("{0:n2}", warpCapacity) });
                 }
@@ -1378,6 +1392,12 @@ namespace Blueshift
             if (HighLogic.LoadedSceneIsEditor)
             {
                 maxWarpSpeed = maxWarpSpeed * throttleLevel;
+
+                // If the absoluteMaxSpeed is enabled, then limit max speed.
+                if (absoluteMaxSpeed > 0 && absoluteMaxSpeed < maxWarpSpeed)
+                {
+                    maxWarpSpeed = absoluteMaxSpeed;
+                }
             }
 
             // Adjust warp speed based on spatial location.
@@ -1437,6 +1457,12 @@ namespace Blueshift
 
             // Finalize warp speed.
             warpSpeed = maxWarpSpeed * throttleLevel;
+
+            // If the absoluteMaxSpeed is enabled, then limit max speed.
+            if (absoluteMaxSpeed > 0 && absoluteMaxSpeed < warpSpeed)
+            {
+                warpSpeed = absoluteMaxSpeed;
+            }
         }
 
         /// <summary>

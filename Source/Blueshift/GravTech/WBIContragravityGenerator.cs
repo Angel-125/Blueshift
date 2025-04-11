@@ -11,22 +11,45 @@ namespace Blueshift
 {
     public class WBIContragravityGenerator : WBIModuleGeneratorFX
     {
+        #region Constants
+        const double standardGee = 9.81;
+        const double maxGravityNegatedPercent = 0.95;
+        #endregion
+
+        #region Fields
         /// <summary>
-        /// A percentage value between 0 and 100, where 100% cancels all the local gravity.
+        /// In meters per second-squared, the amount of acceleration due to gravity that can be negated. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
         /// </summary>
         [KSPField]
-        public float maxGForceCancellation = 95f;
+        public float maxGForceCancellation = 9.810001f;
 
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_contragravityEffectiveG", guiUnits = "m/sec", guiFormat = "f2")]
+        /// <summary>
+        /// Display value of the vessel's effective gravity, in units of g.
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_contragravityEffectiveG", guiUnits = "g", guiFormat = "f2")]
         public double effectiveGravity = 1f;
 
-        private float cancellationFactor;
+        /// <summary>
+        /// Amount of increase in Electric Charge that it costs to run the generator.
+        /// Computed as a percentage of vessel mass. So, if this value is 0.05 (the default),
+        /// and the vessel is 100 tonnes, then the EC cost increases by 5.
+        /// This is a value between 0 and 1.
+        /// </summary>
+        [KSPField]
+        public float ecMassPercentIncrease = 0.05f;
+        #endregion
 
+        #region Housekeeping
+        float cancellationFactor;
+        List<WBIContragravityGenerator> contragravityGenerators;
+        #endregion
+
+        #region Overrides
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
 
-            cancellationFactor = 1 - (Mathf.Clamp(maxGForceCancellation, 10, 100) / 100f);
+            ecMassPercentIncrease = Mathf.Clamp(ecMassPercentIncrease, 0, 1);
 
             if (!string.IsNullOrEmpty(groupName))
             {
@@ -42,14 +65,13 @@ namespace Blueshift
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
 
-            //Get lift vector
-            Vector3d accelerationVector = part.vessel.graviticAcceleration * -1f * cancellationFactor;
-            effectiveGravity = Math.Abs(accelerationVector.magnitude);
+            // Get the list of generators.
+            contragravityGenerators = part.vessel.FindPartModulesImplementing<WBIContragravityGenerator>();
 
             // Check activation state
             if (!IsActivated || isMissingResources)
             {
-                effectiveGravity = Math.Abs(part.vessel.graviticAcceleration.magnitude);
+                effectiveGravity = Math.Abs(part.vessel.graviticAcceleration.magnitude) / standardGee;
                 return;
             }
 
@@ -63,35 +85,73 @@ namespace Blueshift
                 return;
             }
 
-            //Add acceleration. We do this manually instead of letting ModuleEnginesFX do it so that the craft can have any orientation desired.
+            // If we're not the lead generator, then go no further.
+            if (contragravityGenerators[0] != this)
+            {
+                effectiveGravity = contragravityGenerators[0].effectiveGravity;
+                return;
+            }
+
+            // Compute the combined max gravity negation.
+            double combinedMaxGravityNegated = 0;
+            int count = contragravityGenerators.Count;
+            for (int index = 0; index < count; index++)
+            {
+                combinedMaxGravityNegated += contragravityGenerators[index].maxGForceCancellation;
+            }
+
+            // Calculate amount of gravitic acceleration that we can negate.
+            double localGravity = Math.Abs(part.vessel.graviticAcceleration.magnitude);
+            double effectiveLocalGravity = combinedMaxGravityNegated >= localGravity ? (1 - maxGravityNegatedPercent) * localGravity : localGravity - combinedMaxGravityNegated;
+
+            // Update effective gravity display
+            effectiveGravity = effectiveLocalGravity / standardGee;
+
+            //Get lift vector
+            double vectorMagnitude = combinedMaxGravityNegated >= localGravity ? maxGravityNegatedPercent : (localGravity - combinedMaxGravityNegated) / localGravity;
+            Vector3d accelerationVector = part.vessel.graviticAcceleration * -vectorMagnitude;
+
+            //Add acceleration.
             ApplyAccelerationVector(accelerationVector);
         }
 
         protected override ConversionRecipe PrepareRecipe(double deltatime)
         {
+            ConversionRecipe recipe = base.PrepareRecipe(deltatime);
+
             if (!HighLogic.LoadedSceneIsFlight || !IsActivated || isMissingResources)
-                return base.PrepareRecipe(deltatime);
+                return recipe;
 
-            // Compute resourceConsumptionModifier based on vessel mass and local gravity.
+            // Compute modifiers based on vessel mass.
             float vesselMass = vessel.GetTotalMass();
-            double graviticAcceleration = part.vessel.graviticAcceleration.magnitude;
-
-            resourceConsumptionModifier = 1.0f * graviticAcceleration * vesselMass;
-
-            // Now prepare recipe
-            return base.PrepareRecipe(deltatime);
-        }
-
-        private void ApplyAccelerationVector(Vector3d accelerationVector)
-        {
-            // If we're not the lead generator, then switch off.
-            List<WBIContragravityGenerator> generators = this.part.vessel.FindPartModulesImplementing<WBIContragravityGenerator>();
-            if (generators[0] != this)
+            List<ResourceRatio> recipeInputs = recipe.Inputs;
+            int count = recipeInputs.Count;
+            ResourceRatio resource;
+            for (int index = 0; index < count; index++)
             {
-                StopResourceConverter();
-                return;
+                // E.C. increases based on a percentage of the vessel's mass.
+                if (recipe.Inputs[index].ResourceName == "electricCharge")
+                {
+                    resource = recipeInputs[index];
+                    resource.Ratio += (1 + ecMassPercentIncrease) * vesselMass;
+                    recipeInputs[index] = resource;
+                    continue;
+                }
+
+                resource = recipeInputs[index];
+                resource.Ratio *= vesselMass;
+                recipeInputs[index] = resource;
             }
 
+            // Now prepare recipe
+            recipe.SetInputs(recipeInputs);
+            return recipe;
+        }
+        #endregion
+
+        #region Helpers
+        private void ApplyAccelerationVector(Vector3d accelerationVector)
+        {
             int partCount = vessel.parts.Count;
             Part vesselPart;
             for (int index = 0; index < partCount; index++)
@@ -103,5 +163,6 @@ namespace Blueshift
                 }
             }
         }
+        #endregion
     }
 }

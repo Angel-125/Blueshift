@@ -795,6 +795,7 @@
             Default is 10%, which reduces resource consumption by 10% while in interstellar space.
             </summary>
         </member>
+        <!-- Badly formed XML comment ignored for member "F:Blueshift.WBIWarpEngine.absoluteMaxSpeed" -->
         <member name="F:Blueshift.WBIWarpEngine.warpEngineerSkill">
             <summary>
             The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -1803,7 +1804,20 @@
         </member>
         <member name="F:Blueshift.WBIContragravityGenerator.maxGForceCancellation">
             <summary>
-            A percentage value between 0 and 100, where 100% cancels all the local gravity.
+            In meters per second-squared, the amount of acceleration due to gravity that can be negated. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.effectiveGravity">
+            <summary>
+            Display value of the vessel's effective gravity, in units of g.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.ecMassPercentIncrease">
+            <summary>
+            Amount of increase in Electric Charge that it costs to run the generator.
+            Computed as a percentage of vessel mass. So, if this value is 0.05 (the default),
+            and the vessel is 100 tonnes, then the EC cost increases by 5.
+            This is a value between 0 and 1.
             </summary>
         </member>
     </members>

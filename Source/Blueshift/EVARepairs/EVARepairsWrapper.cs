@@ -41,7 +41,7 @@ namespace Blueshift.EVARepairs
 
     internal class BSModuleEVARepairs
     {
-        const string kEVARepairsModuleName = "ModuleEVARepairs";
+        const string kEVARepairsModuleName = "WBIModuleEVARepairs";
         const string kSetRateMultiplierName = "SetRateMultiplier";
         const string kUpdateMTBFName = "UpdateMTBF";
 

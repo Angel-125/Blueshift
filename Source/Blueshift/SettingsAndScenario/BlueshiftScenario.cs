@@ -18,7 +18,7 @@ namespace Blueshift
         /// <summary>
         /// Light-year unit of measurement. Abbreviated "Ly."
         /// </summary>
-        public double kLightYear = 9460700000000000;
+        public double kLightYear = 9460730472580044;
 
         /// <summary>
         /// Gigameter unit of measurement. Abbreviate "Gm."
@@ -61,6 +61,7 @@ namespace Blueshift
         private static string kJumpGateSourceId = "jumpGateSourceId";
         private static string kDestinationGateId = "destinationGateId";
         private static string kInterstellarResourceConsumptionModifier = "interstellarResourceConsumptionModifier";
+        private static string kLightYearMeters = "lightYearMeters";
         #endregion
 
         #region Housekeeping
@@ -772,6 +773,7 @@ namespace Blueshift
                 {
                     lastPlanets.Add(body);
                     lastPlanetByStar.Add(stars[index], body);
+                    Debug.Log("[Blueshfit] - Last planet of the " + stars[index] + " is " + body.bodyName);
                 }
             }
 
@@ -1237,6 +1239,12 @@ namespace Blueshift
                 {
                     Debug.Log("[BlueshiftScenario] - interstellarResourceConsumptionModifier not found in settings, using value: " + interstellarResourceConsumptionModifier);
                 }
+
+                if (nodeSettings.HasValue(kLightYearMeters))
+                {
+                    double.TryParse(nodeSettings.GetValue(kLightYearMeters), out kLightYear);
+                    Debug.Log("[BlueshiftScenario] - 1 light-year equals " + kLightYear.ToString() + " m");
+                }    
             }
         }
 
