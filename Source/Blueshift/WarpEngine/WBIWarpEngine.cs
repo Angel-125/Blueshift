@@ -363,7 +363,7 @@ namespace Blueshift
         /// <summary>
         /// (Debug visible) Total warp capacity calculated from all active warp engines.
         /// </summary>
-        [KSPField]
+        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilTotalCapacity", guiFormat = "n2", guiUnits = "Ko")]
         protected float totalWarpCapacity = 0;
 
         /// <summary>
@@ -1006,10 +1006,17 @@ namespace Blueshift
             // Update warp effects
             if (bowShockTransform != null)
             {
+                // Get vessel length
                 if (part.vessel.vesselSize == Vector3.zero)
                     part.vessel.UpdateVesselSize();
-                Vector3 localPosition = new Vector3(0, part.vessel.vesselSize.y, 0);
-                bowShockTransform.localPosition = localPosition;
+                float length = part.vessel.vesselSize.z;
+
+                // Set bow shock position to vessel transform's position in worldspace.
+                bowShockTransform.position = part.vessel.transform.position;
+
+                // Now update the local position to move it up to the bow.
+                Vector3 localPosition = bowShockTransform.localPosition;
+                bowShockTransform.localPosition = new Vector3(localPosition.x, length * 0.6f, localPosition.z);
             }
 
             if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
@@ -1253,13 +1260,11 @@ namespace Blueshift
             onEditorShipModified(EditorLogic.fetch.ship);
         }
 
+
         void onEditorShipModified(ShipConstruct ship)
         {
             int count = ship.parts.Count;
-            if (vesselPartCount == count)
-                return;
-            else
-                vesselPartCount = count;
+            vesselPartCount = count;
 
             WBIWarpCoil warpCoil;
             WBIModuleGeneratorFX generator;

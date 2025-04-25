@@ -235,6 +235,21 @@
             Interstellar space: the void between the stars...
             </summary>
         </member>
+        <member name="F:Blueshift.WBIModuleAnimation.canSyncWithEngine">
+            <summary>
+            Can sync with a regular engine
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleAnimation.syncEngineID">
+            <summary>
+            ID of engine to sync with.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleAnimation.canSyncWithWarpEngine">
+            <summary>
+            Specicifically can sync with warp engine
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIModuleAnimation.waterfallEffectController">
             <summary>
             Name of the Waterfall effects controller that controls the warp effects (if any).
@@ -504,6 +519,11 @@
             The amount of warp capacity that the coil can produce.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIWarpCoil.totalWarpCapacity">
+            <summary>
+            The total warp capacity based on warpCapacity * capacityMultiplier.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpCoil.isActivated">
             <summary>
             The activation switch. When not running, the animations won't be animated.
@@ -534,11 +554,6 @@
         <member name="F:Blueshift.WBIWarpCoil.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module
-            </summary>
-        </member>
-        <member name="P:Blueshift.WBIWarpCoil.totalWarpCapacity">
-            <summary>
-            Returns the total modified warp capacity, accounting for multi-coil segment variants
             </summary>
         </member>
         <member name="M:Blueshift.WBIWarpCoil.UpdateMTBFRateMultiplier(System.Double)">
@@ -1401,6 +1416,11 @@
         <member name="F:Blueshift.WBISpaceAnomaly.partName">
             <summary>
             Name of the part to spawn
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.protoVesselFilePath">
+            <summary>
+            File path of the proto vessel to spawn.
             </summary>
         </member>
         <member name="F:Blueshift.WBISpaceAnomaly.vesselName">

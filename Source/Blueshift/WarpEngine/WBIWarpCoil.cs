@@ -76,22 +76,28 @@ namespace Blueshift
         public float warpCapacity = 1;
 
         /// <summary>
+        /// The total warp capacity based on warpCapacity * capacityMultiplier.
+        /// </summary>
+        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilCapacity", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup", guiFormat = "n2", guiUnits = "Ko")]
+        public float totalWarpCapacity = 1;
+
+        /// <summary>
         /// The activation switch. When not running, the animations won't be animated.
         /// </summary>
-        [KSPField(isPersistant = true, guiName = "Warp Coil", guiActive = true)]
-        [UI_Toggle(enabledText = "Enabled", disabledText = "Disabled")]
+        [KSPField(isPersistant = true, guiName = "#LOC_BLUESHIFT_warpCoilTitle", guiActive = true, groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup")]
+        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_enabled", disabledText = "#LOC_BLUESHIFT_disabled")]
         public bool isActivated = true;
 
         /// <summary>
         /// Display string for the warp coil status.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpCoilStatus")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpCoilStatus", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup")]
         public string statusDisplay = Localizer.Format("#LOC_BLUESHIFT_statusOK");
 
         /// <summary>
         /// A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
         /// </summary>
-        [KSPField(isPersistant = true, guiName = "Animation Throttle")]
+        [KSPField(isPersistant = true, guiName = "Animation Throttle", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup")]
         [UI_FloatRange(stepIncrement = 0.01f, maxValue = 1f, minValue = 0f)]
         public float animationThrottle = 0f;
 
@@ -100,7 +106,7 @@ namespace Blueshift
         /// Going over this limit incurs performance penalties, but staying under this value provides benefits.
         /// The displacement value is rated in metric tons.
         /// </summary>
-        [KSPField]
+        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilDisplacementImpulse", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup", guiFormat = "n2", guiUnits = "t")]
         public float displacementImpulse = 10;
 
         /// <summary>
@@ -113,6 +119,7 @@ namespace Blueshift
         #region Housekeeping
         public WBIAnimatedTexture[] animatedTextures = null;
         private float capacityMultiplier = 1.0f;
+        private float originalDisplacementImpulse = 10;
         private Dictionary<String, double> resourceMaxAmounts = null;
 
         /// <summary>
@@ -157,17 +164,6 @@ namespace Blueshift
         #endregion
 
         #region API
-        /// <summary>
-        /// Returns the total modified warp capacity, accounting for multi-coil segment variants
-        /// </summary>
-        public float totalWarpCapacity
-        {
-            get
-            {
-                return warpCapacity * capacityMultiplier;
-            }
-        }
-
         /// <summary>
         /// Updates the MTBF rate multiplier with the new rate.
         /// </summary>
@@ -327,6 +323,8 @@ namespace Blueshift
             // Get EVA Repairs module (if any)
             evaRepairs = BSModuleEVARepairs.GetPartModule(part);
 
+            originalDisplacementImpulse = displacementImpulse;
+
             // Get resources for multi-segment coil support
             resourceMaxAmounts = new Dictionary<string, double>();
             int count = part.Resources.Count;
@@ -341,6 +339,10 @@ namespace Blueshift
                 GameEvents.onVariantApplied.Add(onVariantApplied);
                 GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
             }
+            else if (HighLogic.LoadedSceneIsEditor)
+            {
+                GameEvents.onVariantApplied.Add(onVariantApplied);
+            }
         }
 
         public void OnDestroy()
@@ -351,6 +353,10 @@ namespace Blueshift
                 GameEvents.onPartFailure.Remove(onPartFailure);
                 GameEvents.onVariantApplied.Remove(onVariantApplied);
                 GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
+            }
+            else if (HighLogic.LoadedSceneIsEditor)
+            {
+                GameEvents.onVariantApplied.Remove(onVariantApplied);
             }
         }
         #endregion
@@ -374,12 +380,17 @@ namespace Blueshift
             if (String.IsNullOrEmpty(multiplier))
             {
                 capacityMultiplier = 1.0f;
+                totalWarpCapacity = warpCapacity * capacityMultiplier;
+                displacementImpulse = originalDisplacementImpulse;
                 return;
             }
 
             // process the capacity multiplier
             if (float.TryParse(multiplier, out capacityMultiplier))
             {
+                totalWarpCapacity = warpCapacity * capacityMultiplier;
+                displacementImpulse = originalDisplacementImpulse * capacityMultiplier;
+
                 int count = part.Resources.Count;
                 string resourceName = string.Empty;
                 for (int index = 0; index < count; index++)
@@ -394,6 +405,13 @@ namespace Blueshift
 
             //Dirty the GUI
             MonoUtilities.RefreshContextWindows(part);
+           
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                ShipConstruct ship = EditorLogic.fetch.ship;
+                if (ship != null)
+                    GameEvents.onEditorShipModified.Fire(ship);
+            }
         }
 
         void onPartFailure(Part failedPart)

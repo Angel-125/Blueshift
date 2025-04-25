@@ -7,6 +7,8 @@ Describes a space anomaly. Similar to asteroids, space anomalies are listed as u
 Identifier for the space anomaly.
 ### partName
 Name of the part to spawn
+### protoVesselFilePath
+File path of the proto vessel to spawn.
 ### vesselName
 Anomalies are typically named "UNK-" and a sequence of letters and numbers, but you can override the name of the vessel if desired. This field should be used with unique anomalies (maxInstances = 1).
 ### anomalyType

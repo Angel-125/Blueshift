@@ -83,6 +83,7 @@
     <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
     <Compile Include="JumpTech\WBIGateAssembler.cs" />
     <Compile Include="JumpTech\WBIJumpEngine.cs" />
+    <Compile Include="SettingsAndScenario\BlueshiftExportApp.cs" />
     <Compile Include="SettingsAndScenario\BlueshiftSettings.cs" />
     <Compile Include="GUI\JumpgateSelector.cs" />
     <Compile Include="GUI\PotatoScannerInfo.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="Utility\WBIResourceVent.cs" />
     <Compile Include="Utility\WBIStaticAttach.cs" />
     <Compile Include="Utility\WBIWarpSpeedHarvester.cs" />
+    <Compile Include="WarpEngine\WBIWarpEffectsAligner.cs" />
     <Compile Include="Waterfall\WFWrapper.cs" />
     <Compile Include="Utility\WBIModuleGeneratorFX.cs" />
     <Compile Include="Utility\WBIPartModule.cs" />

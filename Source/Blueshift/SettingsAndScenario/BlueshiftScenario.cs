@@ -271,6 +271,8 @@ namespace Blueshift
 
             // Load anomaly templates
             ConfigNode[] templateNodes = GameDatabase.Instance.GetConfigNodes(WBISpaceAnomaly.kNodeName);
+            if (debugMode)
+                Debug.Log("[Blueshift] - " + WBISpaceAnomaly.kNodeName + " nodes found: " + templateNodes.Length);
             WBISpaceAnomaly anomaly;
             if (templateNodes != null)
             {
@@ -279,7 +281,11 @@ namespace Blueshift
                     anomaly = WBISpaceAnomaly.CreateFromNode(templateNodes[index]);
 
                     anomalyTemplates.Add(anomaly);
+                    if (debugMode)
+                        Debug.Log("[Blueshift] - Added " + anomaly.name + " to the template library.");
                 }
+                if (debugMode)
+                    Debug.Log("[Blueshift] - " + anomalyTemplates.Count + " added to the template library.");
             }
 
             // Load Jumpgate anomalies
@@ -1042,6 +1048,8 @@ namespace Blueshift
 
         private void checkForNewAnomalies()
         {
+            if (debugMode)
+                Debug.Log("[BlueshiftScenario] - Checking for new anomalies...");
             int count = anomalyTemplates.Count;
             WBISpaceAnomaly anomalyTemplate;
 
@@ -1244,7 +1252,24 @@ namespace Blueshift
                 {
                     double.TryParse(nodeSettings.GetValue(kLightYearMeters), out kLightYear);
                     Debug.Log("[BlueshiftScenario] - 1 light-year equals " + kLightYear.ToString() + " m");
-                }    
+                } else
+                {
+                    //Find homeworld
+                    int count = FlightGlobals.Bodies.Count;
+                    CelestialBody body = null;
+                    for (int index = 0; index < count; index++)
+                    {
+                        body = FlightGlobals.Bodies[index];
+                        if (body.isHomeWorld)
+                        {
+                            double secondsPerYear = body.orbit.period;
+                            kLightYear = 299792458 * secondsPerYear;
+                            Debug.Log("[BlueshiftScenario] - 1 light-year equals " + kLightYear.ToString() + " m");
+                            break;
+                        }
+                    }
+
+                }
             }
         }
 

@@ -11,7 +11,7 @@ namespace Blueshift
     internal enum AnimationSyncStates
     {
         manual,
-        warpEngine,
+        engine,
         converter
     }
 
@@ -67,6 +67,21 @@ namespace Blueshift
         [KSPField]
         public bool canSyncWithConverter = false;
 
+        /// <summary>
+        /// Can sync with a regular engine
+        /// </summary>
+        [KSPField]
+        public bool canSyncWithEngine = false;
+
+        /// <summary>
+        /// ID of engine to sync with.
+        /// </summary>
+        [KSPField]
+        public string syncEngineID;
+
+        /// <summary>
+        /// Specicifically can sync with warp engine
+        /// </summary>
         [KSPField]
         public bool canSyncWithWarpEngine = false;
 
@@ -100,6 +115,7 @@ namespace Blueshift
         bool playInReverse = false;
         WFModuleWaterfallFX waterfallFXModule = null;
         SDModuleSpaceDustHarvester harvester = null;
+        ModuleEnginesFX engine = null;
         #endregion
 
         #region Events
@@ -145,9 +161,14 @@ namespace Blueshift
             {
                 updateAnimation();
             }
-            else if ((syncState == AnimationSyncStates.converter) || (syncState == AnimationSyncStates.warpEngine && engineThrottle <= 0 && canSyncWithConverter))
+            else if ((syncState == AnimationSyncStates.converter) || (syncState == AnimationSyncStates.engine && engineThrottle <= 0 && canSyncWithConverter))
             {
                 updateConverterState();
+                updateAnimation();
+            }
+            else if (syncState == AnimationSyncStates.engine && engine != null && engine.isOperational)
+            {
+                engineThrottle = engine.throttleSetting;
                 updateAnimation();
             }
         }
@@ -169,6 +190,21 @@ namespace Blueshift
             WBIWarpEngine.onWarpEngineFlameout.Add(onWarpEngineFlameout);
             WBIWarpEngine.onWarpEngineUnFlameout.Add(onWarpEngineUnFlameout);
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+
+            if (canSyncWithEngine && !string.IsNullOrEmpty(syncEngineID))
+            {
+                List<ModuleEnginesFX> engines = part.FindModulesImplementing<ModuleEnginesFX>();
+                int count = engines.Count;
+                for(int index = 0; index < count; index++)
+                {
+                    if (engines[index].engineID == syncEngineID)
+                    {
+                        engine = engines[index];
+                        syncState = AnimationSyncStates.engine;
+                        break;
+                    }
+                }
+            }
 
             debugMode = BlueshiftScenario.debugMode;
             showGui(guiIsVisible || debugMode);
@@ -215,7 +251,7 @@ namespace Blueshift
             if (!canSyncWithWarpEngine || part.vessel != warpShip)
                 return;
 
-            syncState = AnimationSyncStates.warpEngine;
+            syncState = AnimationSyncStates.engine;
             engineThrottle = throttle;
 
             if ((!isDeployed && engineThrottle > 0) || (isDeployed && engineThrottle <= 0 && (!canSyncWithConverter || (canSyncWithConverter && !harvesterWasActivated))))
@@ -228,7 +264,7 @@ namespace Blueshift
         {
             if (!canSyncWithWarpEngine || part.vessel != warpShip)
                 return;
-            syncState = AnimationSyncStates.warpEngine;
+            syncState = AnimationSyncStates.engine;
         }
 
         void onWarpEngineShutdown(Vessel warpShip, WBIWarpEngine warpEngine)
@@ -251,7 +287,7 @@ namespace Blueshift
         {
             if (!canSyncWithWarpEngine || part.vessel != warpShip)
                 return;
-            syncState = AnimationSyncStates.warpEngine;
+            syncState = AnimationSyncStates.engine;
         }
 
         void showGui(bool isVisible)
@@ -348,9 +384,9 @@ namespace Blueshift
 
         void updateSyncState()
         {
-            if (!isDeployed && canSyncWithWarpEngine)
+            if (!isDeployed && (canSyncWithWarpEngine || canSyncWithEngine))
             {
-                syncState = AnimationSyncStates.warpEngine;
+                syncState = AnimationSyncStates.engine;
             }
             else if (!isDeployed && canSyncWithConverter)
             {
@@ -389,7 +425,7 @@ namespace Blueshift
 
         void updateCurrentSpoolTime()
         {
-            if (syncState == AnimationSyncStates.warpEngine && engineThrottle > 0)
+            if (syncState == AnimationSyncStates.engine && engineThrottle > 0)
             {
                 // if engineThrottle > 0 but < minSpool then set engineThrottle to minSpool.
                 if (engineThrottle > 0 && engineThrottle < minEngineSpool)

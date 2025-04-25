@@ -263,6 +263,8 @@ Warp coils can play a running effect while the generator is running.
 Name of the Waterfall effects controller that controls the warp effects (if any).
 ### warpCapacity
 The amount of warp capacity that the coil can produce.
+### totalWarpCapacity
+The total warp capacity based on warpCapacity * capacityMultiplier.
 ### isActivated
 The activation switch. When not running, the animations won't be animated.
 ### statusDisplay
@@ -275,10 +277,6 @@ Warp coils can efficiently move a certain amount of mass to light speed and beyo
 Flag to indicate that the part needs maintenance in order to function.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
-## Properties
-
-### totalWarpCapacity
-Returns the total modified warp capacity, accounting for multi-coil segment variants
 ## Methods
 
 
@@ -760,6 +758,8 @@ Describes a space anomaly. Similar to asteroids, space anomalies are listed as u
 Identifier for the space anomaly.
 ### partName
 Name of the part to spawn
+### protoVesselFilePath
+File path of the proto vessel to spawn.
 ### vesselName
 Anomalies are typically named "UNK-" and a sequence of letters and numbers, but you can override the name of the vessel if desired. This field should be used with unique anomalies (maxInstances = 1).
 ### anomalyType
