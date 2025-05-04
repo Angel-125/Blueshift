@@ -1,6 +1,82 @@
 ﻿# Blueshift
 
 
+# BlueshiftUtilities
+            
+A collection of utility functions that Blueshift uses.
+        
+## Methods
+
+
+### BalanceResources(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double)
+Balances resource amounts so that all resources run out at the same time. Given an array of consumption rates (units/second) and a total storage capacity (units), this function distributes the available storage across the resources so that each one depletes simultaneously. The idea: - For each resource, TimeToEmpty = Amount / ConsumptionRate - All TimeToEmpty values must be equal. - Solve for the common time (T): T = TotalCapacity / Sum(ConsumptionRates) - Then each resource amount is: Amount_i = ConsumptionRate_i * T Example Visualization: Total Capacity = 10000 units Consumption Rates: [ 0.002, 0.005, 0.000188, 0.02 ] Storage split across 4 resources: [ Resource 1 ] ▓▓▓▓▓▓▓▓░░░░░░░░░░░░ [ Resource 2 ] ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ [ Resource 3 ] ▓▓░░░░░░░░░░░░░░░░░░ [ Resource 4 ] ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Resources with higher consumption rates (Resource 4) get more storage. Resources with slower consumption (Resource 3) get less storage. All resources deplete at the same time.
+> #### Parameters
+> **consumptionRates:** Array of resource consumption rates (units/second)
+
+> **totalCapacity:** Total storage capacity (units)
+
+> #### Return value
+> Array of resource amounts corresponding to each consumption rate
+> #### Exceptions
+> **System.ArgumentException:** Thrown if inputs are invalid (null, empty, or zero rates)
+
+
+### ComputeBurnTime(ShipConstruct,System.String@)
+Computes the burn time for the ship's gravimetric generators given the ship's current resource amounts and the rate of consumption of the resources required to run the generators. The idea: - For each gravimetric generator, get their resource inputs and their resource input rates to obtain all the input resources and rates needed to run all the converters. - For each input resource, determine how much of the resource the ship has. - Divide resource amount by input ratio to get the burn time for that ratio. - Determine the lowest burn time from the list of burn times. - The lowest burn time is returned as the burn time for all the converters.
+> #### Parameters
+> **ship:** A ShipConstruct to compute the burn time for.
+
+> **status:** A string containing the result of the computation.
+
+> #### Return value
+> a double containing the burn time in seconds.
+
+### ComputeBurnTime(Vessel,System.String@)
+Computes the burn time for the ship's gravimetric generators given the ship's current resource amounts and the rate of consumption of the resources required to run the generators. The idea: - For each gravimetric generator, get their resource inputs and their resource input rates to obtain all the input resources and rates needed to run all the converters. - For each input resource, determine how much of the resource the ship has. - Divide resource amount by input ratio to get the burn time for that ratio. - Determine the lowest burn time from the list of burn times. - The lowest burn time is returned as the burn time for all the converters.
+> #### Parameters
+> **ship:** A ShipConstruct to compute the burn time for.
+
+> **status:** A string containing the result of the computation.
+
+> #### Return value
+> a double containing the burn time in seconds.
+
+### CalculateRange(System.Double,System.Double,System.Double@)
+Computes the range in light-years based on burn time, warp factor, and pre-defined light-years.
+> #### Parameters
+> **burnTime:** Number of seconds of operation time.
+
+> **warpFactor:** Warp velocity in multiples of C.
+
+> **distanceTraveledMeters:** Out parameter that returns the distance traveled in meters.
+
+> #### Return value
+> The distance traveled in light-years.
+
+### FormatTime(System.Double)
+Formats the time
+> #### Parameters
+> **timeSeconds:** Amount of seconds to format
+
+> #### Return value
+> A string containing the time
+
+### GetBounds(Vessel)
+Courtesy of MechJeb by Sarbian Licensed under GPLV3 This Vessel extension computes the Bounds of the supplied vessel. This works both in the editor and in flight. EX: Bounds vesselBounds = FlightGlobals.ActiveVessel.GetBounds();
+> #### Parameters
+> **vessel:** A Vessel object to compute the bounds for.
+
+> #### Return value
+> A Bounds object containing the vessel's bounds.
+
+### GetBounds(Part)
+Courtesy of MechJeb by Sarbian Licensed under GPLV3 This Part extension computes the Bounds of the supplied part. This works both in the editor and flight. EX: Bounds partBounds = FlightGlobals.ActiveVessel.rootPart.GetBounds();
+> #### Parameters
+> **part:** A Part object to compute the Bounds for.
+
+> #### Return value
+> A Bounds object containing the part's bounds.
+
 # WBIGateAssembler
             
 This is a helper module for jumpgates that are built insted of ones that are single-piece.
@@ -25,6 +101,15 @@ Adds new segment to the jumpgate if one can be found. The located segment will b
 
 ### CompleteAssembly
 Debug method to complete gate assembly.
+
+# WBIModuleResourceSponge
+            
+This small part module soaks up the input resource(s)
+        
+## Fields
+
+### lastUpdateTime
+Timestamp of when it was last updated.
 
 # GateSelectedDelegate
             
@@ -108,6 +193,11 @@ Planetary space: vessel's mainBody is a planet or a moon.
 Interplanetary space: vessel's mainBody is a star.
 ### Interstellar
 Interstellar space: the void between the stars...
+
+# WBIVesselTypeFixer
+            
+This part module is a small helper class to fix
+        
 
 # WBIModuleGeneratorFX
             
@@ -406,8 +496,6 @@ Name of optional bow shock transform.
 (Debug visible) Effective warp capacity after accounting for vessel mass
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
-### waterfallEffectsLevel
-(Debug visible) Current throttle level for the warp effects.
 ### warpResourceProduced
 (Debug visible) amount of simulation resource produced.
 ### warpResourceRequired
@@ -434,8 +522,6 @@ Current throttle level
 Optional bow shock effect transform.
 ### warpFlameout
 Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
-### waterfallFXModule
-Optional (but highly recommended) Waterfall effects module
 ### hasExceededLightSpeed
 Flag to indicate whether or not the vessel has exceeded light speed.
 ### warpSpeed
@@ -482,16 +568,13 @@ Determines whether or not the ship meets the minimum required altitude to go to 
 ### UpdateWarpStatus
 Updates the warp status display
 
-### fadeOutEffects
-Fades out the warp effects
-
 ### getAnimatedWarpEngineTextures
 Finds any animated textures that should be controlled by the warp engine
 
-### calculateBestWarpSpeed
+### calculateBestWarpSpeed(System.Boolean)
 Calculates the best possible warp speed from the vessel's active warp engines.
 
-### getTotalWarpCapacity
+### getTotalWarpCapacity(System.Boolean)
 Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
 
 ### updateWarpPowerGenerators
@@ -522,7 +605,9 @@ This class helps starships determine when they're in interstellar space.
 ## Fields
 
 ### kLightYear
-Light-year unit of measurement. Abbreviated "Ly."
+Light-year unit of measurement. Abbreviated "Ly". This is the default; the actual distance is calculated as the speed of light times the homeworld's Sidereal Year length. It can be overriden by setting the lightYearMeters in the settings.cfg file.
+### kLightSpeed
+Speed of light in meters per second.
 ### kGigaMeter
 Gigameter unit of measurement. Abbreviate "Gm."
 ### kMegaMeter
@@ -555,6 +640,8 @@ Flag to indicate whether or not Space Anomalies are enabled.
 Flag to indicate whether or not Jumpgate anomalies are enabled.
 ### jumpgateStartupIsDestructive
 The jumpgate startup sequence is destructive. Stay clear!
+### enableJumpMaxDimensions
+Vessels must fit within the jumpgate's max allowed jump dimensions (if any).
 ### maintenanceEnabled
 Flag to indicate if parts require maintenance.
 ### minRendezvousDistancePlanetary
@@ -721,7 +808,7 @@ Find the parent star of the celestial body.
 
 # WBIModuleHarvesterFX
             
-This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
+This resource harvester adds the ability to drive Effects, animated textures, and Waterfall.
         
 ## Fields
 
@@ -800,6 +887,8 @@ Flag to indicate whether or not the gate should automatically be added to the ne
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
 ### rendezvousDistance
 Overrides the jumpgate's rendezvous distance.
+### vesselType
+Type of vessel the anomaly should become when it is claimed by the player. Default is Debris.
 ## Methods
 
 
@@ -865,6 +954,57 @@ Name of the resource required to pay the jump toll.
 Amount of resource per metric tonne mass of the traveler
 ### paidByTraveler
 Resource is paid by the traveler that is initiating the jump
+
+# WBIJumpGate
+            
+The WBIJumpGate is a part module that transports vessels that enter the gate to another gate some distance away. It allows instantaneous, faster than light travel without the need for the traveling vessel to carry expensive FTL equipment. The craft merely needs to approach the gate, select the desired destination, and then travel through the gate. The jump gate need not require resources to travel through, but the gates in Blueshift all require a Graviolium toll to be paid before travel is allowed. For the large gates (Jump Gate Anomaly, Astria Porta), the graviolium toll must be paid by the vessel that wishes to traverse the gate. For the Miniature Jumpgate, the gate itself pays the toll. Below is a sample config file for the jump gate. MODULE { name = WBIJumpGate // Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. // If there are only two gates in the network then there is no need to select the other gate from the list. // You can add additional networks by adding a semicolon character in between network IDs. networkID = 4.8.15.16.23.42 // If the gate has a limited jump range, then only those gates that are in the network and within range can be selected. // The exception is a network of two gates; max range is ignored. // Set to -1 (the default) for unlimited jump range. // Units are in light-years (9460700000000000 meters) maxJumpRange = -1 // Maximum width and height of the vessel that the gate can support. jumpMaxDimensions = 24,24 // Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity. portalTriggerTransform = portalTrigger // Scale curve to use during startup. This should follow the Waterfall effect (if any). // During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught // by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled. triggerStartupScaleCurve { key = 0 1 key = 0.25 1 key = 0.625 50 key = 1 1 } runningEffect = running // Name of the waterfall effect controller, if any. waterfallEffectController = gateEffectsController // In seconds, how quickly to throttle up the waterfall effect from 0 to 1. effectSpoolTime = 0.5 // In order to jump a vessel, gates can require that the vessel pay a toll of one or more resources. // If the vessel doesn't have sufficient resources then it cannot jump. Simply add one or more Resource nodes. // The cost is per metric ton of the vessel. RESOURCE { name = Graviolium rate = 5 FlowMode = STAGE_PRIORITY_FLOW } // Defines a resource that must be paid in order to reach the desired destination. // This node overrides the older RESOURCE node that defined the jump toll. RESOURCE_TOLL { // Name of the toll. This is mainly for ModuleManager purposes. name = planetarySOIToll // Price tier- one of: planetary, interplanetary, interstellar priceTier = planetary // Name of the resource resourceName = Graviolium // Amount of resource per metric tonne mass of the traveler amountPerTonne = 0.1 // Resource is paid by the traveler that is initiating the jump paidByTraveler = false } RESOURCE_TOLL { name = interplanetaryToll priceTier = interplanetary resourceName = Graviolium amountPerTonne = 1 paidByTraveler = false } RESOURCE_TOLL { name = interstellarToll priceTier = interstellar resourceName = Graviolium amountPerTonne = 5 paidByTraveler = false } }
+        
+## Fields
+
+### debugMode
+A flag to enable/disable debug mode.
+### textureModuleID
+This field tells the module which WBIAnimatedTexture to control.
+### startupAnimation
+Animation to play before playing the portal effect.
+### runningEffect
+Warp coils can play a running effect while the generator is running.
+### waterfallEffectController
+Name of the Waterfall effects controller that controls the warp effects (if any).
+### effectSpoolTime
+In seconds, how quickly to throttle up the waterfall effect from 0 to 1.
+### effectsThrottle
+A control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
+### networkID
+Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs.
+### maxJumpRange
+If the gate has a limited jump range, then only those gates that are in the network and within range can be selected. The exception is a network of two gates; max range is ignored. Set to -1 (the default) for unlimited jump range. Units are in light-years (9460700000000000 meters)
+### jumpMaxMass
+Since KSP's vessel measurements are so wacked when in flight, we'll use a maximum jump mass instead. Set to -1 (the default value) for unlimited mass.
+### jumpMaxDimensions
+Maximum dimensions, in meters, that can fit in the gate to be transported. Width, length, height. Set a dimension to 0 for unrestricted size for that dimension.
+### interactionRange
+Range at which players can interact with the gate's PAW. Default is 500 meters.
+### portalTriggerTransform
+Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity.
+### triggerStartupScaleCurve
+Scale curve to use during startup. This should follow the Waterfall effect (if any). During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled.
+### rendezvousDistance
+Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform. Set to -1 (the default) to use the value from Blueshift settings.
+### autoActivate
+Flag to automatically activate the jumpgate. It requires two gates in the network.
+### waterfallFXModule
+Optional (but highly recommended) Waterfall effects module
+### vesselID
+The ID of the vessel when it was first created.
+## Methods
+
+
+### SetGateEnabled(System.Boolean)
+Enables/disables the jumpgate.
+> #### Parameters
+> **isEnabled:** A flag that sets the gate enabled/disabled.
+
 
 # WBIDockingAlignmentLock
             

@@ -4,6 +4,119 @@
         <name>Blueshift</name>
     </assembly>
     <members>
+        <member name="T:Blueshift.BlueshiftUtilities">
+            <summary>
+            A collection of utility functions that Blueshift uses.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.BalanceResources(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double)">
+             <summary>
+             Balances resource amounts so that all resources run out at the same time.
+             
+             Given an array of consumption rates (units/second) and a total storage capacity (units),
+             this function distributes the available storage across the resources so that each one depletes simultaneously.
+             
+             The idea:
+              - For each resource, TimeToEmpty = Amount / ConsumptionRate
+              - All TimeToEmpty values must be equal.
+              - Solve for the common time (T):
+                  T = TotalCapacity / Sum(ConsumptionRates)
+              - Then each resource amount is:
+                  Amount_i = ConsumptionRate_i * T
+             
+             Example Visualization:
+             
+             Total Capacity = 10000 units
+             Consumption Rates: [ 0.002, 0.005, 0.000188, 0.02 ]
+             
+             Storage split across 4 resources:
+             
+              [ Resource 1 ] ▓▓▓▓▓▓▓▓░░░░░░░░░░░░
+            
+              [ Resource 2 ] ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░
+            
+              [ Resource 3 ] ▓▓░░░░░░░░░░░░░░░░░░
+            
+              [ Resource 4 ] ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+             
+             Resources with higher consumption rates (Resource 4) get more storage.
+             Resources with slower consumption (Resource 3) get less storage.
+             
+             All resources deplete at the same time.
+             </summary>
+             <param name="consumptionRates">Array of resource consumption rates (units/second)</param>
+             <param name="totalCapacity">Total storage capacity (units)</param>
+             <returns>Array of resource amounts corresponding to each consumption rate</returns>
+             <exception cref="T:System.ArgumentException">Thrown if inputs are invalid (null, empty, or zero rates)</exception>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.ComputeBurnTime(ShipConstruct,System.String@)">
+            <summary>
+            Computes the burn time for the ship's gravimetric generators given the ship's current resource amounts and the rate of consumption of the resources required to run the generators.
+            
+            The idea:
+             - For each gravimetric generator, get their resource inputs and their resource input rates to obtain all the input resources and rates needed to run all the converters.
+             - For each input resource, determine how much of the resource the ship has.
+             - Divide resource amount by input ratio to get the burn time for that ratio.
+             - Determine the lowest burn time from the list of burn times.
+             - The lowest burn time is returned as the burn time for all the converters.
+            </summary>
+            <param name="ship">A ShipConstruct to compute the burn time for.</param>
+            <param name="status">A string containing the result of the computation.</param>
+            <returns>a double containing the burn time in seconds.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.ComputeBurnTime(Vessel,System.String@)">
+            <summary>
+            Computes the burn time for the ship's gravimetric generators given the ship's current resource amounts and the rate of consumption of the resources required to run the generators.
+            
+            The idea:
+             - For each gravimetric generator, get their resource inputs and their resource input rates to obtain all the input resources and rates needed to run all the converters.
+             - For each input resource, determine how much of the resource the ship has.
+             - Divide resource amount by input ratio to get the burn time for that ratio.
+             - Determine the lowest burn time from the list of burn times.
+             - The lowest burn time is returned as the burn time for all the converters.
+            </summary>
+            <param name="ship">A ShipConstruct to compute the burn time for.</param>
+            <param name="status">A string containing the result of the computation.</param>
+            <returns>a double containing the burn time in seconds.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.CalculateRange(System.Double,System.Double,System.Double@)">
+            <summary>
+            Computes the range in light-years based on burn time, warp factor, and pre-defined light-years.
+            </summary>
+            <param name="burnTime">Number of seconds of operation time.</param>
+            <param name="warpFactor">Warp velocity in multiples of C.</param>
+            <param name="distanceTraveledMeters">Out parameter that returns the distance traveled in meters.</param>
+            <returns>The distance traveled in light-years.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.FormatTime(System.Double)">
+            <summary>
+            Formats the time
+            </summary>
+            <param name="timeSeconds">Amount of seconds to format</param>
+            <returns>A string containing the time</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.GetBounds(Vessel)">
+            <summary>
+            Courtesy of MechJeb by Sarbian
+            Licensed under GPLV3
+            This Vessel extension computes the Bounds of the supplied vessel.
+            This works both in the editor and in flight.
+            EX: Bounds vesselBounds = FlightGlobals.ActiveVessel.GetBounds();
+            </summary>
+            <param name="vessel">A Vessel object to compute the bounds for.</param>
+            <returns>A Bounds object containing the vessel's bounds.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftUtilities.GetBounds(Part)">
+            <summary>
+            Courtesy of MechJeb by Sarbian
+            Licensed under GPLV3
+            This Part extension computes the Bounds of the supplied part.
+            This works both in the editor and flight.
+            EX: Bounds partBounds = FlightGlobals.ActiveVessel.rootPart.GetBounds();
+            </summary>
+            <param name="part">A Part object to compute the Bounds for.</param>
+            <returns>A Bounds object containing the part's bounds.</returns>
+        </member>
         <member name="T:Blueshift.WBIGateAssembler">
             <summary>
             This is a helper module for jumpgates that are built insted of ones that are single-piece.
@@ -98,6 +211,21 @@
             </summary>
         </member>
         <!-- Badly formed XML comment ignored for member "M:Blueshift.JumpTech.WBIJumpEngine.ActionJumpShip(KSPActionParam)" -->
+        <member name="M:Blueshift.WBIModuleResourceCapacitor.RepairPart">
+            <summary>
+            Repairs the part.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIModuleResourceSponge">
+            <summary>
+            This small part module soaks up the input resource(s)
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleResourceSponge.lastUpdateTime">
+            <summary>
+            Timestamp of when it was last updated.
+            </summary>
+        </member>
         <member name="T:Blueshift.GateSelectedDelegate">
             <summary>
             Callback to indicate that a jumpgate was selected
@@ -253,6 +381,11 @@
         <member name="F:Blueshift.WBIModuleAnimation.waterfallEffectController">
             <summary>
             Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIVesselTypeFixer">
+            <summary>
+            This part module is a small helper class to fix 
             </summary>
         </member>
         <member name="T:Blueshift.WBIModuleGeneratorFX">
@@ -871,11 +1004,6 @@
             (Debug visible) Distance per physics update that the vessel will move.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.waterfallEffectsLevel">
-            <summary>
-            (Debug visible) Current throttle level for the warp effects.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpResourceProduced">
             <summary>
             (Debug visible) amount of simulation resource produced.
@@ -941,11 +1069,6 @@
             Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIWarpEngine.waterfallFXModule">
-            <summary>
-            Optional (but highly recommended) Waterfall effects module
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIWarpEngine.hasExceededLightSpeed">
             <summary>
             Flag to indicate whether or not the vessel has exceeded light speed.
@@ -1007,22 +1130,17 @@
             Updates the warp status display
             </summary>
         </member>
-        <member name="M:Blueshift.WBIWarpEngine.fadeOutEffects">
-            <summary>
-            Fades out the warp effects
-            </summary>
-        </member>
         <member name="M:Blueshift.WBIWarpEngine.getAnimatedWarpEngineTextures">
             <summary>
             Finds any animated textures that should be controlled by the warp engine
             </summary>
         </member>
-        <member name="M:Blueshift.WBIWarpEngine.calculateBestWarpSpeed">
+        <member name="M:Blueshift.WBIWarpEngine.calculateBestWarpSpeed(System.Boolean)">
             <summary>
             Calculates the best possible warp speed from the vessel's active warp engines.
             </summary>
         </member>
-        <member name="M:Blueshift.WBIWarpEngine.getTotalWarpCapacity">
+        <member name="M:Blueshift.WBIWarpEngine.getTotalWarpCapacity(System.Boolean)">
             <summary>
             Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
             </summary>
@@ -1094,7 +1212,13 @@
         </member>
         <member name="F:Blueshift.BlueshiftScenario.kLightYear">
             <summary>
-            Light-year unit of measurement. Abbreviated "Ly."
+            Light-year unit of measurement. Abbreviated "Ly". This is the default; the actual distance is calculated as the speed of light times the homeworld's Sidereal Year length.
+            It can be overriden by setting the lightYearMeters in the settings.cfg file.
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.kLightSpeed">
+            <summary>
+            Speed of light in meters per second.
             </summary>
         </member>
         <member name="F:Blueshift.BlueshiftScenario.kGigaMeter">
@@ -1176,6 +1300,11 @@
         <member name="F:Blueshift.BlueshiftScenario.jumpgateStartupIsDestructive">
             <summary>
             The jumpgate startup sequence is destructive. Stay clear!
+            </summary>
+        </member>
+        <member name="F:Blueshift.BlueshiftScenario.enableJumpMaxDimensions">
+            <summary>
+            Vessels must fit within the jumpgate's max allowed jump dimensions (if any).
             </summary>
         </member>
         <member name="F:Blueshift.BlueshiftScenario.maintenanceEnabled">
@@ -1345,7 +1474,7 @@
         </member>
         <member name="T:Blueshift.WBIModuleHarvesterFX">
             <summary>
-            This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
+            This resource harvester adds the ability to drive Effects, animated textures, and Waterfall.
             </summary>
         </member>
         <member name="F:Blueshift.WBIModuleHarvesterFX.debugMode">
@@ -1532,6 +1661,11 @@
             Overrides the jumpgate's rendezvous distance.
             </summary>
         </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.vesselType">
+            <summary>
+            Type of vessel the anomaly should become when it is claimed by the player. Default is Debris.
+            </summary>
+        </member>
         <member name="M:Blueshift.WBISpaceAnomaly.CopyFrom(Blueshift.WBISpaceAnomaly)">
             <summary>
             Copies the fields from another space anomaly.
@@ -1642,6 +1776,103 @@
             Resource is paid by the traveler that is initiating the jump
             </summary>
         </member>
+        <member name="T:Blueshift.WBIJumpGate">
+            <summary>
+            The WBIJumpGate is a part module that transports vessels that enter the gate to another gate some distance away. It allows instantaneous, faster than light travel without the need for the traveling vessel to carry expensive FTL equipment. The craft merely needs to approach the gate, select the desired destination, and then travel through the gate.
+            The jump gate need not require resources to travel through, but the gates in Blueshift all require a Graviolium toll to be paid before travel is allowed. For the large gates (Jump Gate Anomaly, Astria Porta), the graviolium toll must be paid by the vessel that wishes to traverse the gate. For the Miniature Jumpgate, the gate itself pays the toll.
+            <example>
+            Below is a sample config file for the jump gate.
+            <code>
+            MODULE
+            {
+            	name = WBIJumpGate
+            
+            	// Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network.
+            	// If there are only two gates in the network then there is no need to select the other gate from the list.
+            	// You can add additional networks by adding a semicolon character in between network IDs.
+            	networkID = 4.8.15.16.23.42
+            
+            	// If the gate has a limited jump range, then only those gates that are in the network and within range can be selected.
+            	// The exception is a network of two gates; max range is ignored.
+            	// Set to -1 (the default) for unlimited jump range.
+            	// Units are in light-years (9460700000000000 meters)
+            	maxJumpRange = -1
+            
+            	// Maximum width and height of the vessel that the gate can support.
+            	jumpMaxDimensions = 24,24
+            
+            	// Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity.
+            	portalTriggerTransform = portalTrigger
+            
+            	// Scale curve to use during startup. This should follow the Waterfall effect (if any).
+            	// During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught
+            	// by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled.
+            	triggerStartupScaleCurve
+            	{
+            		key = 0 1
+            		key = 0.25 1
+            		key = 0.625 50
+            		key = 1 1
+            	}		
+            
+            	runningEffect = running
+            
+            	// Name of the waterfall effect controller, if any.
+            	waterfallEffectController = gateEffectsController
+            	
+            	// In seconds, how quickly to throttle up the waterfall effect from 0 to 1.
+            	effectSpoolTime = 0.5
+            
+            	// In order to jump a vessel, gates can require that the vessel pay a toll of one or more resources.
+            	// If the vessel doesn't have sufficient resources then it cannot jump. Simply add one or more Resource nodes.
+            	// The cost is per metric ton of the vessel.
+            	RESOURCE
+            	{
+            		name = Graviolium
+            		rate = 5
+            		FlowMode = STAGE_PRIORITY_FLOW
+            	}
+            
+            	// Defines a resource that must be paid in order to reach the desired destination.
+            	// This node overrides the older RESOURCE node that defined the jump toll.
+            	RESOURCE_TOLL
+            	{
+            		// Name of the toll. This is mainly for ModuleManager purposes.
+            		name = planetarySOIToll
+            
+            		// Price tier- one of: planetary, interplanetary, interstellar
+            		priceTier = planetary
+            
+            		// Name of the resource
+            		resourceName = Graviolium
+            
+            		// Amount of resource per metric tonne mass of the traveler
+            		amountPerTonne = 0.1
+            
+            		// Resource is paid by the traveler that is initiating the jump
+            		paidByTraveler = false
+            	}
+            	RESOURCE_TOLL
+            	{
+            		name = interplanetaryToll
+            		priceTier = interplanetary
+            		resourceName = Graviolium
+            		amountPerTonne = 1
+            		paidByTraveler = false
+            	}
+            	RESOURCE_TOLL
+            	{
+            		name = interstellarToll
+            		priceTier = interstellar
+            		resourceName = Graviolium
+            		amountPerTonne = 5
+            		paidByTraveler = false
+            	}
+            }
+            </code>
+            </example>
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIJumpGate.debugMode">
             <summary>
             A flag to enable/disable debug mode.
@@ -1684,18 +1915,6 @@
             You can add additional networks by adding a semicolon character in between network IDs.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIJumpGate.gateAddress">
-            <summary>
-            For paired gates, the address of the gate. This should be set using JUMPGATE_ANOMALY.
-            Default is an empty address.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIJumpGate.pairedGateAddress">
-            <summary>
-            For paired gates, the address of the paired gate. This should be set using JUMPGATE_ANOMALY.
-            Default is an empty address.
-            </summary>
-        </member>
         <member name="F:Blueshift.WBIJumpGate.maxJumpRange">
             <summary>
             If the gate has a limited jump range, then only those gates that are in the network and within range can be selected.
@@ -1708,6 +1927,12 @@
             <summary>
             Since KSP's vessel measurements are so wacked when in flight, we'll use a maximum jump mass instead.
             Set to -1 (the default value) for unlimited mass.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIJumpGate.jumpMaxDimensions">
+            <summary>
+            Maximum dimensions, in meters, that can fit in the gate to be transported.
+            Width, length, height. Set a dimension to 0 for unrestricted size for that dimension.
             </summary>
         </member>
         <member name="F:Blueshift.WBIJumpGate.interactionRange">

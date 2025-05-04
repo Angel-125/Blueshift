@@ -13,8 +13,8 @@ namespace Blueshift
     [KSPAddon(KSPAddon.Startup.TrackingStation, false)]
     public class BlueshiftExportApp : MonoBehaviour
     {
-        static protected ApplicationLauncherButton appLauncherButton = null;
-        static public Texture2D appIcon = null;
+        static private ApplicationLauncherButton appLauncherButton = null;
+        static private Texture2D appIcon = null;
 
         public void Awake()
         {

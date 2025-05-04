@@ -82,7 +82,7 @@ namespace Blueshift
         /// <summary>
         /// Adds new segment to the jumpgate if one can be found. The located segment will be destroyed.
         /// </summary>
-        [KSPEvent(guiName = "#LOC_BLUESHIFT_jumpGateInstallSegment", guiActive = true)]
+        [KSPEvent(guiName = "#LOC_BLUESHIFT_jumpGateInstallSegment", guiActive = true, guiActiveUnfocused = true, unfocusedRange = 50)]
         public void AddSegment()
         {
             // Make sure that we have a segment to add.
@@ -158,7 +158,11 @@ namespace Blueshift
             {
                 updateCoM();
                 if (HighLogic.LoadedSceneIsFlight)
+                {
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[Blueshift] - enableJumpgateIfNeeded: enabling jumpgate");
                     jumpgateController.SetGateEnabled(true);
+                }
                 setPortalTriggerEnabled(true);
                 Events["AddSegment"].guiActive = false;
                 Events["AddSegment"].guiActiveEditor = false;
@@ -168,7 +172,11 @@ namespace Blueshift
             else
             {
                 if (HighLogic.LoadedSceneIsFlight)
+                {
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[Blueshift] - enableJumpgateIfNeeded: disabling jumpgate");
                     jumpgateController.SetGateEnabled(false);
+                }
             }
         }
 

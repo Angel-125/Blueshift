@@ -1,0 +1,3235 @@
+VESSEL
+{
+	pid = 2d6b68c4971146d69ec2b183d16d1cad
+	persistentId = 2514979786
+	name = RelaySat4
+	type = Relay
+	sit = ORBITING
+	landed = False
+	skipGroundPositioning = False
+	skipGroundPositioningForDroppedPart = False
+	vesselSpawning = False
+	launchedFrom = LaunchPad
+	landedAt = 
+	displaylandedAt = 
+	splashed = False
+	met = 8.640000008046627
+	lct = 405937.62389639305
+	lastUT = 405946.28389640112
+	distanceTraveled = 2541.4685377578521
+	root = 0
+	lat = 2.9611597599161948E-08
+	lon = 25.396245374533841
+	alt = 576749.79848012514
+	hgt = 576749.813
+	nrm = 0.685639024,0.727918148,0.00589802861
+	rot = -0.570614219,-0.413847715,-0.418486267,0.572711945
+	CoM = -5.21540642E-07,0.276840419,-1.05798244E-06
+	stg = 0
+	prst = False
+	ref = 2869847494
+	ctrl = True
+	PQSMin = 2
+	PQSMax = 9
+	GroupOverride = 0
+	OverrideDefault = False,False,False,False
+	OverrideActionControl = 0,0,0,0
+	OverrideAxisControl = 0,0,0,0
+	OverrideGroupNames = ,,,
+	altDispState = ASL
+	cPch = 0.1709507
+	cHdg = -3.687232
+	cMod = 0
+	ORBIT
+	{
+		SMA = 786749.99996263883
+		ECC = 4.5777986827686495E-11
+		INC = 3.8812807772080144E-10
+		LPE = 10.55672555252176
+		LAN = 187.67655479645185
+		MNA = 2.8267392324541674
+		EPH = 405946.2638964011
+		REF = 16
+	}
+	PART
+	{
+		name = HECS2.ProbeCore
+		cid = 4292855390
+		uid = 2869847494
+		mid = 1644390934
+		persistentId = 1700519853
+		launchID = 137
+		parent = 0
+		position = 0,0,0
+		rotation = 0,0,0,1
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		srfN = , -1
+		attN = top, 13
+		attN = bottom, -1
+		mass = 0.200000003
+		shielded = False
+		temp = 307.59287243125527
+		tempExt = 306.81694433486103
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = _default
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Gold
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleDataTransmitter
+			isEnabled = True
+			xmitIncomplete = False
+			stagingEnabled = True
+			canComm = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				StartTransmissionAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCommand
+			isEnabled = True
+			hibernation = False
+			hibernateOnWarp = False
+			activeControlPointName = _default
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				MakeReferenceToggle
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				HibernateToggle
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleReactionWheel
+			isEnabled = True
+			actuatorModeCycle = 0
+			authorityLimiter = 100
+			stateString = Idle
+			stagingEnabled = True
+			WheelState = Active
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				CycleAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				Activate
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				Deactivate
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				Toggle
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleSAS
+			isEnabled = True
+			standaloneToggle = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleKerbNetAccess
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				OpenKerbNetAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleScienceContainer
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				CollectAllAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = MechJebCore
+			isEnabled = True
+			running = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				OnOrbitProgradeAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnOrbitRetrogradeAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnOrbitNormalAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnOrbitAntinormalAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnOrbitRadialInAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnOrbitRadialOutAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnKillRotationAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnDeactivateSmartASSAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnLandsomewhereAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnLandTargetAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnPanicAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnTranslatronOffAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnTranslatronKeepVertAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnTranslatronZeroSpeedAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnTranslatronPlusOneSpeedAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnTranslatronMinusOneSpeedAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnTranslatronToggleHSAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+				OnAscentAPToggleAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			MechJebLocalSettings
+			{
+				MechJebModuleMenu
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleRoverWindow
+				{
+					unlockParts = 
+					unlockTechs = fieldScience
+				}
+				MechJebModuleAttitudeAdjustment
+				{
+					unlockParts = 
+					unlockTechs = advFlightControl
+				}
+				MechJebModuleAscentNavBall
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleLogicalStageTracking
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleRCSBalancerWindow
+				{
+					unlockParts = 
+					unlockTechs = advFlightControl
+				}
+				MechJebModuleRoverController
+				{
+					ControlHeading = False
+					ControlSpeed = False
+					BrakeOnEject = False
+					BrakeOnEnergyDepletion = False
+					WarpToDaylight = False
+					StabilityControl = False
+					LimitAcceleration = False
+					unlockParts = 
+					unlockTechs = 
+					heading
+					{
+						_val = 0
+						_text = 0
+					}
+					speed
+					{
+						_val = 10
+						_text = 10
+					}
+				}
+				MechJebModuleSpaceplaneGuidance
+				{
+					runwayIndex = 0
+					unlockParts = 
+					unlockTechs = unmannedTech
+				}
+				MechJebModuleAscentPVG
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleInfoItems
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleSmartRcs
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleAscentClassic
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleSpaceplaneAutopilot
+				{
+					bBreakAsSoonAsLanded = False
+					unlockParts = 
+					unlockTechs = 
+					glideslope
+					{
+						_val = 3
+						_text = 3
+					}
+					approachSpeed
+					{
+						_val = 80
+						_text = 80
+					}
+					touchdownSpeed
+					{
+						_val = 60
+						_text = 60
+					}
+					maximumSafeBankAngle
+					{
+						_val = 25
+						_text = 25
+					}
+				}
+				MechJebModuleAirplaneAutopilot
+				{
+					HeadingHoldEnabled = False
+					AltitudeHoldEnabled = False
+					VertSpeedHoldEnabled = False
+					RollHoldEnabled = False
+					SpeedHoldEnabled = False
+					AltitudeTarget = 0
+					HeadingTarget = 90
+					RollTarget = 0
+					SpeedTarget = 0
+					VertSpeedTarget = 0
+					BankAngle = 30
+					unlockParts = 
+					unlockTechs = 
+					AccKp
+					{
+						_val = 0.5
+						_text = 0.5
+					}
+					AccKi
+					{
+						_val = 0.5
+						_text = 0.5
+					}
+					AccKd
+					{
+						_val = 0.0050000000000000001
+						_text = 0.005
+					}
+					PitKp
+					{
+						_val = 2
+						_text = 2
+					}
+					PitKi
+					{
+						_val = 1
+						_text = 1
+					}
+					PitKd
+					{
+						_val = 0.0050000000000000001
+						_text = 0.005
+					}
+					RolKp
+					{
+						_val = 0.5
+						_text = 0.5
+					}
+					RolKi
+					{
+						_val = 0.02
+						_text = 0.02
+					}
+					RolKd
+					{
+						_val = 0.5
+						_text = 0.5
+					}
+					YawKp
+					{
+						_val = 1
+						_text = 1
+					}
+					YawKi
+					{
+						_val = 0.25
+						_text = 0.25
+					}
+					YawKd
+					{
+						_val = 0.02
+						_text = 0.02
+					}
+					YawLimit
+					{
+						_val = 10
+						_text = 10
+					}
+					RollLimit
+					{
+						_val = 45
+						_text = 45
+					}
+					PitchDownLimit
+					{
+						_val = 15
+						_text = 15
+					}
+					PitchUpLimit
+					{
+						_val = 25
+						_text = 25
+					}
+				}
+				MechJebModuleDockingGuidance
+				{
+					unlockParts = 
+					unlockTechs = advUnmanned
+				}
+				MechJebModuleSettings
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleAscentGT
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleDebugArrows
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleSmartASS
+				{
+					mode = ORBITAL
+					target = OFF
+					advReference = INERTIAL
+					advDirection = FORWARD
+					forceRol = False
+					forcePitch = True
+					forceYaw = True
+					unlockParts = 
+					unlockTechs = flightControl
+					srfHdg
+					{
+						_val = 90
+						_text = 90
+					}
+					srfPit
+					{
+						_val = 90
+						_text = 90
+					}
+					srfRol
+					{
+						_val = 0
+						_text = 0
+					}
+					srfVelYaw
+					{
+						_val = 0
+						_text = 0
+					}
+					srfVelPit
+					{
+						_val = 0
+						_text = 0
+					}
+					srfVelRol
+					{
+						_val = 0
+						_text = 0
+					}
+					rol
+					{
+						_val = 0
+						_text = 0
+					}
+				}
+				MechJebModuleDockingAutopilot
+				{
+					forceRol = False
+					overrideSafeDistance = False
+					overrideTargetSize = False
+					unlockParts = 
+					unlockTechs = 
+					rol
+					{
+						_val = 0
+						_text = 0
+					}
+				}
+				ModExtensionDemo
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleThrustWindow
+				{
+					autostageSavedState = False
+					unlockParts = 
+					unlockTechs = advFlightControl
+				}
+				MechJebModuleWarpHelper
+				{
+					unlockParts = 
+					unlockTechs = advFlightControl
+					phaseAngle
+					{
+						_val = 0
+						_text = 0
+					}
+				}
+				MechJebModuleCustomWindowEditor
+				{
+					unlockParts = 
+					unlockTechs = flightControl
+				}
+				MechJebModuleAscentAutopilot
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleRendezvousAutopilotWindow
+				{
+					unlockParts = 
+					unlockTechs = advUnmanned
+				}
+				MechJebModuleNodeExecutor
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleNodeEditor
+				{
+					unlockParts = 
+					unlockTechs = advFlightControl
+				}
+				MechJebModuleLandingAutopilot
+				{
+					deployGears = True
+					deployChutes = True
+					rcsAdjustment = True
+					unlockParts = 
+					unlockTechs = 
+					touchdownSpeed
+					{
+						_val = 0.5
+						_text = 0.5
+					}
+					limitGearsStage
+					{
+						val = 0
+						_text = 0
+					}
+					limitChutesStage
+					{
+						val = 0
+						_text = 0
+					}
+				}
+				MechJebModuleScript
+				{
+					minifiedGUI = False
+					selectedSlot = 0
+					selectedMemorySlotType = 0
+					vesselSaveName = RelaySat4
+					activeSavepoint = -1
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleLandingGuidance
+				{
+					landingSiteIdx = 0
+					unlockParts = 
+					unlockTechs = unmannedTech
+				}
+				MechJebModuleLandingPredictions
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleTranslatron
+				{
+					unlockParts = 
+					unlockTechs = advFlightControl
+					trans_spd
+					{
+						_val = 0
+						_text = 0
+					}
+				}
+				MechJebModuleAscentGuidance
+				{
+					unlockParts = 
+					unlockTechs = unmannedTech
+				}
+				MechJebModuleRendezvousAutopilot
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleWaypointWindow
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleWaypointHelpWindow
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleTargetController
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleManeuverPlanner
+				{
+					unlockParts = 
+					unlockTechs = advFlightControl
+				}
+				MechJebModuleStageStats
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleAirplaneGuidance
+				{
+					showpid = False
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleGuidanceController
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleRendezvousGuidance
+				{
+					unlockParts = 
+					unlockTechs = advUnmanned
+				}
+				MechJebModuleAscentClassicMenu
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleCustomInfoWindow
+				{
+				}
+				MechJebModuleWarpController
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleDeployableAntennaController
+				{
+					prev_shouldDeploy = False
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleSolarPanelController
+				{
+					prev_shouldDeploy = False
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleThrustController
+				{
+					limitThrottle = False
+					limiterMinThrottle = False
+					electricThrottle = False
+					unlockParts = 
+					unlockTechs = 
+					maxThrottle
+					{
+						_val = 1
+						_text = 100
+					}
+					minThrottle
+					{
+						_val = 0.050000000000000003
+						_text = 5
+					}
+					electricThrottleLo
+					{
+						_val = 0.050000000000000003
+						_text = 5
+					}
+					electricThrottleHi
+					{
+						_val = 0.14999999999999999
+						_text = 15
+					}
+				}
+				MechJebModuleRCSController
+				{
+					unlockParts = 
+					unlockTechs = 
+					Tf
+					{
+						_val = 1
+						_text = 1
+					}
+					Kp
+					{
+						_val = 0.125
+						_text = 0.125
+					}
+					Ki
+					{
+						_val = 0.070000000000000007
+						_text = 0.07
+					}
+					Kd
+					{
+						_val = 0.53000000000000003
+						_text = 0.53
+					}
+				}
+				MechJebModuleRCSBalancer
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleAttitudeController
+				{
+					unlockParts = 
+					unlockTechs = 
+					MJAttitudeController
+					{
+					}
+					KosAttitudeController
+					{
+					}
+					HybridController
+					{
+					}
+					BetterController
+					{
+					}
+				}
+				MechJebModuleStagingController
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleFlightRecorder
+				{
+					markUT = 405937.62389639305
+					deltaVExpended = 0
+					dragLosses = -1.4579360228390237E-08
+					gravityLosses = 0
+					steeringLosses = 0
+					markLAN = 46.83706565330202
+					markLatitude = -0.097207777161253284
+					markLongitude = -74.557670163806776
+					markAltitude = 73.100181434478145
+					markBodyIndex = 1
+					maxDragGees = 1.8649706916485297E-14
+					unlockParts = 
+					unlockTechs = 
+				}
+				MechJebModuleFlightRecorderGraph
+				{
+					unlockParts = 
+					unlockTechs = 
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ParkingBrakeModule
+			isEnabled = True
+			brakeActive = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			selectedVariant = Gold
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = FlightEngineerModule
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleTripLogger
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			Log
+			{
+				flight = 0
+				0 = Orbit,Eeloo
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleEVARepairs
+			isEnabled = True
+			needsMaintenance = False
+			mtbf = -1
+			currentMTBF = 2160000
+			mtbfCurrentMultiplier = 1
+			partWornOut = False
+			lastUpdated = 405946.28389640112
+			reliability = -1
+			wheelStuckPosition = -1
+			actionGroupId = None
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		RESOURCE
+		{
+			name = ElectricCharge
+			amount = 1000
+			maxAmount = 1000
+			flowState = True
+			isTweakable = True
+			hideFlow = False
+			isVisible = True
+			flowMode = Both
+		}
+	}
+	PART
+	{
+		name = rtg
+		cid = 4292821898
+		uid = 4108130085
+		mid = 1644390934
+		persistentId = 318987295
+		launchID = 137
+		parent = 0
+		position = 9.2566651233028097E-08,-0.10128116607666016,-1.0538768768310547
+		rotation = 3.13779367E-08,0.707106769,-0.707106888,3.13779331E-08
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 1
+		sameVesselCollision = False
+		sym = 2
+		sym = 3
+		srfN = srfAttach, 0,COLLIDER_REBUILT
+		attN = top, -1
+		attN = bottom, -1
+		mass = 0.0799999982
+		shielded = False
+		temp = 307.61056737879022
+		tempExt = 306.8165270422366
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = rtg
+		modCost = 0
+		modMass = 0
+		moduleVariantName = 
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleGenerator
+			isEnabled = True
+			generatorIsActive = True
+			throttle = 1
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				ToggleAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+				ActivateAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+				ShutdownAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCoreHeat
+			isEnabled = True
+			CoreTempGoalAdjustment = 0
+			CoreThermalEnergy = 15827.92900152794
+			stagingEnabled = True
+			lastUpdateTime = 405946.28389640112
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleEVARepairs
+			isEnabled = True
+			needsMaintenance = False
+			mtbf = -1
+			currentMTBF = 2160000
+			mtbfCurrentMultiplier = 1
+			partWornOut = False
+			lastUpdated = 405946.28389640112
+			reliability = -1
+			wheelStuckPosition = -1
+			actionGroupId = None
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = rtg
+		cid = 4292821554
+		uid = 4160009112
+		mid = 1644390934
+		persistentId = 1579606165
+		launchID = 137
+		parent = 0
+		position = -0.91268420219421387,-0.10128116607666016,0.52693849802017212
+		rotation = -0.612372518,0.353553385,-0.353553444,-0.612372458
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 1
+		sameVesselCollision = False
+		sym = 1
+		sym = 3
+		srfN = srfAttach, 0,COLLIDER_REBUILT
+		attN = top, -1
+		attN = bottom, -1
+		mass = 0.0799999982
+		shielded = False
+		temp = 307.61060774440773
+		tempExt = 306.81668897044938
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = rtg
+		modCost = 0
+		modMass = 0
+		moduleVariantName = 
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleGenerator
+			isEnabled = True
+			generatorIsActive = True
+			throttle = 1
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				ToggleAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+				ActivateAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+				ShutdownAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCoreHeat
+			isEnabled = True
+			CoreTempGoalAdjustment = 0
+			CoreThermalEnergy = 15827.928984972134
+			stagingEnabled = True
+			lastUpdateTime = 405946.28389640112
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleEVARepairs
+			isEnabled = True
+			needsMaintenance = False
+			mtbf = -1
+			currentMTBF = 2160000
+			mtbfCurrentMultiplier = 1
+			partWornOut = False
+			lastUpdated = 405946.28389640112
+			reliability = -1
+			wheelStuckPosition = -1
+			actionGroupId = None
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = rtg
+		cid = 4292821504
+		uid = 1913453084
+		mid = 1644390934
+		persistentId = 1189509019
+		launchID = 137
+		parent = 0
+		position = 0.91268420219421387,-0.10128116607666016,0.52693849802017212
+		rotation = -0.612372458,-0.353553385,0.353553444,-0.612372398
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 1
+		sameVesselCollision = False
+		sym = 1
+		sym = 2
+		srfN = srfAttach, 0,COLLIDER_REBUILT
+		attN = top, -1
+		attN = bottom, -1
+		mass = 0.0799999982
+		shielded = False
+		temp = 307.61166654333471
+		tempExt = 306.81705299795135
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = rtg
+		modCost = 0
+		modMass = 0
+		moduleVariantName = 
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleGenerator
+			isEnabled = True
+			generatorIsActive = True
+			throttle = 1
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				ToggleAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+				ActivateAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+				ShutdownAction
+				{
+					actionGroup = None
+					active = False
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCoreHeat
+			isEnabled = True
+			CoreTempGoalAdjustment = 0
+			CoreThermalEnergy = 15827.92900152794
+			stagingEnabled = True
+			lastUpdateTime = 405946.28389640112
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleEVARepairs
+			isEnabled = True
+			needsMaintenance = False
+			mtbf = -1
+			currentMTBF = 2160000
+			mtbfCurrentMultiplier = 1
+			partWornOut = False
+			lastUpdated = 405946.28389640112
+			reliability = -1
+			wheelStuckPosition = -1
+			actionGroupId = None
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = structuralIBeam2
+		cid = 4292524084
+		uid = 2875084544
+		mid = 1644390934
+		persistentId = 2193676040
+		launchID = 137
+		parent = 0
+		position = -2.0144486427307129,0.043515205383300781,-1.1630427837371826
+		rotation = -0.353553385,0.612372458,-0.612372518,-0.353553355
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 1
+		sameVesselCollision = False
+		sym = 7
+		sym = 10
+		srfN = srfAttach, 0,COLLIDER_REBUILT
+		attN = top, 5
+		attN = bottom, -1
+		mass = 0.375
+		shielded = False
+		temp = 307.61400827998159
+		tempExt = 306.81537589169784
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = structuralIBeam2
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Basic
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = structuralMiniNode
+		cid = 4292523114
+		uid = 2400272363
+		mid = 1644390934
+		persistentId = 1606708357
+		launchID = 137
+		parent = 4
+		position = -3.5564966201782227,0.043515205383300781,-2.0533428192138672
+		rotation = 1.49011612E-08,-0.258819103,4.47034836E-08,0.965925813
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		sym = 8
+		sym = 11
+		srfN = , -1
+		attN = right, 4
+		attN = left, -1
+		attN = back, -1
+		attN = front, -1
+		attN = top, 6
+		attN = bottom, -1
+		mass = 0.150000006
+		shielded = False
+		temp = 307.61685386188515
+		tempExt = 306.82851399120949
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = structuralMiniNode
+		modCost = 0
+		modMass = 0
+		moduleVariantName = 
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = RelayAntenna100
+		cid = 4292521442
+		uid = 3424036305
+		mid = 1644390934
+		persistentId = 1013237547
+		launchID = 137
+		parent = 5
+		position = -3.5564980506896973,0.40584087371826172,-2.0533428192138672
+		rotation = 8.94069672E-08,1.49011612E-07,-5.96046448E-08,1.00000012
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		sym = 9
+		sym = 12
+		srfN = srfAttach, -1
+		attN = bottom, 5
+		mass = 0.649999976
+		shielded = False
+		temp = 307.60762414928041
+		tempExt = 306.83953272594033
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = RelayAntenna100
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Size1
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleDataTransmitter
+			isEnabled = True
+			xmitIncomplete = False
+			stagingEnabled = True
+			canComm = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				StartTransmissionAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleTripLogger
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			Log
+			{
+				flight = 0
+				0 = Orbit,Eeloo
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = structuralIBeam2
+		cid = 4292523748
+		uid = 274136521
+		mid = 1644390934
+		persistentId = 3516247948
+		launchID = 137
+		parent = 0
+		position = -1.6820322912280972E-08,0.043515205383300781,2.326085090637207
+		rotation = -0.707106888,4.37158576E-09,-1.23570878E-08,-0.707106709
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 1
+		sameVesselCollision = False
+		sym = 4
+		sym = 10
+		srfN = srfAttach, 0,COLLIDER_REBUILT
+		attN = top, 8
+		attN = bottom, -1
+		mass = 0.375
+		shielded = False
+		temp = 307.61504398863178
+		tempExt = 306.819762504295
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = structuralIBeam2
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Basic
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = structuralMiniNode
+		cid = 4292522450
+		uid = 2277797340
+		mid = 1644390934
+		persistentId = 95291340
+		launchID = 137
+		parent = 7
+		position = -3.2897222723704544E-08,0.043514251708984375,4.106684684753418
+		rotation = 2.38418579E-07,0.707106948,-1.49011612E-07,0.707106709
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		sym = 5
+		sym = 11
+		srfN = , -1
+		attN = right, 7
+		attN = left, -1
+		attN = back, -1
+		attN = front, -1
+		attN = top, 9
+		attN = bottom, -1
+		mass = 0.150000006
+		shielded = False
+		temp = 307.6280857826128
+		tempExt = 306.84530888872536
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = structuralMiniNode
+		modCost = 0
+		modMass = 0
+		moduleVariantName = 
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = RelayAntenna100
+		cid = 4292520724
+		uid = 3556188348
+		mid = 1644390934
+		persistentId = 2091756811
+		launchID = 137
+		parent = 8
+		position = 2.8738492119373404E-07,0.40583992004394531,4.106684684753418
+		rotation = 5.96046448E-08,0.866025567,-2.98023224E-08,0.499999881
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		sym = 6
+		sym = 12
+		srfN = srfAttach, -1
+		attN = bottom, 8
+		mass = 0.649999976
+		shielded = False
+		temp = 307.62327875274406
+		tempExt = 306.86495132416502
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = RelayAntenna100
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Size1
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleDataTransmitter
+			isEnabled = True
+			xmitIncomplete = False
+			stagingEnabled = True
+			canComm = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				StartTransmissionAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleTripLogger
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			Log
+			{
+				flight = 0
+				0 = Orbit,Eeloo
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = structuralIBeam2
+		cid = 4292523660
+		uid = 263261166
+		mid = 1644390934
+		persistentId = 2837928805
+		launchID = 137
+		parent = 0
+		position = 2.0144491195678711,0.043515205383300781,-1.1630425453186035
+		rotation = -0.353553444,-0.612372398,0.612372518,-0.353553355
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 1
+		sameVesselCollision = False
+		sym = 4
+		sym = 7
+		srfN = srfAttach, 0,COLLIDER_REBUILT
+		attN = top, 11
+		attN = bottom, -1
+		mass = 0.375
+		shielded = False
+		temp = 307.61440996381708
+		tempExt = 306.81886502431706
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = structuralIBeam2
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Basic
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = structuralMiniNode
+		cid = 4292522400
+		uid = 381151669
+		mid = 1644390934
+		persistentId = 2442884816
+		launchID = 137
+		parent = 10
+		position = 3.556495189666748,0.043515205383300781,-2.0533444881439209
+		rotation = 1.04308128E-07,0.965925813,-8.94069672E-08,-0.258819014
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		sym = 5
+		sym = 8
+		srfN = , -1
+		attN = right, 10
+		attN = left, -1
+		attN = back, -1
+		attN = front, -1
+		attN = top, 12
+		attN = bottom, -1
+		mass = 0.150000006
+		shielded = False
+		temp = 307.62808788351748
+		tempExt = 306.84554604712218
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = structuralMiniNode
+		modCost = 0
+		modMass = 0
+		moduleVariantName = 
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = RelayAntenna100
+		cid = 4292520612
+		uid = 3078571235
+		mid = 1644390934
+		persistentId = 1892774096
+		launchID = 137
+		parent = 11
+		position = 3.5564961433410645,0.40584087371826172,-2.0533444881439209
+		rotation = -8.94069672E-08,0.866025448,-8.94069672E-08,-0.5
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		sym = 6
+		sym = 9
+		srfN = srfAttach, -1
+		attN = bottom, 11
+		mass = 0.649999976
+		shielded = False
+		temp = 307.62336639915861
+		tempExt = 306.86528830980672
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = RelayAntenna100
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Size1
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleDataTransmitter
+			isEnabled = True
+			xmitIncomplete = False
+			stagingEnabled = True
+			canComm = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				StartTransmissionAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleTripLogger
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			Log
+			{
+				flight = 0
+				0 = Orbit,Eeloo
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	PART
+	{
+		name = RelayAntenna100
+		cid = 4292847378
+		uid = 1981087535
+		mid = 1644390934
+		persistentId = 331372090
+		launchID = 137
+		parent = 0
+		position = 0,0.68000030517578125,0
+		rotation = 0,0,0,1
+		mirror = 1,1,1
+		symMethod = Radial
+		istg = -1
+		resPri = 0
+		dstg = 0
+		sqor = -1
+		sepI = -1
+		sidx = -1
+		attm = 0
+		sameVesselCollision = False
+		srfN = srfAttach, -1
+		attN = bottom, 0
+		mass = 0.649999976
+		shielded = False
+		temp = 307.60273781721969
+		tempExt = 306.8244818631423
+		tempExtUnexp = 4
+		staticPressureAtm = 0
+		expt = 0.5
+		state = 0
+		PreFailState = 0
+		attached = True
+		autostrutMode = Off
+		rigidAttachment = False
+		flag = WildBlueIndustries/000WildBlueTools/Agencies/WildBlueFlag
+		rTrf = RelayAntenna100
+		modCost = 0
+		modMass = 0
+		moduleVariantName = Size1
+		moduleCargoStackableQuantity = 1
+		EVENTS
+		{
+		}
+		ACTIONS
+		{
+			ToggleSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			SetSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+			RemoveSameVesselInteraction
+			{
+				actionGroup = None
+				wasActiveBeforePartWasAdjusted = False
+			}
+		}
+		PARTDATA
+		{
+		}
+		MODULE
+		{
+			name = ModuleDataTransmitter
+			isEnabled = True
+			xmitIncomplete = False
+			stagingEnabled = True
+			canComm = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+				StartTransmissionAction
+				{
+					actionGroup = None
+					wasActiveBeforePartWasAdjusted = False
+				}
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleCargoPart
+			isEnabled = True
+			beingAttached = False
+			beingSettled = False
+			reinitResourcesOnStoreInVessel = False
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPartScrapper
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = WBIPrinterRequirements
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModulePartVariants
+			isEnabled = True
+			useVariantMass = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+		MODULE
+		{
+			name = ModuleTripLogger
+			isEnabled = True
+			stagingEnabled = True
+			EVENTS
+			{
+			}
+			ACTIONS
+			{
+			}
+			Log
+			{
+				flight = 0
+				0 = Orbit,Eeloo
+			}
+			UPGRADESAPPLIED
+			{
+			}
+		}
+	}
+	ACTIONGROUPS
+	{
+		Stage = False, 0
+		Gear = False, 0
+		Light = False, 0
+		RCS = False, 0
+		SAS = False, 0
+		Brakes = False, 0
+		Abort = False, 0
+		Custom01 = False, 0
+		Custom02 = False, 0
+		Custom03 = False, 0
+		Custom04 = False, 0
+		Custom05 = False, 0
+		Custom06 = False, 0
+		Custom07 = False, 0
+		Custom08 = False, 0
+		Custom09 = False, 0
+		Custom10 = False, 0
+	}
+	DISCOVERY
+	{
+		state = -1
+		lastObservedTime = 0
+		lifetime = Infinity
+		refTime = Infinity
+		size = 2
+	}
+	FLIGHTPLAN
+	{
+	}
+	CTRLSTATE
+	{
+		pitch = 0
+		yaw = 0
+		roll = 0
+		trimPitch = 0
+		trimYaw = 0
+		trimRoll = 0
+		mainThrottle = 0
+	}
+	VESSELMODULES
+	{
+		ModularFlightIntegrator
+		{
+		}
+		AxisGroupsModule
+		{
+		}
+		SuspensionLoadBalancer
+		{
+		}
+		CommNetVessel
+		{
+			controlState = ProbeFull
+			canComm = True
+		}
+		ELVesselWorkNet
+		{
+			lastUpdate = 0
+			selectedPad = 0
+			Productivity = 0
+		}
+		ParkingBrake
+		{
+			lat = 0
+			lon = 0
+			alt = 0
+			positionSet = False
+		}
+		GoldStrikeVesselModule
+		{
+			lastProspectLongitude = 0
+			lastProspectLatitude = 0
+			lastProspectAltitude = 0
+			lastProspectPlanet = -1
+			lastProspectBiome = 
+		}
+		SnacksVesselModule
+		{
+			solarFlux = 0
+			sciencePenalties = 0
+			geeForce = 0
+			staticPressurekPa = 0
+		}
+		WBIPressureOverride
+		{
+		}
+	}
+}

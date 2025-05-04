@@ -275,10 +275,6 @@ namespace Blueshift
         [KSPField]
         public float warpIgnitionThreshold = 0.25f;
 
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_superchargerMultiplier", guiFormat = "n0", guiUnits = "%", isPersistant = true)]
-        [UI_FloatRange(affectSymCounterparts = UI_Scene.All, minValue = 0f, maxValue = 100f, stepIncrement = 5f)]
-        float superchargerMultiplier = 0f;
-
         /// <summary>
         /// Planetary Speed Brake
         /// </summary>
@@ -379,12 +375,6 @@ namespace Blueshift
         protected float warpDistance = 0;
 
         /// <summary>
-        /// (Debug visible) Current throttle level for the warp effects.
-        /// </summary>
-        [KSPField]
-        protected float waterfallEffectsLevel = 0;
-
-        /// <summary>
         /// (Debug visible) amount of simulation resource produced.
         /// </summary>
         [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
@@ -451,11 +441,6 @@ namespace Blueshift
         protected bool warpFlameout = false;
 
         /// <summary>
-        /// Optional (but highly recommended) Waterfall effects module
-        /// </summary>
-        protected WFModuleWaterfallFX waterfallFXModule = null;
-
-        /// <summary>
         /// Flag to indicate whether or not the vessel has exceeded light speed.
         /// </summary>
         protected bool hasExceededLightSpeed = false;
@@ -479,7 +464,7 @@ namespace Blueshift
         public double consumptionMultiplier = 1f;
 
         float prevThrottle = -1f;
-        float maxWarpSpeed = 0;
+        internal float maxWarpSpeed = 0;
         float prevWarpSpeed = 0;
         float prevMaxWarpSpeed = 0;
         bool wentInterstellar = false;
@@ -490,6 +475,7 @@ namespace Blueshift
         Vector3d preCruiseVelocity;
         bool needsVelocityUpdate = false;
         double resumeUpdateTimestamp = -1f;
+        PartResourceDefinition staticChargeDef = null;
 
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         float generatorInsterstellarResourceMultiplier = 1.0f;
@@ -733,13 +719,8 @@ namespace Blueshift
 
             if (!isOperational && !EngineIgnited)
             {
-                fadeOutEffects();
                 spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
                 return;
-            }
-            else if (flameout || warpFlameout)
-            {
-                fadeOutEffects();
             }
 
             // Update warp engine status
@@ -770,6 +751,10 @@ namespace Blueshift
             base.OnStart(state);
             loadFloatCurves();
 
+            PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
+            if (definitions.Contains("StaticCharge"))
+                staticChargeDef = definitions["StaticCharge"];
+
             // Use global warp performance improvement skills if the part doesn't define any.
             if (string.IsNullOrEmpty(warpEngineerSkill))
                 warpEngineerSkill = BlueshiftScenario.warpEngineerSkill;
@@ -781,7 +766,6 @@ namespace Blueshift
             warpEngines = new List<WBIWarpEngine>();
             warpCoils = new List<WBIWarpCoil>();
             warpGenerators = new List<WBIModuleGeneratorFX>();
-            waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
             getAnimatedWarpEngineTextures();
 
             // Optional bow shock transform.
@@ -804,7 +788,6 @@ namespace Blueshift
             Fields["minPlanetaryRadius"].guiActive = debugMode;
             Fields["effectiveWarpCapacity"].guiActive = debugMode;
             Fields["warpDistance"].guiActive = debugMode;
-            Fields["waterfallEffectsLevel"].guiActive = debugMode;
             Fields["warpResourceProduced"].guiActive = debugMode;
             Fields["warpResourceRequired"].guiActive = debugMode;
             Fields["warpResourceAmount"].guiActive = debugMode;
@@ -820,8 +803,6 @@ namespace Blueshift
                 if (EditorLogic.fetch != null && EditorLogic.fetch.ship != null)
                     onEditorShipModified(EditorLogic.fetch.ship);
 
-                Fields["superchargerMultiplier"].uiControlEditor.onFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
-                Fields["superchargerMultiplier"].uiControlEditor.onSymmetryFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
                 Fields["thrustPercentage"].uiControlEditor.onFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
                 Fields["thrustPercentage"].uiControlEditor.onSymmetryFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
             }
@@ -1007,9 +988,8 @@ namespace Blueshift
             if (bowShockTransform != null)
             {
                 // Get vessel length
-                if (part.vessel.vesselSize == Vector3.zero)
-                    part.vessel.UpdateVesselSize();
-                float length = part.vessel.vesselSize.z;
+                Bounds vesselBounds = part.vessel.GetBounds();
+                float length = vesselBounds.size.y;
 
                 // Set bow shock position to vessel transform's position in worldspace.
                 bowShockTransform.position = part.vessel.transform.position;
@@ -1017,24 +997,6 @@ namespace Blueshift
                 // Now update the local position to move it up to the bow.
                 Vector3 localPosition = bowShockTransform.localPosition;
                 bowShockTransform.localPosition = new Vector3(localPosition.x, length * 0.6f, localPosition.z);
-            }
-
-            if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
-            {
-                float targetValue = 0f;
-                if (throttleLevel > 0)
-                    targetValue = waterfallWarpEffectsCurve.Evaluate(warpSpeed);
-
-                waterfallEffectsLevel = Mathf.Lerp(waterfallEffectsLevel, targetValue, engineSpoolTime);
-
-               if (waterfallEffectsLevel <= 0.001 && targetValue <= 0f)
-                    waterfallEffectsLevel = 0;
-                else if (targetValue > 0f && targetValue >= waterfallEffectsLevel && (waterfallEffectsLevel / targetValue >= 0.99f))
-                    waterfallEffectsLevel = targetValue;
-                else if (targetValue > 0f && waterfallEffectsLevel > targetValue && targetValue / waterfallEffectsLevel >= 0.99f)
-                    waterfallEffectsLevel = targetValue;
-
-                waterfallFXModule.SetControllerValue(waterfallEffectController, waterfallEffectsLevel);
             }
 
             if (!hasExceededLightSpeed && warpSpeed >= 1f)
@@ -1218,22 +1180,6 @@ namespace Blueshift
         }
 
         /// <summary>
-        /// Fades out the warp effects
-        /// </summary>
-        protected void fadeOutEffects()
-        {
-            if (waterfallFXModule != null && waterfallEffectsLevel > 0f)
-            {
-                waterfallEffectsLevel = Mathf.Lerp(waterfallEffectsLevel, 0, engineSpoolTime);
-
-                if (waterfallEffectsLevel <= 0.001f)
-                    waterfallEffectsLevel = 0f;
-
-                waterfallFXModule.SetControllerValue(waterfallEffectController, 0);
-            }
-        }
-
-        /// <summary>
         /// Finds any animated textures that should be controlled by the warp engine
         /// </summary>
         protected void getAnimatedWarpEngineTextures()
@@ -1372,10 +1318,45 @@ namespace Blueshift
             }
         }
 
+        public float CalculateBestSpeedSimulated()
+        {
+            float origThrottleLevel = throttleLevel;
+            float origMaxWarpSpeed = maxWarpSpeed;
+            float origWarpSpeed = warpSpeed;
+            float origTotalWarpCapacity = totalWarpCapacity;
+            float origTotalDisplacementImpulse = totalDisplacementImpulse;
+            float origPowerMultiplier = powerMultiplier;
+            float origDisplacementMultiplier = displacementMultiplier;
+            float origEffectiveWarpCapacity = effectiveWarpCapacity;
+            double origWarpResourceProduced = warpResourceProduced;
+            double origWarpResourceRequired = warpResourceRequired;
+            double origConsumptionMultiplier = consumptionMultiplier;
+
+            throttleLevel = 1;
+            getTotalWarpCapacity(true);
+            calculateBestWarpSpeed(true);
+
+            float maxSpeed = maxWarpSpeed;
+
+            throttleLevel = origThrottleLevel;
+            maxWarpSpeed = origMaxWarpSpeed;
+            warpSpeed = origWarpSpeed;
+            totalWarpCapacity = origTotalWarpCapacity;
+            totalDisplacementImpulse = origTotalDisplacementImpulse;
+            powerMultiplier = origPowerMultiplier;
+            displacementMultiplier = origDisplacementMultiplier;
+            effectiveWarpCapacity = origEffectiveWarpCapacity;
+            warpResourceProduced = origWarpResourceProduced;
+            warpResourceRequired = origWarpResourceRequired;
+            consumptionMultiplier = origConsumptionMultiplier;
+
+            return maxSpeed;
+        }
+
         /// <summary>
         /// Calculates the best possible warp speed from the vessel's active warp engines.
         /// </summary>
-        protected void calculateBestWarpSpeed()
+        protected void calculateBestWarpSpeed(bool simulated = false)
         {
             maxWarpSpeed = 0;
             warpSpeed = 0;
@@ -1383,6 +1364,10 @@ namespace Blueshift
             int count = warpEngines.Count;
             float bestWarpSpeed = -1f;
             float warpCurveSpeed = 0;
+            if (simulated && warpEngines.Count <= 0)
+            {
+                warpEngines = part.vessel.FindPartModulesImplementing<WBIWarpEngine>();
+            }
             for (int index = 0; index < count; index++)
             {
                 warpCurveSpeed = warpEngines[index].warpCurve.Evaluate(effectiveWarpCapacity);
@@ -1415,6 +1400,8 @@ namespace Blueshift
 
                 // Limit speed if we're in a planetary SOI
                 case WBISpatialLocations.Planetary:
+                    if (simulated)
+                        break;
                     if (planetarySpeedBrakeEnabled)
                     {
                         float speedRatio = (float)(this.part.vessel.altitude / this.part.vessel.mainBody.sphereOfInfluence);
@@ -1473,7 +1460,7 @@ namespace Blueshift
         /// <summary>
         /// Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
         /// </summary>
-        protected void getTotalWarpCapacity()
+        protected void getTotalWarpCapacity(bool simulated = false)
         {
             int count = warpCoils.Count;
             WBIWarpCoil warpCoil;
@@ -1507,7 +1494,7 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 generator = warpGenerators[index];
-                if (HighLogic.LoadedSceneIsFlight && (!generator.isEnabled || !generator.IsActivated || generator.isMissingResources))
+                if (HighLogic.LoadedSceneIsFlight && !simulated && (!generator.isEnabled || !generator.IsActivated || generator.isMissingResources))
                     continue;
                 totalResourceProduced += generator.GetAmountProduced(warpSimulationResource);
             }
@@ -1517,7 +1504,7 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 warpCoil = warpCoils[index];
-                if (HighLogic.LoadedSceneIsFlight && (!warpCoil.isEnabled || !warpCoil.isActivated))
+                if (HighLogic.LoadedSceneIsFlight && !simulated && (!warpCoil.isEnabled || !warpCoil.isActivated))
                     continue;
                 totalResourceRequired += warpCoil.GetAmountRequired(warpSimulationResource);
             }
@@ -1546,15 +1533,6 @@ namespace Blueshift
             else
                 powerMultiplier = 0.0001f;
 
-            // If the supercharger is off then set the powerMultiplier to 1. Otherwise adust the power multiplier.
-            if (powerMultiplier > 1)
-            {
-                if (superchargerMultiplier <= 0)
-                    powerMultiplier = 1f;
-                else
-                    powerMultiplier = 1f + ((powerMultiplier - 1f) * (superchargerMultiplier / 100f));
-            }
-
             // Check for flamout
             if (powerMultiplier < warpIgnitionThreshold)
             {
@@ -1563,17 +1541,17 @@ namespace Blueshift
             }
 
             // Calculate the consumption multiplier and update the EVA Repairs module (if any)
-            consumptionMultiplier = powerMultiplier;
+            consumptionMultiplier = 1;
 
             // Calculate displacement impulse and warp capacity for the active coils that are powered up.
             count = warpCoils.Count;
             for (int index = 0; index < count; index++)
             {
                 warpCoil = warpCoils[index];
-                if (HighLogic.LoadedSceneIsFlight && (!warpCoil.isActivated || warpCoil.needsMaintenance))
+                if (HighLogic.LoadedSceneIsFlight && !simulated && (!warpCoil.isActivated || warpCoil.needsMaintenance))
                     continue;
 
-                if (consumeCoilResources(warpCoil, consumptionMultiplier))
+                if (consumeCoilResources(warpCoil, consumptionMultiplier, simulated))
                 {
                     totalWarpCapacity += warpCoil.totalWarpCapacity;
                     totalDisplacement += warpCoil.displacementImpulse;
@@ -1606,9 +1584,9 @@ namespace Blueshift
             return totalVesselMass;
         }
 
-        bool consumeCoilResources(WBIWarpCoil warpCoil, double rateMultiplier)
+        bool consumeCoilResources(WBIWarpCoil warpCoil, double rateMultiplier, bool simulated = false)
         {
-            if (HighLogic.LoadedSceneIsEditor)
+            if (HighLogic.LoadedSceneIsEditor || simulated)
                 return true;
 
             string errorStatus = string.Empty;
@@ -1966,7 +1944,7 @@ namespace Blueshift
             else if (isTimewarping && !lockedCourseAndSpeed && throttleLevel > 0)
             {
                 // No timewarp during warp dragging.
-                if (BlueshiftScenario.enableWarpDragging && isTimewarping && FlightGlobals.VesselsLoaded.Count > 0)
+                if (BlueshiftScenario.enableWarpDragging && isTimewarping && FlightGlobals.VesselsLoaded.Count > 1)
                 {
                     ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_noTimewarpDuringWarpDragging"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
                     isTimewarping = false;

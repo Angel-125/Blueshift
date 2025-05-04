@@ -83,8 +83,6 @@ Name of optional bow shock transform.
 (Debug visible) Effective warp capacity after accounting for vessel mass
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
-### waterfallEffectsLevel
-(Debug visible) Current throttle level for the warp effects.
 ### warpResourceProduced
 (Debug visible) amount of simulation resource produced.
 ### warpResourceRequired
@@ -111,8 +109,6 @@ Current throttle level
 Optional bow shock effect transform.
 ### warpFlameout
 Due to the way engines work on FixedUpdate, the engine can determine that it is NOT flamed out if it meets its propellant requirements. Therefore, we keep track of our own flameout conditions.
-### waterfallFXModule
-Optional (but highly recommended) Waterfall effects module
 ### hasExceededLightSpeed
 Flag to indicate whether or not the vessel has exceeded light speed.
 ### warpSpeed
@@ -159,16 +155,13 @@ Determines whether or not the ship meets the minimum required altitude to go to 
 ### UpdateWarpStatus
 Updates the warp status display
 
-### fadeOutEffects
-Fades out the warp effects
-
 ### getAnimatedWarpEngineTextures
 Finds any animated textures that should be controlled by the warp engine
 
-### calculateBestWarpSpeed
+### calculateBestWarpSpeed(System.Boolean)
 Calculates the best possible warp speed from the vessel's active warp engines.
 
-### getTotalWarpCapacity
+### getTotalWarpCapacity(System.Boolean)
 Calulates the total warp capacity from the vessel's active warp coils. Each warp coil must successfully consume its required resources in order to be considered.
 
 ### updateWarpPowerGenerators

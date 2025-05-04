@@ -16,9 +16,15 @@ namespace Blueshift
     {
         #region Constants
         /// <summary>
-        /// Light-year unit of measurement. Abbreviated "Ly."
+        /// Light-year unit of measurement. Abbreviated "Ly". This is the default; the actual distance is calculated as the speed of light times the homeworld's Sidereal Year length.
+        /// It can be overriden by setting the lightYearMeters in the settings.cfg file.
         /// </summary>
         public double kLightYear = 9460730472580044;
+
+        /// <summary>
+        /// Speed of light in meters per second.
+        /// </summary>
+        public double kLightSpeed = 299792458;
 
         /// <summary>
         /// Gigameter unit of measurement. Abbreviate "Gm."
@@ -73,7 +79,7 @@ namespace Blueshift
         /// <summary>
         /// Flag to indicate that the mod is in debug mode.
         /// </summary>
-        public static bool debugMode = false;
+        public static bool debugMode = true;
 
         /// <summary>
         /// When in intersteller space, vessels can go much faster. This multiplier tells us how much faster we can go.
@@ -130,6 +136,11 @@ namespace Blueshift
         /// The jumpgate startup sequence is destructive. Stay clear!
         /// </summary>
         public static bool jumpgateStartupIsDestructive = false;
+
+        /// <summary>
+        /// Vessels must fit within the jumpgate's max allowed jump dimensions (if any).
+        /// </summary>
+        public static bool enableJumpMaxDimensions = false;
 
         /// <summary>
         /// Flag to indicate if parts require maintenance.
@@ -245,6 +256,8 @@ namespace Blueshift
                 removeSpaceAnomalies();
             else if (!spawnJumpgates)
                 removeJumpgates();
+
+            onGameSettingsApplied();
         }
 
         public void OnDestroy()
@@ -708,6 +721,26 @@ namespace Blueshift
         /// <returns>true if the body is a star, false if not.</returns>
         public bool IsAStar(CelestialBody body)
         {
+            if (body.isStar)
+            {
+                return true;
+            }
+
+            if (body.GetComponent<SunShaderController>() != null)
+            {
+                return true;
+            }
+
+            if (body.GetComponentInChildren<SunShaderController>() != null)
+            {
+                return true;
+            }
+
+            if (body.scaledBody.GetComponent<SunShaderController>() != null)
+            {
+                return true;
+            }
+
             return body.scaledBody.GetComponentsInChildren<SunShaderController>(true).Length > 0;
         }
 
@@ -913,27 +946,27 @@ namespace Blueshift
                 if (targetDistance > (kGigaMeter * 1000))
                 {
                     targetDistance /= kLightYear;
-                    units = "Ly";
+                    units = "ly";
                 }
 
                 // Giga-meters
                 else if (targetDistance > (kMegaMeter * 1000))
                 {
                     targetDistance /= kGigaMeter;
-                    units = "Gm";
+                    units = "gm";
                 }
 
                 // Mega-meters
                 else if (targetDistance > 1000 * 1000)
                 {
                     targetDistance /= kMegaMeter;
-                    units = "Mm";
+                    units = "mm";
                 }
 
                 else
                 {
                     targetDistance /= 1000;
-                    units = "Km";
+                    units = "km";
                 }
 
             }
@@ -961,11 +994,11 @@ namespace Blueshift
         {
             double distanceMeters = distance;
 
-            if (units == "Km")
+            if (units == "km")
                 distanceMeters *= 1000;
-            else if (units == "Mm")
+            else if (units == "mm")
                 distanceMeters *= kMegaMeter;
-            else if (units == "Gm")
+            else if (units == "gm")
                 distanceMeters *= kGigaMeter;
             else
                 distanceMeters *= kLightYear;
@@ -1049,7 +1082,7 @@ namespace Blueshift
         private void checkForNewAnomalies()
         {
             if (debugMode)
-                Debug.Log("[BlueshiftScenario] - Checking for new anomalies...");
+                Debug.Log("[Blueshift] - Checking for new anomalies...");
             int count = anomalyTemplates.Count;
             WBISpaceAnomaly anomalyTemplate;
 
@@ -1157,6 +1190,7 @@ namespace Blueshift
             spawnSpaceAnomalies = BlueshiftSettings.SpaceAnomaliesEnabled;
             spawnJumpgates = BlueshiftSettings.JumpgatesEnabled;
             jumpgateStartupIsDestructive = BlueshiftSettings.JumpgateStartupIsDestructive;
+            enableJumpMaxDimensions = BlueshiftSettings.JumpgateMaxDimensionsEnabled;
             debugMode = BlueshiftSettings.DebugModeEnabled;
 
             if (!spawnSpaceAnomalies)
@@ -1263,7 +1297,7 @@ namespace Blueshift
                         if (body.isHomeWorld)
                         {
                             double secondsPerYear = body.orbit.period;
-                            kLightYear = 299792458 * secondsPerYear;
+                            kLightYear = kLightSpeed * secondsPerYear;
                             Debug.Log("[BlueshiftScenario] - 1 light-year equals " + kLightYear.ToString() + " m");
                             break;
                         }

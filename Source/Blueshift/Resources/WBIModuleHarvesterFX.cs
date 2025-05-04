@@ -20,7 +20,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 namespace Blueshift
 {
     /// <summary>
-    /// This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
+    /// This resource harvester adds the ability to drive Effects, animated textures, and Waterfall.
     /// </summary>
     public class WBIModuleHarvesterFX: ModuleResourceHarvester
     {

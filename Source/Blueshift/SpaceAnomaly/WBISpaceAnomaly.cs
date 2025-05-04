@@ -181,6 +181,11 @@ namespace Blueshift
         /// Overrides the jumpgate's rendezvous distance.
         /// </summary>
         public float rendezvousDistance = 0;
+
+        /// <summary>
+        /// Type of vessel the anomaly should become when it is claimed by the player. Default is Debris.
+        /// </summary>
+        public VesselType vesselType = VesselType.Debris;
         #endregion
 
         #region Housekeeping
@@ -234,6 +239,7 @@ namespace Blueshift
             networkID = copyFrom.networkID;
             rendezvousDistance = copyFrom.rendezvousDistance;
             expirationDate = copyFrom.expirationDate;
+            vesselType = copyFrom.vesselType;
 
             lastSeed = UnityEngine.Random.Range(0, int.MaxValue);
             UnityEngine.Random.InitState(lastSeed);
@@ -314,6 +320,9 @@ namespace Blueshift
 
             if (node.HasValue(kRendezvousDistance))
                 float.TryParse(node.GetValue(kRendezvousDistance), out anomaly.rendezvousDistance);
+
+            if (node.HasValue("vesselType"))
+                Enum.TryParse(node.GetValue("vesselType"), out anomaly.vesselType);
         }
 
         /// <summary>
@@ -349,6 +358,7 @@ namespace Blueshift
             node.AddValue(kNetworkID, networkID);
             node.AddValue(kExpirationDate, expirationDate.ToString());
             node.AddValue(kRendezvousDistance, rendezvousDistance.ToString());
+            node.AddValue("vesselType", vesselType);
 
             return node;
         }
@@ -770,6 +780,11 @@ namespace Blueshift
                 {
                     if (filteredAnomalies[index].fixedBody == fixedBody)
                     {
+                        if (BlueshiftScenario.shared.GetVessel(filteredAnomalies[index].vesselId) == null)
+                        {
+                            if (BlueshiftScenario.debugMode)
+                                Debug.Log("[Blueshift] - An anomaly for " + name + " already exists at " + fixedBody + " but the vessel is missing!");
+                        }
                         if (BlueshiftScenario.debugMode)
                             Debug.Log("[Blueshift] - An anomaly for " + name + " already exists at " + fixedBody);
                         return false;

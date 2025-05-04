@@ -49,6 +49,8 @@ Flag to indicate whether or not the gate should automatically be added to the ne
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
 ### rendezvousDistance
 Overrides the jumpgate's rendezvous distance.
+### vesselType
+Type of vessel the anomaly should become when it is claimed by the player. Default is Debris.
 ## Methods
 
 

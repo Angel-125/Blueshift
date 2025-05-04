@@ -4,7 +4,9 @@ This class helps starships determine when they're in interstellar space.
 ## Fields
 
 ### kLightYear
-Light-year unit of measurement. Abbreviated "Ly."
+Light-year unit of measurement. Abbreviated "Ly". This is the default; the actual distance is calculated as the speed of light times the homeworld's Sidereal Year length. It can be overriden by setting the lightYearMeters in the settings.cfg file.
+### kLightSpeed
+Speed of light in meters per second.
 ### kGigaMeter
 Gigameter unit of measurement. Abbreviate "Gm."
 ### kMegaMeter
@@ -37,6 +39,8 @@ Flag to indicate whether or not Space Anomalies are enabled.
 Flag to indicate whether or not Jumpgate anomalies are enabled.
 ### jumpgateStartupIsDestructive
 The jumpgate startup sequence is destructive. Stay clear!
+### enableJumpMaxDimensions
+Vessels must fit within the jumpgate's max allowed jump dimensions (if any).
 ### maintenanceEnabled
 Flag to indicate if parts require maintenance.
 ### minRendezvousDistancePlanetary

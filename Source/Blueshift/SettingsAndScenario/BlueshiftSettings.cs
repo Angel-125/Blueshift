@@ -23,7 +23,10 @@ namespace Blueshift
         [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsJumpgatesDesc", toolTip = "#LOC_BLUESHIFT_settingsJumpgatesTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableJumpGates = false;
 
-        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsDestructiveJumpgatesDesc", toolTip = "", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsJumpMaxDesc", toolTip = "#LOC_BLUESHIFT_settingsJumpMaxTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool enableJumpMaxDimensions = false;
+
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsDestructiveJumpgatesDesc", toolTip = "#LOC_BLUESHIFT_settingsDestructiveJumpgatesTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableDestructiveGateStartup = false;
 
         [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsWarpDraggingDesc", toolTip = "#LOC_BLUESHIFT_settingsWarpDraggingTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
@@ -98,6 +101,15 @@ namespace Blueshift
             {
                 BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
                 return settings.debugMode;
+            }
+        }
+
+        public static bool JumpgateMaxDimensionsEnabled
+        {
+            get
+            {
+                BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
+                return settings.enableJumpMaxDimensions;
             }
         }
 

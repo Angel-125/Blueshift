@@ -1,5 +1,5 @@
             
-This resource harvester add the ability to drive Effects, animated textures, and Waterfall.
+This resource harvester adds the ability to drive Effects, animated textures, and Waterfall.
         
 ## Fields
 

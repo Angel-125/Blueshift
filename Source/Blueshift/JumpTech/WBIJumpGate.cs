@@ -68,6 +68,101 @@ namespace Blueshift
     }
     #endregion
 
+    /// <summary>
+    /// The WBIJumpGate is a part module that transports vessels that enter the gate to another gate some distance away. It allows instantaneous, faster than light travel without the need for the traveling vessel to carry expensive FTL equipment. The craft merely needs to approach the gate, select the desired destination, and then travel through the gate.
+    /// The jump gate need not require resources to travel through, but the gates in Blueshift all require a Graviolium toll to be paid before travel is allowed. For the large gates (Jump Gate Anomaly, Astria Porta), the graviolium toll must be paid by the vessel that wishes to traverse the gate. For the Miniature Jumpgate, the gate itself pays the toll.
+    /// <example>
+    /// Below is a sample config file for the jump gate.
+    /// <code>
+    /// MODULE
+    /// {
+    /// 	name = WBIJumpGate
+    /// 
+    /// 	// Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network.
+    /// 	// If there are only two gates in the network then there is no need to select the other gate from the list.
+    /// 	// You can add additional networks by adding a semicolon character in between network IDs.
+    /// 	networkID = 4.8.15.16.23.42
+    /// 
+    /// 	// If the gate has a limited jump range, then only those gates that are in the network and within range can be selected.
+    /// 	// The exception is a network of two gates; max range is ignored.
+    /// 	// Set to -1 (the default) for unlimited jump range.
+    /// 	// Units are in light-years (9460700000000000 meters)
+    /// 	maxJumpRange = -1
+    /// 
+    /// 	// Maximum width and height of the vessel that the gate can support.
+    /// 	jumpMaxDimensions = 24,24
+    /// 
+    /// 	// Name of the portal trigger transform. The trigger is a collider set to Is Trigger in Unity.
+    /// 	portalTriggerTransform = portalTrigger
+    /// 
+    /// 	// Scale curve to use during startup. This should follow the Waterfall effect (if any).
+    /// 	// During the startup sequence the Z-axis will be scaled according to this curve. Any vessel or vessel parts caught
+    /// 	// by the portal trigger during startup will get vaporized unless "Jumpgates: desctructive startup" in Game Difficulty is disabled.
+    /// 	triggerStartupScaleCurve
+    /// 	{
+    /// 		key = 0 1
+    /// 		key = 0.25 1
+    /// 		key = 0.625 50
+    /// 		key = 1 1
+    /// 	}		
+    /// 
+    /// 	runningEffect = running
+    /// 
+    /// 	// Name of the waterfall effect controller, if any.
+    /// 	waterfallEffectController = gateEffectsController
+    /// 	
+    /// 	// In seconds, how quickly to throttle up the waterfall effect from 0 to 1.
+    /// 	effectSpoolTime = 0.5
+    /// 
+    /// 	// In order to jump a vessel, gates can require that the vessel pay a toll of one or more resources.
+    /// 	// If the vessel doesn't have sufficient resources then it cannot jump. Simply add one or more Resource nodes.
+    /// 	// The cost is per metric ton of the vessel.
+    /// 	RESOURCE
+    /// 	{
+    /// 		name = Graviolium
+    /// 		rate = 5
+    /// 		FlowMode = STAGE_PRIORITY_FLOW
+    /// 	}
+    /// 
+    /// 	// Defines a resource that must be paid in order to reach the desired destination.
+    /// 	// This node overrides the older RESOURCE node that defined the jump toll.
+    /// 	RESOURCE_TOLL
+    /// 	{
+    /// 		// Name of the toll. This is mainly for ModuleManager purposes.
+    /// 		name = planetarySOIToll
+    /// 
+    /// 		// Price tier- one of: planetary, interplanetary, interstellar
+    /// 		priceTier = planetary
+    /// 
+    /// 		// Name of the resource
+    /// 		resourceName = Graviolium
+    /// 
+    /// 		// Amount of resource per metric tonne mass of the traveler
+    /// 		amountPerTonne = 0.1
+    /// 
+    /// 		// Resource is paid by the traveler that is initiating the jump
+    /// 		paidByTraveler = false
+    /// 	}
+    /// 	RESOURCE_TOLL
+    /// 	{
+    /// 		name = interplanetaryToll
+    /// 		priceTier = interplanetary
+    /// 		resourceName = Graviolium
+    /// 		amountPerTonne = 1
+    /// 		paidByTraveler = false
+    /// 	}
+    /// 	RESOURCE_TOLL
+    /// 	{
+    /// 		name = interstellarToll
+    /// 		priceTier = interstellar
+    /// 		resourceName = Graviolium
+    /// 		amountPerTonne = 5
+    /// 		paidByTraveler = false
+    /// 	}
+    /// }
+    /// </code>
+    /// </example>
+    /// </summary>
     public class WBIJumpGate: WBIPartModule
     {
         #region Constants
@@ -126,20 +221,6 @@ namespace Blueshift
         public string networkID = string.Empty;
 
         /// <summary>
-        /// For paired gates, the address of the gate. This should be set using JUMPGATE_ANOMALY.
-        /// Default is an empty address.
-        /// </summary>
-        [KSPField(isPersistant = true)]
-        public string gateAddress = string.Empty;
-
-        /// <summary>
-        /// For paired gates, the address of the paired gate. This should be set using JUMPGATE_ANOMALY.
-        /// Default is an empty address.
-        /// </summary>
-        [KSPField(isPersistant = true)]
-        public string pairedGateAddress = string.Empty;
-
-        /// <summary>
         /// If the gate has a limited jump range, then only those gates that are in the network and within range can be selected.
         /// The exception is a network of two gates; max range is ignored.
         /// Set to -1 (the default) for unlimited jump range.
@@ -154,6 +235,13 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public double jumpMaxMass = -1f;
+
+        /// <summary>
+        /// Maximum dimensions, in meters, that can fit in the gate to be transported.
+        /// Width, length, height. Set a dimension to 0 for unrestricted size for that dimension.
+        /// </summary>
+        [KSPField]
+        public string jumpMaxDimensions = string.Empty;
 
         /// <summary>
         /// Range at which players can interact with the gate's PAW. Default is 500 meters.
@@ -205,7 +293,7 @@ namespace Blueshift
 
         bool isActivated = false;
         Vessel destinationVessel = null;
-        Vector2 jumpDimensions = Vector2.zero;
+        Vector3 jumpDimensions = Vector3.zero;
         bool errorMessageShown = false;
         List<Vessel> jumpgates;
         JumpgateSelector jumpgateSelector;
@@ -288,6 +376,39 @@ namespace Blueshift
                     ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateMassToMuch", new string[] { string.Format("{0:n2", vesselToTeleportMass), string.Format("{0:n2", jumpMaxMass) }), kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
                 }
                 return;
+            }
+
+            // Well, now we can calculate jump dimensions reasonably accurately. :)
+            if (BlueshiftScenario.enableJumpMaxDimensions && jumpDimensions != Vector3.zero)
+            {
+                Vector3 vesselSize = vesselToTeleport.GetBounds().size;
+                if (jumpDimensions.x > 0 && vesselSize.x > jumpDimensions.x)
+                {
+                    if (!errorMessageShown)
+                    {
+                        errorMessageShown = true;
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateDimensionsExceeded"), kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+                    }
+                    return;
+                }
+                if (jumpDimensions.y > 0 && vesselSize.y > jumpDimensions.y)
+                {
+                    if (!errorMessageShown)
+                    {
+                        errorMessageShown = true;
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateDimensionsExceeded"), kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+                    }
+                    return;
+                }
+                if (jumpDimensions.z > 0 && vesselSize.z > jumpDimensions.z)
+                {
+                    if (!errorMessageShown)
+                    {
+                        errorMessageShown = true;
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateDimensionsExceeded"), kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+                    }
+                    return;
+                }
             }
 
             // Pay the jump toll.
@@ -390,6 +511,9 @@ namespace Blueshift
         /// <param name="isEnabled">A flag that sets the gate enabled/disabled.</param>
         public void SetGateEnabled(bool isEnabled)
         {
+            if (BlueshiftScenario.debugMode)
+                Debug.Log("[Blueshift] - SetGateEnabled: " + isEnabled);
+
             if (isEnabled)
             {
                 if (!isActivated && destinationVessel == null)
@@ -474,6 +598,12 @@ namespace Blueshift
             debugMode = BlueshiftScenario.debugMode;
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
+
+            if (string.IsNullOrEmpty(jumpMaxDimensions) == false)
+            {
+                jumpDimensions = KSPUtil.ParseVector3(jumpMaxDimensions);
+                Debug.Log("[Blueshift] - JumpMax dimensions: " + jumpDimensions.ToString());
+            }
 
             // Enable event to return back to source gate.
             if (HighLogic.LoadedSceneIsFlight)
@@ -606,8 +736,13 @@ namespace Blueshift
                     }
                 }
 
+                // Calculate the jump distance
+                double jumpDistance = 1;
+                if (destinationVessel != null && resourceToll.priceTier == ResourcePriceTiers.Interstellar)
+                    jumpDistance = Math.Abs((vesselToTeleport.GetWorldPos3D() - destinationVessel.GetWorldPos3D()).magnitude) / BlueshiftScenario.shared.kLightYear;
+
                 // If we don't have enough then we're done.
-                if (amount < (resourceToll.amountPerTonne * vesselMass))
+                if (amount < (resourceToll.amountPerTonne * vesselMass * jumpDistance))
                 {
                     statusMessage = Localizer.Format("#LOC_BLUESHIFT_jumpGateInsufficentResources") + definition.displayName;
                     return false;
@@ -852,6 +987,8 @@ namespace Blueshift
         {
             if (jumpgates.Count == 1 && !isActivated && autoActivate)
             {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[Blueshift] - updateJumpgatePAW: jumpgates.Count == 1");
                 Events["SelectGate"].active = false;
                 effectsThrottle = 1.0f;
                 isActivated = true;
@@ -861,6 +998,8 @@ namespace Blueshift
             // Enable the gate selector if we have more than one gate.
             else if (jumpgates.Count >= 1)
             {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[Blueshift] - updateJumpgatePAW: jumpgates.Count >= 1");
                 Events["SelectGate"].active = true;
                 Events["SelectGate"].unfocusedRange = interactionRange;
                 isActivated = false;
@@ -871,6 +1010,8 @@ namespace Blueshift
             // No other gates in the network.
             else
             {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[Blueshift] - updateJumpgatePAW: no gates in the network");
                 Events["SelectGate"].active = false;
                 isActivated = false;
                 effectsThrottle = 0;

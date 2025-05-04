@@ -1,0 +1,119 @@
+EFFECTTEMPLATE
+{
+	templateName = ftlWarpField
+	EFFECT
+	{
+		name = warpField
+		parentName = genericWarpEngine
+		MODEL
+		{
+			path = WildBlueIndustries/Blueshift/FX/Waterfall/warpField
+			positionOffset = 0,0,0
+			rotationOffset = 90,0,0
+			scaleOffset = 2500,2500,2500
+			MATERIAL
+			{
+				transform = warpField
+				shader = Waterfall/Additive Directional
+				randomizeSeed = True
+				TEXTURE
+				{
+					textureSlotName = _MainTex
+					texturePath = Waterfall/FX/fx-noise-2
+					textureScale = 1,1
+					textureOffset = 0,0
+				}
+				COLOR
+				{
+					colorName = _StartTint
+					colorValue = 0.678431392,0.784313738,0.913725495,1
+				}
+				COLOR
+				{
+					colorName = _EndTint
+					colorValue = 0.941176474,0.0627451017,0.0627451017,1
+				}
+				FLOAT
+				{
+					floatName = _TintFalloff
+					value = 0.480277032
+				}
+				FLOAT
+				{
+					floatName = _Falloff
+					value = 0.75
+				}
+				FLOAT
+				{
+					floatName = _Fresnel
+					value = 0
+				}
+				FLOAT
+				{
+					floatName = _FresnelInvert
+					value = 0
+				}
+				FLOAT
+				{
+					floatName = _Noise
+					value = 1
+				}
+				FLOAT
+				{
+					floatName = _Brightness
+					value = 1
+				}
+				FLOAT
+				{
+					floatName = _SpeedY
+					value = 3
+				}
+				FLOAT
+				{
+					floatName = _TileX
+					value = 10
+				}
+				FLOAT
+				{
+					floatName = _TileY
+					value = 1
+				}
+			}
+		}
+		FLOATMODIFIER
+		{
+			name = fieldSpeed
+			controllerName = warpEffectController
+			transformName = warpField
+			combinationType = REPLACE
+			useRandomness = False
+			randomnessController = random
+			randomnessScale = 1
+			floatName = _SpeedY
+			floatCurve
+			{
+				key = 0 0 0 0
+				key = 0.4 1.5 0 0
+				key = 0.5 3 0 0
+				key = 1 9 0 0
+			}
+		}
+		FLOATMODIFIER
+		{
+			name = fieldAlpha
+			controllerName = warpEffectController
+			transformName = warpField
+			combinationType = REPLACE
+			useRandomness = False
+			randomnessController = random
+			randomnessScale = 1
+			floatName = _Brightness
+			floatCurve
+			{
+				key = 0 0 0 0
+				key = 0.5 1 0 0
+				key = 1 1 0 0
+			}
+		}
+	}
+}

@@ -393,7 +393,7 @@ namespace Blueshift.Utility
                 if (elapsedTime >= 1.0f)
                     demand *= elapsedTime;
 
-                amountObtained = this.part.RequestResource(inputs[index].ResourceName, demand);
+                amountObtained = this.part.RequestResource(inputs[index].ResourceName, demand, ResourceFlowMode.STAGE_PRIORITY_FLOW);
                 if (amountObtained / demand < 0.9999f)
                 {
                     PartResourceDefinition resourceDef = null;
