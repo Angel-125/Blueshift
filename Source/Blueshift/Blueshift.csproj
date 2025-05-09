@@ -85,6 +85,7 @@
     <Compile Include="HelperClasses\BlueshiftUtilities.cs" />
     <Compile Include="JumpTech\WBIGateAssembler.cs" />
     <Compile Include="JumpTech\WBIJumpEngine.cs" />
+    <Compile Include="MassTech\WBIGravityGenerator.cs" />
     <Compile Include="Resources\WBIModuleResourceCapacitor.cs" />
     <Compile Include="Resources\WBIModuleResourceSponge.cs" />
     <Compile Include="SettingsAndScenario\BlueshiftExportApp.cs" />

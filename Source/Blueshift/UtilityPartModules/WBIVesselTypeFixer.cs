@@ -22,10 +22,6 @@ namespace Blueshift
                 {
                     vessel.vesselType = anomaly.vesselType;
                 }
-                else
-                {
-                    vessel.vesselType = VesselType.Debris;
-                }
             }
         }
 

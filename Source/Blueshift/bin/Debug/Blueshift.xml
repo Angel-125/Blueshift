@@ -211,6 +211,11 @@
             </summary>
         </member>
         <!-- Badly formed XML comment ignored for member "M:Blueshift.JumpTech.WBIJumpEngine.ActionJumpShip(KSPActionParam)" -->
+        <member name="F:Blueshift.WBIGravityGenerator.maxTonnage">
+            <summary>
+            Max amount of mass that the generator can support before experiencing reductions in gravitic acceleration.
+            </summary>
+        </member>
         <member name="M:Blueshift.WBIModuleResourceCapacitor.RepairPart">
             <summary>
             Repairs the part.

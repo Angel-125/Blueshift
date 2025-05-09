@@ -43,20 +43,15 @@ namespace Blueshift
                 appLauncherButton = null;
             }
 
-            appLauncherButton = ApplicationLauncher.Instance.AddModApplication(openTravelPlanner, closeTravelPlanner, null, null, null, null, ApplicationLauncher.AppScenes.ALWAYS, appIcon);
+            appLauncherButton = ApplicationLauncher.Instance.AddModApplication(toggleTravelPlanner, toggleTravelPlanner, null, null, null, null, ApplicationLauncher.AppScenes.ALWAYS, appIcon);
         }
 
-        private void openTravelPlanner()
+        private void toggleTravelPlanner()
         {
             if ((HighLogic.LoadedSceneIsEditor && EditorLogic.fetch.ship != null) || (HighLogic.LoadedSceneIsFlight && FlightGlobals.fetch.activeVessel != null))
             {
-                travelPlanner.SetVisible(true);
+                travelPlanner.SetVisible(!travelPlanner.IsVisible());
             }
-        }
-
-        private void closeTravelPlanner()
-        {
-            travelPlanner.SetVisible(false);
         }
     }
 }
