@@ -83,9 +83,13 @@
     <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
     <Compile Include="GUI\WarpTravelPlanner.cs" />
     <Compile Include="HelperClasses\BlueshiftUtilities.cs" />
+    <Compile Include="HelperClasses\EngineCurves.cs" />
     <Compile Include="JumpTech\WBIGateAssembler.cs" />
     <Compile Include="JumpTech\WBIJumpEngine.cs" />
     <Compile Include="MassTech\WBIGravityGenerator.cs" />
+    <Compile Include="MassTech\WBIInertialDampener.cs" />
+    <Compile Include="MassTech\WBIInertialDampeningField.cs" />
+    <Compile Include="MassTech\WBIDampeningFieldLoader.cs" />
     <Compile Include="Resources\WBIModuleResourceCapacitor.cs" />
     <Compile Include="Resources\WBIModuleResourceSponge.cs" />
     <Compile Include="SettingsAndScenario\BlueshiftExportApp.cs" />

@@ -8,12 +8,11 @@ namespace Blueshift
     /// <summary>
     /// This part module is a small helper class to fix 
     /// </summary>
-    public class WBIVesselTypeFixer: VesselModule
+    public class WBIVesselTypeFixer: PartModule
     {
-        protected override void OnStart()
+        public override void OnStart(StartState state)
         {
-            base.OnStart();
-
+            base.OnStart(state);
             // Fix an issue where the the player claims the space anomaly and it's uncontrollable.
             if (vessel.vesselType == VesselType.SpaceObject)
             {
@@ -23,14 +22,6 @@ namespace Blueshift
                     vessel.vesselType = anomaly.vesselType;
                 }
             }
-        }
-
-        public override bool ShouldBeActive()
-        {
-            if (HighLogic.LoadedSceneIsFlight)
-                return true;
-
-            return base.ShouldBeActive();
         }
     }
 }

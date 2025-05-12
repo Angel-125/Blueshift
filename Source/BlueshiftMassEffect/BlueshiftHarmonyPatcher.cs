@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace BlueshiftMassEffect
+namespace Blueshift
 {
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
     public class BlueshiftHarmonyPatcher: MonoBehaviour

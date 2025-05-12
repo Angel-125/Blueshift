@@ -9,6 +9,9 @@ using KSP.Localization;
 
 namespace Blueshift
 {
+    /// <summary>
+    /// Counters the pull of gravity up to a maximum amount of gravitic acceleration.
+    /// </summary>
     public class WBIContragravityGenerator : WBIModuleGeneratorFX
     {
         #region Constants
@@ -40,8 +43,30 @@ namespace Blueshift
         #endregion
 
         #region Housekeeping
-        float cancellationFactor;
-        List<WBIContragravityGenerator> contragravityGenerators;
+        /// <summary>
+        /// Flag indicating that the generator should cancel the effects of gravity.
+        /// </summary>
+        protected bool canApplyContragravity = true;
+
+        /// <summary>
+        /// How much to reduce the gravity by.
+        /// </summary>
+        protected float gravityReductionFactor = 1f;
+
+        /// <summary>
+        /// Current vessel part count.
+        /// </summary>
+        protected int vesselPartCount = 0;
+
+        /// <summary>
+        /// Flag indicating if the converter should auto-disable itself when the flight state for applying gravity effects is invalid.
+        /// </summary>
+        protected bool disableConverterUponIvalidFlightState = true;
+
+        /// <summary>
+        /// List of contragravity generators on the vessel.
+        /// </summary>
+        protected List<WBIContragravityGenerator> contragravityGenerators;
         #endregion
 
         #region Overrides
@@ -56,6 +81,10 @@ namespace Blueshift
                 Fields["effectiveGravity"].group.name = groupName;
                 Fields["effectiveGravity"].group.displayName = groupName;
             }
+
+            if (HighLogic.LoadedSceneIsFlight)
+                vesselPartCount = part.vessel.parts.Count;
+            getGenerators();
         }
 
         public override void FixedUpdate()
@@ -66,10 +95,14 @@ namespace Blueshift
                 return;
 
             // Get the list of generators.
-            contragravityGenerators = part.vessel.FindPartModulesImplementing<WBIContragravityGenerator>();
+            if (contragravityGenerators == null || vesselPartCount != part.vessel.parts.Count)
+            {
+                vesselPartCount = part.vessel.parts.Count;
+                getGenerators();
+            }
 
             // Check activation state
-            if (!IsActivated || isMissingResources)
+            if (!IsActivated || isMissingResources || !canApplyContragravity)
             {
                 effectiveGravity = Math.Abs(part.vessel.graviticAcceleration.magnitude) / standardGee;
                 return;
@@ -80,8 +113,11 @@ namespace Blueshift
                 this.part.vessel.situation == Vessel.Situations.DOCKED ||
                 this.part.vessel.situation == Vessel.Situations.ORBITING)
             {
-                ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_contragravityDeactivated"), 3.0f, ScreenMessageStyle.UPPER_LEFT);
-                StopResourceConverter();
+                if (disableConverterUponIvalidFlightState)
+                {
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_contragravityDeactivated"), 3.0f, ScreenMessageStyle.UPPER_LEFT);
+                    StopResourceConverter();
+                }
                 return;
             }
 
@@ -99,6 +135,7 @@ namespace Blueshift
             {
                 combinedMaxGravityNegated += contragravityGenerators[index].maxGForceCancellation;
             }
+            combinedMaxGravityNegated *= gravityReductionFactor;
 
             // Calculate amount of gravitic acceleration that we can negate.
             double localGravity = Math.Abs(part.vessel.graviticAcceleration.magnitude);
@@ -123,7 +160,7 @@ namespace Blueshift
                 return recipe;
 
             // Compute modifiers based on vessel mass.
-            float vesselMass = vessel.GetTotalMass();
+            float ratioMultiplier = vessel.GetTotalMass() * gravityReductionFactor;
             List<ResourceRatio> recipeInputs = recipe.Inputs;
             int count = recipeInputs.Count;
             ResourceRatio resource;
@@ -133,13 +170,13 @@ namespace Blueshift
                 if (recipe.Inputs[index].ResourceName == "electricCharge")
                 {
                     resource = recipeInputs[index];
-                    resource.Ratio += (1 + ecMassPercentIncrease) * vesselMass;
+                    resource.Ratio += (1 + ecMassPercentIncrease) * ratioMultiplier;
                     recipeInputs[index] = resource;
                     continue;
                 }
 
                 resource = recipeInputs[index];
-                resource.Ratio *= vesselMass;
+                resource.Ratio *= ratioMultiplier;
                 recipeInputs[index] = resource;
             }
 
@@ -150,6 +187,17 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        protected virtual void getGenerators()
+        {
+            if (!HighLogic.LoadedSceneIsFlight)
+            {
+                contragravityGenerators = new List<WBIContragravityGenerator>();
+                return;
+            }
+
+            contragravityGenerators = part.vessel.FindPartModulesImplementing<WBIContragravityGenerator>();
+        }
+
         private void ApplyAccelerationVector(Vector3d accelerationVector)
         {
             int partCount = vessel.parts.Count;

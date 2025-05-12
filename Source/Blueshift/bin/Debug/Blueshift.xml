@@ -216,6 +216,44 @@
             Max amount of mass that the generator can support before experiencing reductions in gravitic acceleration.
             </summary>
         </member>
+        <member name="T:Blueshift.WBIInertialDampener">
+            <summary>
+            This part module enhances engine thrust and Isp. While the vessel's reported mass will remain unchanged, thrust, Isp, TWR, and delta-v values will be affected.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIInertialDampener.onDampenerUpdated">
+            <summary>
+            Signals that the inertial dampener was updated.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIInertialDampener.onDampenerUpdatedEditor">
+            <summary>
+            Signals that the inertial dampener was updated in the editor.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIInertialDampener.inertialDampeningFactor">
+            <summary>
+            How much internal dampening to produce
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIInertialDampener.ecMassPercentIncrease">
+            <summary>
+            Amount of increase in Electric Charge that it costs to run the generator.
+            Computed as a percentage of vessel mass. So, if this value is 0.05 (the default),
+            and the vessel is 100 tonnes, then the EC cost increases by 5.
+            This is a value between 0 and 1.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIInertialDampener.inertialDampeners">
+            <summary>
+            List of inertial dampeners on the vessel.
+            </summary>
+        </member>
+        <member name="T:Blueshift.MassTech.WBIInertialDampeningField">
+            <summary>
+            Applies the Higgs field to engines and RCS thrusters, improving their thrust and Isp.
+            </summary>
+        </member>
         <member name="M:Blueshift.WBIModuleResourceCapacitor.RepairPart">
             <summary>
             Repairs the part.
@@ -2052,6 +2090,11 @@
             Replacement event for ModuleAsteroid's event to target the asteroid's center of mass.
             </summary>
         </member>
+        <member name="T:Blueshift.WBIContragravityGenerator">
+            <summary>
+            Counters the pull of gravity up to a maximum amount of gravitic acceleration.
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIContragravityGenerator.maxGForceCancellation">
             <summary>
             In meters per second-squared, the amount of acceleration due to gravity that can be negated. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
@@ -2068,6 +2111,31 @@
             Computed as a percentage of vessel mass. So, if this value is 0.05 (the default),
             and the vessel is 100 tonnes, then the EC cost increases by 5.
             This is a value between 0 and 1.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.canApplyContragravity">
+            <summary>
+            Flag indicating that the generator should cancel the effects of gravity.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.gravityReductionFactor">
+            <summary>
+            How much to reduce the gravity by.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.vesselPartCount">
+            <summary>
+            Current vessel part count.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.disableConverterUponIvalidFlightState">
+            <summary>
+            Flag indicating if the converter should auto-disable itself when the flight state for applying gravity effects is invalid.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIContragravityGenerator.contragravityGenerators">
+            <summary>
+            List of contragravity generators on the vessel.
             </summary>
         </member>
     </members>

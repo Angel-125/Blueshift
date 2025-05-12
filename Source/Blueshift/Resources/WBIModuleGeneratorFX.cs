@@ -412,10 +412,6 @@ namespace Blueshift
                 {
                     recipeInput.Ratio = baseInputRatios[recipeInput.ResourceName] * resourceConsumptionModifier;
                     recipe.Inputs[index] = recipeInput;
-                    if (debugMode)
-                    {
-                        Debug.Log("[WWBIModuleGeneratorFX] - " + recipeInput.ResourceName + " consumes " + recipeInput.Ratio);
-                    }
                 }
             }
 
