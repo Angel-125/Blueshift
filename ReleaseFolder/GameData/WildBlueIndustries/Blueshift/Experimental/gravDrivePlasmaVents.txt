@@ -1,4 +1,15 @@
-// Adds gravitic engines to the plasma vent parts
+// Adds grav drives to the plasma vent parts
+
+WBIPLASMAGRAV_DUMMY:NEEDS[WildBlueIndustries/FlyingSaucers]
+{
+	name = WBIPlasmaGravDrive
+}
+@WBIPLASMAGRAV_DUMMY:FOR[WBIPlasmaGravDrive]
+{
+	%description = I exist
+	%WBIPlasmaGravDriveVersion = 1
+}
+
 @PART[wbiMk2PlasmaVent]:NEEDS[WildBlueIndustries/FlyingSaucers]
 {
 	MODEL
@@ -70,15 +81,6 @@
 
 		//How many seconds to spin down the gravity ring
 		shutdownTime = 1.0
-
-		//Crazy Mode - Not the same as warp drive!
-		crazyModeUnlocked = false
-		crazyModeResource = GravityWaves
-		crazyModeResourceReserve = 0.05 //When GravityWaves drops below 5%, stop crazy mode.
-
-		//These values assume 100% throttle and are scaled to the current throttle setting and engine thrust percentage.
-		crazyModeVelocity = 1000 //meters/sec
-		crazyModeResourcePerSec = 10
 	}
 
 	MODULE
@@ -287,15 +289,6 @@
 
 		//How many seconds to spin down the gravity ring
 		shutdownTime = 1.0
-
-		//Crazy Mode - Not the same as warp drive!
-		crazyModeUnlocked = false
-		crazyModeResource = GravityWaves
-		crazyModeResourceReserve = 0.05 //When GravityWaves drops below 5%, stop crazy mode.
-
-		//These values assume 100% throttle and are scaled to the current throttle setting and engine thrust percentage.
-		crazyModeVelocity = 1000 //meters/sec
-		crazyModeResourcePerSec = 10
 	}
 
 	MODULE
@@ -504,15 +497,6 @@
 
 		//How many seconds to spin down the gravity ring
 		shutdownTime = 1.0
-
-		//Crazy Mode - Not the same as warp drive!
-		crazyModeUnlocked = false
-		crazyModeResource = GravityWaves
-		crazyModeResourceReserve = 0.05 //When GravityWaves drops below 5%, stop crazy mode.
-
-		//These values assume 100% throttle and are scaled to the current throttle setting and engine thrust percentage.
-		crazyModeVelocity = 1000 //meters/sec
-		crazyModeResourcePerSec = 10
 	}
 
 	MODULE

@@ -8,46 +8,46 @@ GameData
 	WildBlueIndustries
 		Blueshift
 
-HOW TO FIX MISSING PART MODULES ERROR
-This update renames a number of Wild Blue Industries' part modules and may cause KSP to complain when you try to load your craft files.
-To fix this issue, follow the steps here: https://github.com/Angel-125/WildBlueCore/wiki/How-To-Fix-Missing-Part-Modules-Warning
-
 New Parts
 
-- S3Mk3 Warp Ring: This large warp ring can be surface-attached to Size 3 and Mk3 parts and offers a few pylon options.
-- SC-400 Static Charge Converter: An advanced alternative to Plasma Vents/Plasma Contactors, this part converts Static Charge into Electric Charge- at least until it breaks and has to be either repaired or replaced.
+- Low-Grav Compensator (Gravity Wave Applications): This handy part was made for rovers. It compensates for low-gravity worlds by pushing down on the rover to simulate a 1g environment. It also doubles as a small gravimetric generator.
 
-Available when Kerbal Flying Saucers isn't installed:
-- Stardust Graviolium Collector: Collects dust-form graviolium from the orbits of planets.
-- Plasma Contactor: Based on the real-world plasma contactor used on the ISS, this device discharges Static Charge. It does so automatically when in an atmosphere or on the ground, and it uses Xenon Gas when in space.
-- Plasma Contactor (Large): Larger version of the above.
-- Plasma Contactor Module: Even larger version of the above. It's a 2.5m station module to allow starships to discharge while docked to a station.
+Extras
+These are extra configs that are optional. Just rename them from .txt to .cfg to use.
+
+- size1WarpTech: Officially, the smallest warp engine in Blueshift is the Mk2 "Starflight" Warp Core, but for those who want something smaller, this file contains configs for Size 1 warp tech parts including a warp core and gravimetric generator, plus Size 0 warp coils, bussard collector, plasma vent, and FTL Endcap tank.
+- ExpensiveDrives: This config file will increase the cost of Warp Tech parts by a factor of 100.
+- originalFtlWarpField: This config file contains the original template for the warp field. PLEASE READ THE FILE's DIRECTIONS TO APPLY.
+- stlWarpDrives: Limits the maximum speed of warp tech engines below the speed of light to encourage use of other FTL methods. Size 3 engines can go up to 0.95c, Size 2 engines can reach 0.60c, and Size 1/Mk2 engines can achieve 0.25c.
+
+Experimental
+This folder contains parts in development that may or may not make it into the mod. They might be removed at any time, so please plan accordingly. 
+THESE NEED PLAYTESTING AND COMMENTS, PLEASE HELP IF YOU CAN.
+
+- S-2 Zero-Point Inertial Dampener: Powered by Graviolium, this device disturbs the quantum vacuum around your ship and its exhaust stream, reducing inertial resistance during engine burns. It works- but does it capture the "Mass Effect" feel?
 
 Changes
 
-- Updated the Wiki: RTFM!
-- Added new Warp Range app. It's like a delta-v calculator, but for warp ships. It's available in the VAB, SPH, and during flight. You'll find it in the list of app buttons.
-- Warp Coils now display their Warp Capacity and Displacement Impulse in the VAB/SPH.
-- Updated warp effects to reduce the "neon tube" look. Don't like the new look? Check out the Extras folder for the original config.
-- If left undefined in the settings file, Blueshift will calculate the distance of a light-year based on the Sidereal Year of the home world (a.k.a. length of a year) and the speed of light.
-- Tweaked the performance specs on various warp tech and jump tech parts.
-- You can now install Astria Porta Auxilium segments on an Astria Porta without needing to switch focus to the Astria Porta beforehand.
-- Static Charge is now ever present on warp tech parts. If your vessel's Static Charge reaches its maximum, then warp engines will flame out. Be sure to equip your ship with Plasma Contactors/Plasma Vents, or your engines will shut down.
-- jumpMaxDimensions for jumpgates are back! Thanks Sarbian for showing me how to properly calculate vessel dimensions in flight. :) Dimension limits can be disabled in the Blueshift Settings (it's off by default).
-- Jumpgates now charge based on vessel mass AND distance for interstellar distances. This is in preparation for increasing the Graviolium toll to initiate jumps to bring the cost in line with warp tech.
-- Removed Supercharger from warp engines; it didn't offer much of a performance boost and it complicated resource calculations.
-- Added Radial Mounts part variants to the S2 and S3 Warp Cores.
+- Jumpgates have had their interstellar Graviolium tolls dramatically increased to be more in line with Warp Tech.
+- Reduced E.C. output of the SC-400 Static Charge Converter- it was OP.
+- Updated the flavor text for several of the tech tree nodes.
+- New Tech Tree Node: Advanced Jump Tech.
+- Renamed the S-2 Contragravity Generator to the S-2 Flex Grav Generator, and updated its part description.
+- Renamed WBIContragravityGenerator to WBIFlexGravGenerator. 
+- WBIFlexGravGenerator can now redirect part or all of its countered gravity into forward acceleration via its Part Action Window. 
+  NOTE: At higher altitudes, where gravity is weaker, the redirection effect diminishes.
+- WBIFlexGravGenerator's forward and/or vertical acceleration can be controlled via throttle inputs.
+- Removed WBIFlexGravGenerator's use limitations for the Orbiting and Escaping situations.
+- Added new Action Menu Actions to WBIFlexGravGenerator.
+
+New Part Modules
+- WBIGravityGenerator: Designed for rovers, it keeps them pinned to the ground.
+- WBIInertialDampener & WBIInertialDampeningField: Experimental Mass Effect-like tech to simulate lowered inertial mass via increased engine thrust & Isp.
 
 Bug Fixes
 
-- Fixed issue where vessels could not warp during time warp with Warp Dragging enabled, and no other vessels were in physics range.
-- Fixed issues with surface attachment nodes on some parts.
-- Fixed issues with Multicoil parts not correctly reporting their warp capacity & displacement impulse in the VAB/SPH.
-- Fixed issue with the Mk2 Multicoil part's warp plasma animations going the wrong way.
-- Fixed issue with the warp engine bow shock not aligning with the vessel properly in some situations.
-- Fixed issue where multi-coil parts weren't increasing their displacement impulse after applying a part variant.
-- Fixed issues where the Alien Jumpgate and the KFS UFO anomaly are uncontrollable when claimed by the player.
-- Fixed missing resource entries for Electro Plasma to several parts with fusion reactors.
+- Fixed issue with ElectricCharge use in the S-2 Contragravity Generator.
+- Fixed issue where the Astria Porta wasn't correctly reporting its mass when new segments were added.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2025 by Michael Billard, All Rights Reserved.

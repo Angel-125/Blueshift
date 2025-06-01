@@ -85,8 +85,9 @@
     <Compile Include="HelperClasses\BlueshiftUtilities.cs" />
     <Compile Include="HelperClasses\EngineCurves.cs" />
     <Compile Include="JumpTech\WBIGateAssembler.cs" />
+    <Compile Include="JumpTech\DEPRECATEDWBIGateAssemblyChecker.cs" />
     <Compile Include="JumpTech\WBIJumpEngine.cs" />
-    <Compile Include="MassTech\WBIGravityGenerator.cs" />
+    <Compile Include="GravTech\WBIGravityGenerator.cs" />
     <Compile Include="MassTech\WBIInertialDampener.cs" />
     <Compile Include="MassTech\WBIInertialDampeningField.cs" />
     <Compile Include="MassTech\WBIDampeningFieldLoader.cs" />
@@ -124,9 +125,8 @@
     <Compile Include="SpaceAnomaly\WBITechUnlock.cs" />
     <Compile Include="JumpTech\WBIJumpGate.cs" />
     <Compile Include="UtilityPartModules\WBIDockingAlignmentLock.cs" />
-    <Compile Include="JumpTech\WBIGateAssemblyChecker.cs" />
     <Compile Include="SpaceAnomaly\WBICustomAsteroid.cs" />
-    <Compile Include="MassTech\WBIContragravityGenerator.cs" />
+    <Compile Include="GravTech\WBIFlexGravGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="MarkdownSeparator.exe">

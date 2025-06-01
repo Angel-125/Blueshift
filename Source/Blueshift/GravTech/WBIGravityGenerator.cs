@@ -102,10 +102,12 @@ namespace Blueshift
             double deltaGravity = (standardGee - localGravity) * heavyVesselPenalty;
 
             // Get gravity vector
+            Vector3d forwardVector = (Vector3d)part.vessel.transform.forward.normalized;
+            forwardVector *= part.vessel.graviticAcceleration.magnitude + deltaGravity;
             Vector3d accelerationVector = part.vessel.graviticAcceleration + (part.vessel.graviticAcceleration.normalized * deltaGravity);
 
             //Add acceleration.
-            ApplyAccelerationVector(accelerationVector);
+            ApplyAccelerationVector(forwardVector);
         }
         #endregion
 

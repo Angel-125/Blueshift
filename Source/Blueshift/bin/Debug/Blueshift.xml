@@ -159,6 +159,26 @@
             Debug method to complete gate assembly.
             </summary>
         </member>
+        <member name="T:Blueshift.WBIGateAssemblyChecker">
+            <summary>
+            A handy class for making sure that a jumpgate is fully assembled.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssemblyChecker.totalSegments">
+            <summary>
+            Total number of segments to check.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssemblyChecker.primaryNodeName">
+            <summary>
+            Name of the node to check for other gate segments.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIGateAssemblyChecker.secondaryNodeName">
+            <summary>
+            Name of the node to check for other gate segments.
+            </summary>
+        </member>
         <member name="F:Blueshift.JumpTech.WBIJumpEngine.debugMode">
             <summary>
             A flag to enable/disable debug mode.
@@ -196,7 +216,7 @@
         </member>
         <member name="F:Blueshift.JumpTech.WBIJumpEngine.maxJumpRange">
             <summary>
-            The is the maxium range of the jump engine. Units are in light-years (9460700000000000 meters)
+            The is the maxium range of the jump engine. Units are in light-years
             </summary>
         </member>
         <member name="F:Blueshift.JumpTech.WBIJumpEngine.cooldownTime">
@@ -249,9 +269,9 @@
             List of inertial dampeners on the vessel.
             </summary>
         </member>
-        <member name="T:Blueshift.MassTech.WBIInertialDampeningField">
+        <member name="T:Blueshift.WBIInertialDampeningField">
             <summary>
-            Applies the Higgs field to engines and RCS thrusters, improving their thrust and Isp.
+            Applies the inertial dampening field to engines and RCS thrusters, improving their thrust and Isp.
             </summary>
         </member>
         <member name="M:Blueshift.WBIModuleResourceCapacitor.RepairPart">
@@ -2032,26 +2052,6 @@
             Toggles docking alignment to locked/unlocked.
             </summary>
         </member>
-        <member name="T:Blueshift.WBIGateAssemblyChecker">
-            <summary>
-            A handy class for making sure that a jumpgate is fully assembled.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIGateAssemblyChecker.totalSegments">
-            <summary>
-            Total number of segments to check.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIGateAssemblyChecker.primaryNodeName">
-            <summary>
-            Name of the node to check for other gate segments.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIGateAssemblyChecker.secondaryNodeName">
-            <summary>
-            Name of the node to check for other gate segments.
-            </summary>
-        </member>
         <member name="T:Blueshift.WBICustomAsteroid">
             <summary>
             A customized version of ModuleAsteroid to allow for standard asteroid functionality while avoiding the procedural mesh generation.
@@ -2090,22 +2090,47 @@
             Replacement event for ModuleAsteroid's event to target the asteroid's center of mass.
             </summary>
         </member>
-        <member name="T:Blueshift.WBIContragravityGenerator">
+        <member name="T:Blueshift.WBIFlexGravGenerator">
             <summary>
             Counters the pull of gravity up to a maximum amount of gravitic acceleration.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.maxGForceCancellation">
+        <member name="F:Blueshift.WBIFlexGravGenerator.maxGForceCancellation">
             <summary>
-            In meters per second-squared, the amount of acceleration due to gravity that can be negated. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
+            In meters per second-squared, the amount of acceleration due to gravity that the device is rated for. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.effectiveGravity">
+        <member name="F:Blueshift.WBIFlexGravGenerator.maxGravityNegatedPercent">
             <summary>
-            Display value of the vessel's effective gravity, in units of g.
+            A value between 0 and 100, this field represents the maximum percentage of local gravity that can be negated. If multiple generators are present, then this value is averaged between the active generators.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.ecMassPercentIncrease">
+        <member name="F:Blueshift.WBIFlexGravGenerator.verticalAccelerationPercent">
+            <summary>
+            Redirects gravity forward (0) or upward (100)
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.horizontalAcceleration">
+            <summary>
+            Display value of the vessel's horizontal acceleration, in units of m/s^2.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.verticalAcceleration">
+            <summary>
+            Display value of the vessel's vertical acceleration, in units of m/s^2.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.horizontalAccelerationThrottled">
+            <summary>
+            Flag to indicate whether or not to control horizontal acceleration via main throttle.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.verticalAccelerationThrottled">
+            <summary>
+            Flag to indicate whether or not to control vertical acceleration via main throttle.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.ecMassPercentIncrease">
             <summary>
             Amount of increase in Electric Charge that it costs to run the generator.
             Computed as a percentage of vessel mass. So, if this value is 0.05 (the default),
@@ -2113,30 +2138,39 @@
             This is a value between 0 and 1.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.canApplyContragravity">
-            <summary>
-            Flag indicating that the generator should cancel the effects of gravity.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.gravityReductionFactor">
-            <summary>
-            How much to reduce the gravity by.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.vesselPartCount">
+        <member name="F:Blueshift.WBIFlexGravGenerator.vesselPartCount">
             <summary>
             Current vessel part count.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.disableConverterUponIvalidFlightState">
-            <summary>
-            Flag indicating if the converter should auto-disable itself when the flight state for applying gravity effects is invalid.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIContragravityGenerator.contragravityGenerators">
+        <member name="F:Blueshift.WBIFlexGravGenerator.flexGravGenerators">
             <summary>
             List of contragravity generators on the vessel.
             </summary>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGenerator.SetForwardAccelerationAction(KSPActionParam)">
+            <summary>
+            Sets acceleration fully forward.
+            </summary>
+            <param name="param"></param>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGenerator.SetVerticalAccelerationAction(KSPActionParam)">
+            <summary>
+            Sets acceleration fully vertical.
+            </summary>
+            <param name="param"></param>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGenerator.ToggleVerticalAccelerationThrottleAction(KSPActionParam)">
+            <summary>
+            Toggles vertical acceleration throttle.
+            </summary>
+            <param name="param"></param>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGenerator.ToggleHorizontalAccelerationThrottleAction(KSPActionParam)">
+            <summary>
+            Toggles horizontal acceleration throttle.
+            </summary>
+            <param name="param"></param>
         </member>
     </members>
 </doc>

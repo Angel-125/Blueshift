@@ -102,6 +102,19 @@ Adds new segment to the jumpgate if one can be found. The located segment will b
 ### CompleteAssembly
 Debug method to complete gate assembly.
 
+# WBIGateAssemblyChecker
+            
+A handy class for making sure that a jumpgate is fully assembled.
+        
+## Fields
+
+### totalSegments
+Total number of segments to check.
+### primaryNodeName
+Name of the node to check for other gate segments.
+### secondaryNodeName
+Name of the node to check for other gate segments.
+
 # WBIInertialDampener
             
 This part module enhances engine thrust and Isp. While the vessel's reported mass will remain unchanged, thrust, Isp, TWR, and delta-v values will be affected.
@@ -119,9 +132,9 @@ Amount of increase in Electric Charge that it costs to run the generator. Comput
 ### inertialDampeners
 List of inertial dampeners on the vessel.
 
-# MassTech.WBIInertialDampeningField
+# WBIInertialDampeningField
             
-Applies the Higgs field to engines and RCS thrusters, improving their thrust and Isp.
+Applies the inertial dampening field to engines and RCS thrusters, improving their thrust and Isp.
         
 
 # WBIModuleResourceSponge
@@ -1037,19 +1050,6 @@ A simple helper class to lock the docking alignment.
 ### lockAlignment
 Toggles docking alignment to locked/unlocked.
 
-# WBIGateAssemblyChecker
-            
-A handy class for making sure that a jumpgate is fully assembled.
-        
-## Fields
-
-### totalSegments
-Total number of segments to check.
-### primaryNodeName
-Name of the node to check for other gate segments.
-### secondaryNodeName
-Name of the node to check for other gate segments.
-
 # WBICustomAsteroid
             
 A customized version of ModuleAsteroid to allow for standard asteroid functionality while avoiding the procedural mesh generation. This is helpful for custom asteroid anomalies like Oumuamua.
@@ -1077,25 +1077,54 @@ Replacement event for the asteroid's sample return experiment.
 ### TargetCoM
 Replacement event for ModuleAsteroid's event to target the asteroid's center of mass.
 
-# WBIContragravityGenerator
+# WBIFlexGravGenerator
             
 Counters the pull of gravity up to a maximum amount of gravitic acceleration.
         
 ## Fields
 
 ### maxGForceCancellation
-In meters per second-squared, the amount of acceleration due to gravity that can be negated. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
-### effectiveGravity
-Display value of the vessel's effective gravity, in units of g.
+In meters per second-squared, the amount of acceleration due to gravity that the device is rated for. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
+### maxGravityNegatedPercent
+A value between 0 and 100, this field represents the maximum percentage of local gravity that can be negated. If multiple generators are present, then this value is averaged between the active generators.
+### verticalAccelerationPercent
+Redirects gravity forward (0) or upward (100)
+### horizontalAcceleration
+Display value of the vessel's horizontal acceleration, in units of m/s^2.
+### verticalAcceleration
+Display value of the vessel's vertical acceleration, in units of m/s^2.
+### horizontalAccelerationThrottled
+Flag to indicate whether or not to control horizontal acceleration via main throttle.
+### verticalAccelerationThrottled
+Flag to indicate whether or not to control vertical acceleration via main throttle.
 ### ecMassPercentIncrease
 Amount of increase in Electric Charge that it costs to run the generator. Computed as a percentage of vessel mass. So, if this value is 0.05 (the default), and the vessel is 100 tonnes, then the EC cost increases by 5. This is a value between 0 and 1.
-### canApplyContragravity
-Flag indicating that the generator should cancel the effects of gravity.
-### gravityReductionFactor
-How much to reduce the gravity by.
 ### vesselPartCount
 Current vessel part count.
-### disableConverterUponIvalidFlightState
-Flag indicating if the converter should auto-disable itself when the flight state for applying gravity effects is invalid.
-### contragravityGenerators
+### flexGravGenerators
 List of contragravity generators on the vessel.
+## Methods
+
+
+### SetForwardAccelerationAction(KSPActionParam)
+Sets acceleration fully forward.
+> #### Parameters
+> **param:** 
+
+
+### SetVerticalAccelerationAction(KSPActionParam)
+Sets acceleration fully vertical.
+> #### Parameters
+> **param:** 
+
+
+### ToggleVerticalAccelerationThrottleAction(KSPActionParam)
+Toggles vertical acceleration throttle.
+> #### Parameters
+> **param:** 
+
+
+### ToggleHorizontalAccelerationThrottleAction(KSPActionParam)
+Toggles horizontal acceleration throttle.
+> #### Parameters
+> **param:** 

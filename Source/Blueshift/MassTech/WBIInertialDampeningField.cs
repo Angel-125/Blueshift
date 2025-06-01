@@ -7,15 +7,15 @@ using UnityEngine;
 using KSP.IO;
 using KSP.Localization;
 
-namespace Blueshift.MassTech
+namespace Blueshift
 {
     /// <summary>
-    /// Applies the Higgs field to engines and RCS thrusters, improving their thrust and Isp.
+    /// Applies the inertial dampening field to engines and RCS thrusters, improving their thrust and Isp.
     /// </summary>
     public class WBIInertialDampeningField: WBIPartModule
     {
         #region Housekeeping
-        float totalInertialDampeningFactor;
+        public float dampeningFactor;
         List<EngineCurves> engineModuleCurves;
         List<ModuleRCSFX> rcsModules;
         #endregion
@@ -50,9 +50,9 @@ namespace Blueshift.MassTech
         #region Helpers
         void DampenerUpdated(WBIInertialDampener attenuator)
         {
-            totalInertialDampeningFactor = attenuator.totalInertialDampeningFactor;
-            if (totalInertialDampeningFactor <= 0)
-                totalInertialDampeningFactor = 0;
+            dampeningFactor = attenuator.totalInertialDampeningFactor;
+            if (dampeningFactor <= 0)
+                dampeningFactor = 0;
 
             updateEngineModuleCurves();
         }
@@ -71,7 +71,7 @@ namespace Blueshift.MassTech
             for (int index = 0; index < count; index++)
             {
                 engineCurve = engineModuleCurves[index];
-                engineCurve.UpdateCurves(totalInertialDampeningFactor);
+                engineCurve.UpdateCurves(dampeningFactor);
             }
         }
 

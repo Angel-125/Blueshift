@@ -55,10 +55,25 @@ namespace Blueshift
                 return;
             }
 
+            // Useful for reporting the engine thrust on some displays like Kerbal Engineer.
             engine.minThrust = originalMinThrust * inertialDampeningFactor;
             engine.maxThrust = originalMaxThrust * inertialDampeningFactor;
-            engine.minFuelFlow = originalMinFuelFlow / inertialDampeningFactor;
-            engine.maxFuelFlow = originalMaxFuelFlow / inertialDampeningFactor;
+
+            // We're trying to simulate what happens when inertia is cancelled out. We can't do that directly- it really messes up KSP's performance calculations.
+            // My research shows that we can simulate the effects of reduced inertial mass by increasing Isp.
+            // With the inertial dampener:
+            // 1. Particles in the exhaust accelerate more easily, needing less energy to reach higher speeds.
+            // 2. This causes the exhaust velocity (Ve) to increase.
+            // How do we do this in KSP? DON'T MESS WITH MASS FLOW RATE. Just modify Isp.
+            // When you divide the fuel flow and subsequently multiply the Isp,
+            // Your engine thrust will stay the same but your burn time and delta-v will go up.
+            // If you just modify Isp, your burn time will remain the same but your thrust and delta-v will increase.
+            // Increased delta-v and thrust is what we want to do to simulate the reduction in inertial mass.
+            // Hence, there's no point in fiddling with both Isp and mass flow to balance it all out.
+            // Just modify ISP, which will ultimately affect thrust by:
+            // Thrust = mass flow rate * exhaust velocity, where exhaust velocity = Isp * 9.80665
+            //engine.minFuelFlow = originalMinFuelFlow / inertialDampeningFactor;
+            //engine.maxFuelFlow = originalMaxFuelFlow / inertialDampeningFactor;
 
             FloatCurve floatCurve = CopyFloatCurve(originalThrustCurve);
             multiplyCurve(ref floatCurve, inertialDampeningFactor);

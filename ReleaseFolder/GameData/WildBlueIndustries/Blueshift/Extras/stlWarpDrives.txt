@@ -1,0 +1,53 @@
+// This config file limits the max speed of warp engines to below the speed of light.
+// This will encourage players to use other FTL methods to go interstellar.
+// Warp capacity still matters.
+
+WBISTLWARP_DUMMY
+{
+	name = WBISTLWarpTech
+}
+@WBISTLWARP_DUMMY:FOR[WBISTLWarpTech]
+{
+	%description = I exist
+	%WBISTLWarpTechVersion = 1
+}
+
+// Size 3 engines are the fastest of the bunch and can hit 0.95c.
+@PART[wbiS3WarpEngine,wbiS3WarpCore]
+{
+	@MODULE[WBIWarpEngine]
+	{
+		// In multiples or fractions of c.
+		absoluteMaxSpeed = 0.95
+	}
+}
+
+// Size 2 engines are mid-range and can attain up to 0.6c.
+@PART[wbiS2WarpCore]
+{
+	@MODULE[WBIWarpEngine]
+	{
+		// In multiples or fractions of c.
+		absoluteMaxSpeed = 0.6
+	}
+}
+
+// Mk2 and Size 1 engines are low-tier, only able to reach 0.25c.
+@PART[wbiMk2WarpCore]
+{
+	@MODULE[WBIWarpEngine]
+	{
+		// In multiples or fractions of c.
+		absoluteMaxSpeed = 0.25
+	}
+}
+
+// Mk2 and Size 1 engines are low-tier, only able to reach 0.25c.
+@PART[wbiS1WarpCore]:NEEDS[WBISize1WarpTech]
+{
+	@MODULE[WBIWarpEngine]
+	{
+		// In multiples or fractions of c.
+		absoluteMaxSpeed = 0.25
+	}
+}

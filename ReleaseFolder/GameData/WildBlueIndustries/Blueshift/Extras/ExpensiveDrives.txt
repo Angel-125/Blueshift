@@ -1,10 +1,23 @@
 // makes Blueshift warp drive components significantly more expensive
-//
-// author: Grimmas
-//
 
-@PART[wbiMk2FusionReactor,wbiS2FusionReactor,wbiS3FusionReactor,wbiMk2GraviticGenerator,wbiMk2WarpCoil,wbiMk2WarpCore,wbiMk2WarpRing,wbiS1WarpCoil,wbiS2GravimetricGenerator,wbiS2WarpCoil,wbiS2WarpCore,wbiS32WarpRing,wbiS3GravimetricGenerator,wbiS3HeavyWarpSustainer,wbiS3WarpCore,wbiS3WarpEngine,wbiS3WarpSustainer]:NEEDS[Blueshift]
+WBICOSTLYWARPTECH_DUMMY
 {
-    @entryCost *= 100
-    @cost *= 100
+	name = WBICostlyWarpTech
+}
+@WBICOSTLYWARPTECH_DUMMY:FOR[WBICostlyWarpTech]
+{
+	%description = I exist
+	%WBICostlyWarpTechVersion = 1
+}
+
+@PART[*]:HAS[WBIWarpEngine]:FOR[Blueshift]
+{
+	@entryCost *= 100
+	@cost *= 100
+}
+
+@PART[*]:HAS[WBIWarpCoil]:FOR[Blueshift]
+{
+	@entryCost *= 100
+	@cost *= 100
 }

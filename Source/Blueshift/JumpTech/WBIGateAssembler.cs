@@ -9,7 +9,7 @@ namespace Blueshift
     /// <summary>
     /// This is a helper module for jumpgates that are built insted of ones that are single-piece.
     /// </summary>
-    public class WBIGateAssembler: WBIPartModule
+    public class WBIGateAssembler: WBIPartModule, IPartMassModifier
     {
         #region Fields
 
@@ -75,6 +75,16 @@ namespace Blueshift
 
             // Enable the controller if we've enabled all the segments
             enableJumpgateIfNeeded(false);
+        }
+
+        public float GetModuleMass(float defaultMass, ModifierStagingSituation sit)
+        {
+            return defaultMass + defaultMass * enabledMeshCount;
+        }
+
+        public ModifierChangeWhen GetModuleMassChangeWhen()
+        {
+            return ModifierChangeWhen.CONSTANTLY;
         }
         #endregion
 

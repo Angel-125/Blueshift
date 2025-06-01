@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using KSP.IO;
-using KSP.Localization;
 
 namespace Blueshift
 {
@@ -30,7 +24,7 @@ namespace Blueshift
         /// <summary>
         /// How much internal dampening to produce
         /// </summary>
-        [KSPField(isPersistant = true, guiName = "#LOC_BLUESHIFT_zeroPointFactorName", guiActive = true)]
+        [KSPField(isPersistant = true, guiName = "#LOC_BLUESHIFT_inertialDampenerFactor", guiActive = true)]
         [UI_FloatRange(stepIncrement = 1f, maxValue = 100f, minValue = 0f)]
         public float inertialDampeningFactor = 100.0f;
 
@@ -94,7 +88,7 @@ namespace Blueshift
                 GameEvents.onEditorPartEvent.Remove(onEditorPartEvent);
                 GameEvents.onEditorShipModified.Remove(onEditorShipModified);
             }
-            Fields["higgsAttenuationFactor"].OnValueModified -= new Callback<object>(onValueModified);
+            Fields["inertialDampeningFactor"].OnValueModified -= new Callback<object>(onValueModified);
         }
 
         public override void FixedUpdate()
@@ -114,6 +108,7 @@ namespace Blueshift
         {
             base.StartResourceConverter();
 
+            enableJointReinforcement();
             updateDampeningFields();
         }
 
@@ -122,6 +117,7 @@ namespace Blueshift
             base.StopResourceConverter();
 
             updateDampeningFields();
+            disableJointReinforcement();
         }
 
         protected override ConversionRecipe PrepareRecipe(double deltatime)
@@ -139,7 +135,7 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 // E.C. increases based on a percentage of the vessel's mass.
-                if (recipe.Inputs[index].ResourceName == "electricCharge")
+                if (recipe.Inputs[index].ResourceName == "ElectricCharge")
                 {
                     resource = recipeInputs[index];
                     resource.Ratio += (1 + ecMassPercentIncrease) * ratioMultiplier;
@@ -159,6 +155,18 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        void enableJointReinforcement()
+        {
+            if (CheatOptions.UnbreakableJoints || inertialDampeners[0] != this)
+                return;
+        }
+
+        void disableJointReinforcement()
+        {
+            if (CheatOptions.UnbreakableJoints || inertialDampeners[0] != this)
+                return;
+        }
+
         void updateDampeningFields()
         {
             // If we're not the lead dampener, then go no further.

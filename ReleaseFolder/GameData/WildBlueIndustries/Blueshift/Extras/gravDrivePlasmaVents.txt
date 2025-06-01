@@ -1,0 +1,635 @@
+// Adds grav drives to the plasma vent parts
+
+WBIPLASMAGRAV_DUMMY:NEEDS[WildBlueIndustries/FlyingSaucers]
+{
+	name = WBIPlasmaGravDrive
+}
+@WBIPLASMAGRAV_DUMMY:FOR[WBIPlasmaGravDrive]
+{
+	%description = I exist
+	%WBIPlasmaGravDriveVersion = 1
+}
+
+@PART[wbiMk2PlasmaVent]:NEEDS[WildBlueIndustries/FlyingSaucers]
+{
+	MODEL
+	{
+		model = WildBlueIndustries/FlyingSaucers/Parts/Engine/size1GraviticEngine/gravEngineTransforms
+	}
+
+	MODULE
+	{
+		name = WBIGraviticEngine
+		engineID = Gravitic
+
+		//Transforms. These will move around with the vessel's center of mass.
+		thrustVectorTransformName = thrustTransform
+		reverseTransformName = reverseThrustTransform
+		vtolThrustTransformName = vtolThrustTransform
+
+		//Always located at the center of the part.
+		vtolFXTransformName = vtolThrustFX
+
+		EngineType = Generic
+		exhaustDamage = False
+		heatProduction = 0
+		fxOffset = 0, 0, 0
+		ignitionThreshold = 0.01
+		minThrust = 0
+
+		//Maximum acceleration produced by the singularity, in meters per second per second.
+		//A single engine can propel a very heavy craft but it will require more resources to do so
+		//than a lighter craft.
+		maxAcceleration = 15
+
+		//The acceleration generated is affected by the throttle setting and thrust limiter
+		//along with this acceleration curve.
+		accelerationCurve
+		{
+			key = 0 0 0 0
+			key = 1 1 2 2
+		}
+
+		PROPELLANT
+		{
+			name = GravityWaves
+			resourceFlowMode = STAGE_STACK_FLOW_BALANCE
+			ratio = 1
+			DrawGauge = True
+		}
+
+		//Specifying a max thrust doesn't matter for the gravitic engine. It will be calculated in flight.
+		//But we need a non-significant value so that KSP won't flip out when the flight scene is loaded.
+		maxThrust = 100
+
+		//ISP is important even for a gravitic engine. But we're unconcerned about atmosphere.
+		atmosphereCurve
+		{
+			key = 0 3.456665 0 0 
+			key = 1 3.456665 0 0 
+		}
+
+		//Effects
+		flameoutEffectName = flameout
+		powerEffectName = power
+		runningEffectName = running
+		engageEffectName = engage
+		disengageEffectName = disengage
+
+		//How many seconds to spin up the gravity ring
+		startupTime = 1.0
+
+		//How many seconds to spin down the gravity ring
+		shutdownTime = 1.0
+	}
+
+	MODULE
+	{
+		name = WBIPlumeController
+		plumeFXTransformName = plasmaTrailFX
+		stationaryFXName = stationaryFX
+		plumeFXName = plumeFX
+	}
+
+	MODULE
+	{
+		name = WBIModuleAnimation
+		debugMode = true
+		guiIsVisible = false
+		canSyncWithEngine = true
+		syncEngineID = Gravitic
+		spoolTime = 3
+		emissiveTransform = casing
+		minEngineSpool = 0.65
+		startEventGUIName = (Engine) start plasma venting
+		endEventGUIName = (Engine) stop plasma venting
+	}
+
+	EFFECTS
+	{	
+		plumeFX
+		{
+			MODEL_MULTI_PARTICLE
+			{
+				name = plasmaTrail
+				modelName = WildBlueIndustries/Blueshift/FX/s1PlasmaVent
+				transformName = plasmaTrailFX
+				emission = 0.0 0.0
+				emission = 1.0 1.25
+				speed = 0.0 0.0
+				speed = 1.25 1.25
+			}
+		}
+
+		running
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/FusionReactorRunning
+				volume = 0.0 0.0
+				volume = 1.0 0.25
+				pitch = 0.0 0.1
+				pitch = 1.0 0.4
+				speed = 0.0 0.0
+				speed = 0.5 0.5
+				speed = 1.0 1.0
+				loop = true
+			}
+		}
+
+		//Just the sound
+		power
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/FusionReactorRunning
+				volume = 0.0 0.0
+				volume = 0.05 8.0
+				volume = 1.0 8.0
+				pitch = 0.0 0.1
+				pitch = 1.0 0.4
+				speed = 0.0 0.0
+				speed = 0.5 0.5
+				speed = 1.0 1.0
+				loop = true
+			}
+		}
+
+		engage
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/jumpgateStart
+				volume = 0.5
+				pitch = 1.0
+				loop = false
+			}
+
+		}
+
+		disengage
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/WarpEngineStop
+				volume = 0.5
+				pitch = 1.0
+				loop = false
+			}
+
+		}
+
+		flameout
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = sound_explosion_low
+				volume = 1.0
+				pitch = 2.0
+				loop = false
+			}
+		}
+	}
+
+	RESOURCE
+	{
+		name = StaticCharge
+		amount = 0
+		maxAmount = 25
+	}
+
+	RESOURCE
+	{
+		name = VirtualMass
+		amount = 0
+		maxAmount = 25
+	}
+
+	RESOURCE
+	{
+		name = GravityWaves
+		amount = 0
+		maxAmount = 250
+	}
+}
+
+@PART[wbiS1PlasmaVent]:NEEDS[WildBlueIndustries/FlyingSaucers]
+{
+	MODEL
+	{
+		model = WildBlueIndustries/FlyingSaucers/Parts/Engine/size1GraviticEngine/gravEngineTransforms
+	}
+
+	MODULE
+	{
+		name = WBIGraviticEngine
+		engineID = Gravitic
+
+		//Transforms. These will move around with the vessel's center of mass.
+		thrustVectorTransformName = thrustTransform
+		reverseTransformName = reverseThrustTransform
+		vtolThrustTransformName = vtolThrustTransform
+
+		//Always located at the center of the part.
+		vtolFXTransformName = vtolThrustFX
+
+		EngineType = Generic
+		exhaustDamage = False
+		heatProduction = 0
+		fxOffset = 0, 0, 0
+		ignitionThreshold = 0.01
+		minThrust = 0
+
+		//Maximum acceleration produced by the singularity, in meters per second per second.
+		//A single engine can propel a very heavy craft but it will require more resources to do so
+		//than a lighter craft.
+		maxAcceleration = 15
+
+		//The acceleration generated is affected by the throttle setting and thrust limiter
+		//along with this acceleration curve.
+		accelerationCurve
+		{
+			key = 0 0 0 0
+			key = 1 1 2 2
+		}
+
+		PROPELLANT
+		{
+			name = GravityWaves
+			resourceFlowMode = STAGE_STACK_FLOW_BALANCE
+			ratio = 1
+			DrawGauge = True
+		}
+
+		//Specifying a max thrust doesn't matter for the gravitic engine. It will be calculated in flight.
+		//But we need a non-significant value so that KSP won't flip out when the flight scene is loaded.
+		maxThrust = 100
+
+		//ISP is important even for a gravitic engine. But we're unconcerned about atmosphere.
+		atmosphereCurve
+		{
+			key = 0 3.456665 0 0 
+			key = 1 3.456665 0 0 
+		}
+
+		//Effects
+		flameoutEffectName = flameout
+		powerEffectName = power
+		runningEffectName = running
+		engageEffectName = engage
+		disengageEffectName = disengage
+
+		//How many seconds to spin up the gravity ring
+		startupTime = 1.0
+
+		//How many seconds to spin down the gravity ring
+		shutdownTime = 1.0
+	}
+
+	MODULE
+	{
+		name = WBIPlumeController
+		plumeFXTransformName = plasmaTrailFX
+		stationaryFXName = stationaryFX
+		plumeFXName = plumeFX
+	}
+
+	MODULE
+	{
+		name = WBIModuleAnimation
+		debugMode = true
+		guiIsVisible = false
+		canSyncWithEngine = true
+		syncEngineID = Gravitic
+		spoolTime = 3
+		emissiveTransform = casing
+		minEngineSpool = 0.65
+		startEventGUIName = (Engine) start plasma venting
+		endEventGUIName = (Engine) stop plasma venting
+	}
+
+	EFFECTS
+	{	
+		plumeFX
+		{
+			MODEL_MULTI_PARTICLE
+			{
+				name = plasmaTrail
+				modelName = WildBlueIndustries/Blueshift/FX/s1PlasmaVent
+				transformName = plasmaTrailFX
+				emission = 0.0 0.0
+				emission = 1.0 1.25
+				speed = 0.0 0.0
+				speed = 1.25 1.25
+			}
+		}
+
+		running
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/FusionReactorRunning
+				volume = 0.0 0.0
+				volume = 1.0 0.25
+				pitch = 0.0 0.1
+				pitch = 1.0 0.4
+				speed = 0.0 0.0
+				speed = 0.5 0.5
+				speed = 1.0 1.0
+				loop = true
+			}
+		}
+
+		//Just the sound
+		power
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/FusionReactorRunning
+				volume = 0.0 0.0
+				volume = 0.05 8.0
+				volume = 1.0 8.0
+				pitch = 0.0 0.1
+				pitch = 1.0 0.4
+				speed = 0.0 0.0
+				speed = 0.5 0.5
+				speed = 1.0 1.0
+				loop = true
+			}
+		}
+
+		engage
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/jumpgateStart
+				volume = 0.5
+				pitch = 1.0
+				loop = false
+			}
+
+		}
+
+		disengage
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/WarpEngineStop
+				volume = 0.5
+				pitch = 1.0
+				loop = false
+			}
+
+		}
+
+		flameout
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = sound_explosion_low
+				volume = 1.0
+				pitch = 2.0
+				loop = false
+			}
+		}
+	}
+
+	RESOURCE
+	{
+		name = StaticCharge
+		amount = 0
+		maxAmount = 25
+	}
+
+	RESOURCE
+	{
+		name = VirtualMass
+		amount = 0
+		maxAmount = 25
+	}
+
+	RESOURCE
+	{
+		name = GravityWaves
+		amount = 0
+		maxAmount = 250
+	}
+}
+
+@PART[wbiS2PlasmaVent]:NEEDS[WildBlueIndustries/FlyingSaucers]
+{
+	MODEL
+	{
+		model = WildBlueIndustries/FlyingSaucers/Parts/Engine/size1GraviticEngine/gravEngineTransforms
+	}
+
+	MODULE
+	{
+		name = WBIGraviticEngine
+		engineID = Gravitic
+
+		//Transforms. These will move around with the vessel's center of mass.
+		thrustVectorTransformName = thrustTransform
+		reverseTransformName = reverseThrustTransform
+		vtolThrustTransformName = vtolThrustTransform
+
+		//Always located at the center of the part.
+		vtolFXTransformName = vtolThrustFX
+
+		EngineType = Generic
+		exhaustDamage = False
+		heatProduction = 0
+		fxOffset = 0, 0, 0
+		ignitionThreshold = 0.01
+		minThrust = 0
+
+		//Maximum acceleration produced by the singularity, in meters per second per second.
+		//A single engine can propel a very heavy craft but it will require more resources to do so
+		//than a lighter craft.
+		maxAcceleration = 15
+
+		//The acceleration generated is affected by the throttle setting and thrust limiter
+		//along with this acceleration curve.
+		accelerationCurve
+		{
+			key = 0 0 0 0
+			key = 1 1 2 2
+		}
+
+		PROPELLANT
+		{
+			name = GravityWaves
+			resourceFlowMode = STAGE_STACK_FLOW_BALANCE
+			ratio = 1
+			DrawGauge = True
+		}
+
+		//Specifying a max thrust doesn't matter for the gravitic engine. It will be calculated in flight.
+		//But we need a non-significant value so that KSP won't flip out when the flight scene is loaded.
+		maxThrust = 100
+
+		//ISP is important even for a gravitic engine. But we're unconcerned about atmosphere.
+		atmosphereCurve
+		{
+			key = 0 3.456665 0 0 
+			key = 1 3.456665 0 0 
+		}
+
+		//Effects
+		flameoutEffectName = flameout
+		powerEffectName = power
+		runningEffectName = running
+		engageEffectName = engage
+		disengageEffectName = disengage
+
+		//How many seconds to spin up the gravity ring
+		startupTime = 1.0
+
+		//How many seconds to spin down the gravity ring
+		shutdownTime = 1.0
+	}
+
+	MODULE
+	{
+		name = WBIPlumeController
+		plumeFXTransformName = plasmaTrailFX
+		stationaryFXName = stationaryFX
+		plumeFXName = plumeFX
+	}
+
+	MODULE
+	{
+		name = WBIModuleAnimation
+		debugMode = true
+		guiIsVisible = false
+		canSyncWithEngine = true
+		syncEngineID = Gravitic
+		spoolTime = 3
+		emissiveTransform = casing
+		minEngineSpool = 0.65
+		startEventGUIName = (Engine) start plasma venting
+		endEventGUIName = (Engine) stop plasma venting
+	}
+
+	EFFECTS
+	{	
+		plumeFX
+		{
+			MODEL_MULTI_PARTICLE
+			{
+				name = plasmaTrail
+				modelName = WildBlueIndustries/Blueshift/FX/s2PlasmaVent
+				transformName = plasmaTrailFX
+				emission = 0.0 0.0
+				emission = 1.0 1.25
+				speed = 0.0 0.0
+				speed = 1.25 1.25
+			}
+		}
+
+		running
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/FusionReactorRunning
+				volume = 0.0 0.0
+				volume = 1.0 0.25
+				pitch = 0.0 0.1
+				pitch = 1.0 0.4
+				speed = 0.0 0.0
+				speed = 0.5 0.5
+				speed = 1.0 1.0
+				loop = true
+			}
+		}
+
+		//Just the sound
+		power
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/FusionReactorRunning
+				volume = 0.0 0.0
+				volume = 0.05 8.0
+				volume = 1.0 8.0
+				pitch = 0.0 0.1
+				pitch = 1.0 0.4
+				speed = 0.0 0.0
+				speed = 0.5 0.5
+				speed = 1.0 1.0
+				loop = true
+			}
+		}
+
+		engage
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/jumpgateStart
+				volume = 0.5
+				pitch = 1.0
+				loop = false
+			}
+
+		}
+
+		disengage
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/WarpEngineStop
+				volume = 0.5
+				pitch = 1.0
+				loop = false
+			}
+
+		}
+
+		flameout
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = sound_explosion_low
+				volume = 1.0
+				pitch = 2.0
+				loop = false
+			}
+		}
+	}
+
+	RESOURCE
+	{
+		name = StaticCharge
+		amount = 0
+		maxAmount = 25
+	}
+
+	RESOURCE
+	{
+		name = VirtualMass
+		amount = 0
+		maxAmount = 25
+	}
+
+	RESOURCE
+	{
+		name = GravityWaves
+		amount = 0
+		maxAmount = 250
+	}
+}

@@ -1,3 +1,7 @@
+// To use this template:
+// Rename WildBlueIndustries/Blueshift/FX/Waterfall/ftlWarpField.cfg to WildBlueIndustries/Blueshift/FX/Waterfall/ftlWarpField.txt
+// Rename THIS file from the .txt extension to the .cfg extension.
+// Restart KSP.
 EFFECTTEMPLATE
 {
 	templateName = ftlWarpField

@@ -64,7 +64,7 @@ namespace Blueshift.JumpTech
         public float effectsThrottle = 0f;
 
         /// <summary>
-        /// The is the maxium range of the jump engine. Units are in light-years (9460700000000000 meters)
+        /// The is the maxium range of the jump engine. Units are in light-years
         /// </summary>
         [KSPField]
         public float maxJumpRange = 1f;
