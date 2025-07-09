@@ -1007,6 +1007,11 @@
             </summary>
         </member>
         <!-- Badly formed XML comment ignored for member "F:Blueshift.WBIWarpEngine.absoluteMaxSpeed" -->
+        <member name="F:Blueshift.WBIWarpEngine.fireflyModuleConfig">
+            <summary>
+            Name of the config for Firefly
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIWarpEngine.warpEngineerSkill">
             <summary>
             The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)

@@ -5,6 +5,7 @@ using UnityEngine;
 using KSP.Localization;
 using KSP.UI.Screens;
 using Blueshift.EVARepairs;
+using FireflyAPI;
 
 /*
 Source code copyright 2021, by Michael Billard (Angel-125)
@@ -297,6 +298,12 @@ namespace Blueshift
         [KSPField]
         public float absoluteMaxSpeed = -1f;
 
+        /// <summary>
+        /// Name of the config for Firefly
+        /// </summary>
+        [KSPField]
+        public string fireflyModuleConfig = "BlueshiftFireflyFTL";
+
         #region SkillBoost
         /// <summary>
         /// The skill required to improve warp speed. Default is "ConverterSkill" (Engineers have this)
@@ -479,6 +486,8 @@ namespace Blueshift
 
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         float generatorInsterstellarResourceMultiplier = 1.0f;
+
+        IFireflyModule fireflyModule;
         #endregion
 
         #region Actions And Events
@@ -822,6 +831,9 @@ namespace Blueshift
             generatorInsterstellarResourceMultiplier = 1- (Mathf.Clamp(interstellarResourceConsumptionModifier, 0f, 99.999f) / 100.0f);
             if (debugMode)
                 Debug.Log("[WBIWarpEngine] - generatorInsterstellarResourceMultiplier: " + generatorInsterstellarResourceMultiplier);
+
+            // Firefly
+            setupFireflyModule();
         }
 
         public override void Flameout(string message, bool statusOnly = false, bool showFX = true)
@@ -1002,7 +1014,24 @@ namespace Blueshift
             if (!hasExceededLightSpeed && warpSpeed >= 1f)
             {
                 hasExceededLightSpeed = true;
-                this.part.Effect(photonicBoomEffectName, 1);
+                part.Effect(photonicBoomEffectName, 1);
+            }
+
+            // Firefly effects
+            if (fireflyModule != null)
+            {
+                fireflyModule.OverrideEntryDirection = part.vessel.transform.up.normalized;
+                fireflyModule.OverrideEffectStrength = 2800 * effectsPowerLevel;
+
+                if (fireflyModule.OverridePhysics && effectsPowerLevel <= 0)
+                {
+                    fireflyModule.OverridePhysics = false;
+                }
+                else if (fireflyModule.OverridePhysics == false && effectsPowerLevel > 0)
+                {
+                    fireflyModule.OverridePhysics = true;
+                    reconfigureFireflyModule();
+                }
             }
 
             onWarpEffectsUpdated.Fire(part.vessel, this, effectsPowerLevel);
@@ -1130,6 +1159,54 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        void setupFireflyModule()
+        {
+            Debug.Log("[WBIWarpEngine] - FireflyAPIManager.IsFireflyInstalled: " + FireflyAPIManager.IsFireflyInstalled);
+            if (!HighLogic.LoadedSceneIsFlight || !FireflyAPIManager.IsFireflyInstalled)
+            {
+                return;
+            }
+
+            FireflyAPIManager.TryFindModule(vessel, out fireflyModule);
+            if (fireflyModule == null)
+            {
+                Debug.Log("[WBIWarpEngine] - Firefly module not found.");
+                return;
+            }
+
+            fireflyModule.OverridePhysics = true;
+            reconfigureFireflyModule();
+        }
+
+        void reconfigureFireflyModule()
+        {
+            // fill the override data with basic values
+            fireflyModule.ResetOverride();
+            fireflyModule.OverridenBy = part.name;
+            fireflyModule.OverrideEntryDirection = vessel.transform.up.normalized;
+            fireflyModule.OverrideAngleOfAttack = 0f;
+
+            // set the effect strength and state
+            // the strength is not in a range of 0-1, but pretty much goes from 0-4000, and 2100-2800 is a good range
+            fireflyModule.OverrideEffectStrength = 2800f;
+
+            // the state is in a range of 0-1 though, so we can set it directly
+            // it represents whether the effects are for mach effects (0) or atmospheric entry (1)
+            fireflyModule.OverrideEffectState = 1f;
+
+            // set the body config
+            // this property sets the body config by name, and fallbacks to the default if it doesn't exist
+            fireflyModule.OverrideBodyConfigName = fireflyModuleConfig;
+
+            // calling this function starts the effects
+            // (Firefly's effects are disabled outside of the atmosphere, so they need to be re-enabled like this)
+            fireflyModule.CreateVesselFx();
+
+            // calling this function reloads the effect colors
+            // this is also needed in addition to the method above, since if the effects were already loaded (eg. in atmosphere), they won't change colors
+            fireflyModule.ReloadCommandBuffer();
+        }
+
         protected void updateFTLPreflightStatus()
         {
             if (powerMultiplier < warpIgnitionThreshold)

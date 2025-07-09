@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.36128.20
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blueshift", "Blueshift.csproj", "{74BD7D76-7EAB-42B8-90AD-58486C5D12C0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{74BD7D76-7EAB-42B8-90AD-58486C5D12C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74BD7D76-7EAB-42B8-90AD-58486C5D12C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74BD7D76-7EAB-42B8-90AD-58486C5D12C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74BD7D76-7EAB-42B8-90AD-58486C5D12C0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {67E7AD77-C576-49CF-BBF1-B9154662EAAD}
+	EndGlobalSection
+EndGlobal
