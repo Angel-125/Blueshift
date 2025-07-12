@@ -740,6 +740,11 @@ namespace Blueshift
             Events["CircularizeOrbit"].active = enableCircularizeOrbit && isOperational;
             Fields["autoCircularizeInclination"].guiActive = enableCircularizeOrbit && isOperational;
             Actions["CircularizeOrbitAction"].active = enableCircularizeOrbit && isOperational;
+
+            if (fireflyModule != null && vessel.situation == Vessel.Situations.FLYING)
+            {
+                fireflyModule.OverridePhysics = false;
+            }
         }
 
         public override string GetInfo()
@@ -844,6 +849,10 @@ namespace Blueshift
             spatialLocation = WBISpatialLocations.Unknown;
             disableGeneratorBypass();
             onWarpEngineFlameout.Fire(part.vessel, this);
+            if (fireflyModule != null)
+            {
+                fireflyModule.OverridePhysics = false;
+            }
         }
 
         public override void UnFlameout(bool showFX = true)
@@ -936,6 +945,11 @@ namespace Blueshift
             onWarpEngineShutdown.Fire(part.vessel, this);
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
             resetWarpParameters();
+
+            if (fireflyModule != null)
+            {
+                fireflyModule.OverridePhysics = false;
+            }
         }
 
         public override void DeactivatePowerFX()
@@ -957,7 +971,8 @@ namespace Blueshift
                 return;
 
             // Set operational status
-            if (EngineIgnited && isEnabled && !flameout && !warpFlameout)
+            bool isOperational = EngineIgnited && isEnabled && !flameout && !warpFlameout;
+            if (isOperational)
             {
                 part.Effect(runningEffectName, 1f);
             }
@@ -1161,9 +1176,11 @@ namespace Blueshift
         #region Helpers
         void setupFireflyModule()
         {
+            Debug.Log("[WBIWarpEngine] - setupFireflyModule called");
             Debug.Log("[WBIWarpEngine] - FireflyAPIManager.IsFireflyInstalled: " + FireflyAPIManager.IsFireflyInstalled);
             if (!HighLogic.LoadedSceneIsFlight || !FireflyAPIManager.IsFireflyInstalled)
             {
+                Debug.Log("[WBIWarpEngine] - Firefly not installed or !LoadedSceneIsFlight.");
                 return;
             }
 
@@ -1173,13 +1190,13 @@ namespace Blueshift
                 Debug.Log("[WBIWarpEngine] - Firefly module not found.");
                 return;
             }
-
-            fireflyModule.OverridePhysics = true;
-            reconfigureFireflyModule();
+            fireflyModule.OverridePhysics = false;
         }
 
         void reconfigureFireflyModule()
         {
+            Debug.Log("[WBIWarpEngine] - reconfigureFireflyModule called");
+
             // fill the override data with basic values
             fireflyModule.ResetOverride();
             fireflyModule.OverridenBy = part.name;
