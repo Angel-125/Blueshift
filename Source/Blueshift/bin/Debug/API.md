@@ -693,6 +693,8 @@ This modifier reduces the resources required to power warp engines while in inte
 The source jumpgate that the traveler is traveling from. This is primarily used to set focus back to the source gate to jump something else.
 ### destinationGateId
 The destination gate that the traveler is traviling to. This is primarily used to set focus back to the source gate to jump something else.
+### fireflyEnabled
+Blueshift settings flag indicating whether or not firefly is enabled.
 ## Methods
 
 

@@ -68,6 +68,7 @@ namespace Blueshift
         private static string kDestinationGateId = "destinationGateId";
         private static string kInterstellarResourceConsumptionModifier = "interstellarResourceConsumptionModifier";
         private static string kLightYearMeters = "lightYearMeters";
+        private static string kFireflyEnabled = "fireflyEnabled";
         #endregion
 
         #region Housekeeping
@@ -177,6 +178,11 @@ namespace Blueshift
         /// The destination gate that the traveler is traviling to. This is primarily used to set focus back to the source gate to jump something else.
         /// </summary>
         public string destinationGateId = string.Empty;
+
+        /// <summary>
+        /// Blueshift settings flag indicating whether or not firefly is enabled.
+        /// </summary>
+        public static bool fireflyEnabled = true;
 
         private double soiMultiplier = 1.1;
         private double soiNoPlanetsMultiplier = 100;
@@ -1271,6 +1277,9 @@ namespace Blueshift
 
                 if (nodeSettings.HasValue(kWarpSpeedSkillMultiplier))
                     float.TryParse(nodeSettings.GetValue(kWarpSpeedSkillMultiplier), out warpSpeedSkillMultiplier);
+
+                if (nodeSettings.HasValue(kFireflyEnabled))
+                    bool.TryParse(nodeSettings.GetValue(kFireflyEnabled), out fireflyEnabled);
 
                 if (nodeSettings.HasValue(kInterstellarResourceConsumptionModifier))
                 {

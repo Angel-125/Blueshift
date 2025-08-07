@@ -1178,6 +1178,12 @@ namespace Blueshift
         {
             Debug.Log("[WBIWarpEngine] - setupFireflyModule called");
             Debug.Log("[WBIWarpEngine] - FireflyAPIManager.IsFireflyInstalled: " + FireflyAPIManager.IsFireflyInstalled);
+
+            if (BlueshiftScenario.fireflyEnabled == false)
+            {
+                Debug.Log("[WBIWarpEngine] - setupFireflyModule- skipped. BlueshiftScenario.fireflyEnabled == false");
+                return;
+            }
             if (!HighLogic.LoadedSceneIsFlight || !FireflyAPIManager.IsFireflyInstalled)
             {
                 Debug.Log("[WBIWarpEngine] - Firefly not installed or !LoadedSceneIsFlight.");
