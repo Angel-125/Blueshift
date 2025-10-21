@@ -474,15 +474,17 @@ namespace Blueshift
         internal float maxWarpSpeed = 0;
         float prevWarpSpeed = 0;
         float prevMaxWarpSpeed = 0;
-        bool wentInterstellar = false;
-        string targetDistanceUnits = string.Empty;
         bool lockedCourseAndSpeed = false;
         bool isTimewarping = false;
         Vector3d warpCruiseVector;
         Vector3d preCruiseVelocity;
         bool needsVelocityUpdate = false;
         double resumeUpdateTimestamp = -1f;
+        bool wentInterstellar = false;
         PartResourceDefinition staticChargeDef = null;
+        string targetDistanceUnits = string.Empty;
+        int vesselPartCount = 0;
+        bool updateBowshockTransform = true;
 
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         float generatorInsterstellarResourceMultiplier = 1.0f;
@@ -621,6 +623,8 @@ namespace Blueshift
         {
             base.OnFixedUpdate();
             if (!HighLogic.LoadedSceneIsFlight)
+                return;
+            if (!EngineIgnited)
                 return;
 
             // Get timewarping state.
@@ -901,6 +905,7 @@ namespace Blueshift
 
             onWarpEngineStart.Fire(part.vessel, this);
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
+            updateBowshockTransform = true;
         }
 
         public override void Shutdown()
@@ -1012,11 +1017,12 @@ namespace Blueshift
             }
 
             // Update warp effects
-            if (bowShockTransform != null)
+            if (bowShockTransform != null && isOperational && updateBowshockTransform)
             {
                 // Get vessel length
                 Bounds vesselBounds = part.vessel.GetBounds();
                 float length = vesselBounds.size.y;
+                updateBowshockTransform = false;
 
                 // Set bow shock position to vessel transform's position in worldspace.
                 bowShockTransform.position = part.vessel.transform.position;
@@ -1869,12 +1875,12 @@ namespace Blueshift
             loadCurve(interstellarAccelerationCurve, "interstellarAccelerationCurve", defaultCurve);
         }
 
-        int vesselPartCount = 0;
         private void getCoilsAndGenerators()
         {
             if (vesselPartCount != part.vessel.parts.Count)
             {
                 vesselPartCount = part.vessel.parts.Count;
+                updateBowshockTransform = true;
 
                 // Warp coils
                 List<WBIWarpCoil> coils = part.vessel.FindPartModulesImplementing<WBIWarpCoil>();

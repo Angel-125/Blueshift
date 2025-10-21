@@ -9,8 +9,9 @@ GameData
 		Blueshift
 	FireflyAPI
 
-Changes
-- New settings flag- fireflyEnabled: When enabled (default is true), it allows warp engines to make use of custom Firefly effects if the Firefly mod is installed.
+Bug Fixes
+
+- Fixed issue in WBIWarpEngine that was causing excessively slow framerates.
 
 ---LICENSE---
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2025 by Michael Billard, All Rights Reserved.

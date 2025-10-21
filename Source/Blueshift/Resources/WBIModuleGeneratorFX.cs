@@ -473,6 +473,8 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 resource = drainedResources[index];
+                if (part.Resources[resource.ResourceName].amount <= 0)
+                    return;
 
                 this.part.RequestResource(resource.ResourceName, resource.Ratio, resource.FlowMode);
             }
