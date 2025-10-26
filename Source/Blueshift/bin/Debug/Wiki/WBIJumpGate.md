@@ -10,7 +10,11 @@ This field tells the module which WBIAnimatedTexture to control.
 ### startupAnimation
 Animation to play before playing the portal effect.
 ### runningEffect
-Warp coils can play a running effect while the generator is running.
+Effect to play while the gate is running.
+### startupEffect
+Effect to play when the gate starts.
+### teleportEffect
+Effect to play when a vessel teleports.
 ### waterfallEffectController
 Name of the Waterfall effects controller that controls the warp effects (if any).
 ### effectSpoolTime
@@ -35,6 +39,8 @@ Scale curve to use during startup. This should follow the Waterfall effect (if a
 Specifies the rendezvous distance. Default is 50 meters away from the gate's vessel transform. Set to -1 (the default) to use the value from Blueshift settings.
 ### autoActivate
 Flag to automatically activate the jumpgate. It requires two gates in the network.
+### lightIntensity
+How bright to make the lights.
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
 ### vesselID

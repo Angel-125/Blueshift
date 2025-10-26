@@ -188,11 +188,25 @@ namespace Blueshift
         [KSPField]
         public string startupAnimation = string.Empty;
 
+        #region Effects
         /// <summary>
-        /// Warp coils can play a running effect while the generator is running.
+        /// Effect to play while the gate is running.
         /// </summary>
         [KSPField]
         public string runningEffect = string.Empty;
+
+        /// <summary>
+        /// Effect to play when the gate starts.
+        /// </summary>
+        [KSPField]
+        public string startupEffect = string.Empty;
+
+        /// <summary>
+        /// Effect to play when a vessel teleports.
+        /// </summary>
+        [KSPField]
+        public string teleportEffect = string.Empty;
+        #endregion
 
         /// <summary>
         /// Name of the Waterfall effects controller that controls the warp effects (if any).
@@ -275,6 +289,11 @@ namespace Blueshift
         [KSPField]
         public bool autoActivate = false;
 
+        /// <summary>
+        /// How bright to make the lights.
+        /// </summary>
+        [KSPField]
+        public float lightIntensity = 5f;
         #endregion
 
         #region Housekeeping
@@ -301,6 +320,9 @@ namespace Blueshift
         Transform portalTrigger = null;
         List<ResourceToll> resourceTolls = null;
         ResourcePriceTiers destinationPriceTier = ResourcePriceTiers.Interstellar;
+        Light[] lights = null;
+        AudioSource teleportSound = null;
+        AudioSource startSound = null;
         #endregion
 
         #region IModuleInfo
@@ -430,6 +452,8 @@ namespace Blueshift
             BlueshiftScenario.shared.jumpGateSourceId = part.vessel.id.ToString();
             BlueshiftScenario.shared.destinationGateId = destinationVessel.id.ToString();
 
+            part.Effect(teleportEffect, 1);
+
             // If the destination is in space then rendezvous with its orbit. Otherwise, land next to it.
             // We can use size here because, while inaccurate, it is overestimated, and we just want to get in the vicinity
             vesselToTeleport.UpdateVesselSize();
@@ -438,7 +462,9 @@ namespace Blueshift
             if (BlueshiftScenario.shared.IsInSpace(destinationVessel))
             {
                 Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + (float)distance);
-                FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
+                //position = UnityEngine.Random.onUnitSphere * (rendezvousDistance + (float)distance);
+                // Start the coroutine to rendezvous so we don't do this while in the trigger. Helps the game figure out the vessel's proper state.
+                part.StartCoroutine(setOrbitRendezvous(destinationVessel, position));
             }
 
             // Land the vessel next to the jumpgate.
@@ -460,9 +486,29 @@ namespace Blueshift
                 double longitude = latLong.y;
 
                 // Off we go
-                FlightGlobals.fetch.SetVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, distance, inclination, heading, true, true);
-                FloatingOrigin.ResetTerrainShaderOffset();
+                part.StartCoroutine(setVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, distance, inclination, heading));
             }
+        }
+
+        IEnumerator<YieldInstruction> setOrbitRendezvous(Vessel destinationVessel, Vector3 position)
+        {
+            part.Effect(teleportEffect, 1);
+            yield return new WaitForFixedUpdate();
+
+            FlightGlobals.fetch.SetShipOrbitRendezvous(destinationVessel, position, Vector3d.zero);
+
+            yield return null;
+        }
+
+        IEnumerator<YieldInstruction> setVesselPosition(int flightGlobalsIndex, double latitude, double longitude, double distance, double inclination, double heading)
+        {
+            part.Effect(teleportEffect, 1);
+            yield return new WaitForFixedUpdate();
+
+            FlightGlobals.fetch.SetVesselPosition(flightGlobalsIndex, latitude, longitude, distance, inclination, heading, true, true);
+            FloatingOrigin.ResetTerrainShaderOffset();
+
+            yield return null;
         }
 
         public void OnTriggerExit(Collider collider)
@@ -523,6 +569,11 @@ namespace Blueshift
             {
                 Events["SelectGate"].active = false;
                 effectsThrottle = 0;
+                if (lights != null && lights.Length > 0)
+                {
+                    for (int index = 0; index < lights.Length; index++)
+                        lights[index].intensity = 0f;
+                }
                 destinationVessel = null;
                 isActivated = false;
             }
@@ -593,6 +644,9 @@ namespace Blueshift
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
+
+            // Lights
+            lights = part.transform.gameObject.GetComponentsInChildren<Light>();
 
             // Setup GUI
             debugMode = BlueshiftScenario.debugMode;
@@ -884,6 +938,11 @@ namespace Blueshift
 
             isActivated = false;
             effectsThrottle = 0;
+            if (lights != null && lights.Length > 0)
+            {
+                for (int index = 0; index < lights.Length; index++)
+                    lights[index].intensity = 0f;
+            }
 
             OnUpdate();
         }
@@ -915,7 +974,14 @@ namespace Blueshift
             destinationVessel = destinationGate;
 
             // Start updating the FX.
+            part.Effect(startupEffect, 1);
+
             effectsThrottle = 0;
+            if (lights != null && lights.Length > 0)
+            {
+                for (int index = 0; index < lights.Length; index++)
+                    lights[index].intensity = 0f;
+            }
             playEffects = true;
             isActivated = false;
 
@@ -991,6 +1057,11 @@ namespace Blueshift
                     Debug.Log("[Blueshift] - updateJumpgatePAW: jumpgates.Count == 1");
                 Events["SelectGate"].active = false;
                 effectsThrottle = 1.0f;
+                if (lights != null && lights.Length > 0)
+                {
+                    for (int index = 0; index < lights.Length; index++)
+                        lights[index].intensity = 1f;
+                }
                 isActivated = true;
                 destinationVessel = jumpgates[0];
             }
@@ -1004,6 +1075,11 @@ namespace Blueshift
                 Events["SelectGate"].unfocusedRange = interactionRange;
                 isActivated = false;
                 effectsThrottle = 0;
+                if (lights != null && lights.Length > 0)
+                {
+                    for (int index = 0; index < lights.Length; index++)
+                        lights[index].intensity = 0f;
+                }
                 destinationVessel = null;
             }
 
@@ -1015,6 +1091,11 @@ namespace Blueshift
                 Events["SelectGate"].active = false;
                 isActivated = false;
                 effectsThrottle = 0;
+                if (lights != null && lights.Length > 0)
+                {
+                    for (int index = 0; index < lights.Length; index++)
+                        lights[index].intensity = 0f;
+                }
                 destinationVessel = null;
             }
         }
@@ -1041,6 +1122,11 @@ namespace Blueshift
             {
                 animatedTextures[index].isActivated = effectsThrottle > 0;
                 animatedTextures[index].animationThrottle = effectsThrottle;
+            }
+            if (lights != null && lights.Length > 0)
+            {
+                for (int index = 0; index < lights.Length; index++)
+                    lights[index].intensity = effectsThrottle * lightIntensity;
             }
         }
 

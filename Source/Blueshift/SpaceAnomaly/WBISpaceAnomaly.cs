@@ -666,13 +666,37 @@ namespace Blueshift
                     body = FlightGlobals.GetBodyByName(anomaly.fixedBody);
                     if (body != null)
                     {
-                        double sma = anomaly.fixedSMA + body.Radius;
-                        if (body.atmosphere)
-                            sma += body.atmosphereDepth;
+                        // Semi-Major Axis.
+                        // If <= 0 then we generate a random SMA from top of atmosphere to body's SOI.
+                        double sma = anomaly.fixedSMA;
+                        if (sma <= 0)
+                        {
+                            double minSMA = body.Radius * 1.05f;
+                            if (body.atmosphere)
+                                minSMA += body.atmosphereDepth * 1.01f;
+
+                            double maxSMA = body.sphereOfInfluence * 0.99f;
+
+                            sma = UnityEngine.Random.Range((float)minSMA, (float)maxSMA);
+                        }
+                        else
+                        {
+                            sma = sma + body.Radius;
+                            if (body.atmosphere)
+                                sma += body.atmosphereDepth;
+                        }
+
+                        // Inclination. If < 0 then we generate a random inclination between 0 and 90.
                         double inclination = anomaly.fixedInclination;
                         if (inclination < 0)
                             inclination = UnityEngine.Random.Range(0, 90);
-                        return new Orbit(inclination, anomaly.fixedEccentricity, sma, 0, 0, 0, Planetarium.GetUniversalTime(), body);
+
+                        // Eccentricity. If < 0 then we generate a random eccentricity between 0 and 1.
+                        double eccentricity = anomaly.fixedEccentricity;
+                        if (eccentricity < 0)
+                            eccentricity = UnityEngine.Random.Range(0f, 1f);
+
+                        return new Orbit(inclination, eccentricity, sma, 0, 0, 0, Planetarium.GetUniversalTime(), body);
                     }
                     break;
 

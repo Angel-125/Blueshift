@@ -1,0 +1,51 @@
+// This patch removes the Graviolium toll requirements for all jump gates and replaces them with Electric Charge.
+
+@PART[wbiMinigate]:FOR[Blueshift]
+{
+	@MODULE[WBIJumpgate]
+	{
+		!RESOURCE {}
+		@RESOURCE_TOLL[planetarySOIToll] 
+		{
+			// Name of the resource
+			@resourceName = ElectricCharge
+
+			// Amount of resource per metric tonne mass of the traveler
+			@amountPerTonne = 1
+		}
+		@RESOURCE_TOLL[interplanetaryToll]
+		{
+			@resourceName = ElectricCharge
+		}
+
+		@RESOURCE_TOLL[interstellarToll]
+		{
+			@resourceName = GravioElectricChargelium
+		}
+	}
+}
+
+@PART[wbiAstriaPorta,wbiAlienJumpGate]:FOR[Blueshift]
+{
+	@MODULE[WBIJumpgate]
+	{
+		!RESOURCE {}
+		@RESOURCE_TOLL[planetarySOIToll] 
+		{
+			// Name of the resource
+			@resourceName = ElectricCharge
+
+			// Amount of resource per metric tonne mass of the traveler
+			@amountPerTonne = 1
+		}
+		@RESOURCE_TOLL[interplanetaryToll]
+		{
+			@resourceName = ElectricCharge
+		}
+
+		@RESOURCE_TOLL[interstellarToll]
+		{
+			@resourceName = ElectricCharge
+		}
+	}
+}

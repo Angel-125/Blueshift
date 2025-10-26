@@ -1,0 +1,148 @@
+// This is a sample ModuleManager patch that shows you how to replace the existing jump gate sound effects with custom effects.
+// You'll need to convert the files into ogg format. Audacity is one such program that can do it, and it's free.
+// You can find it here: https://www.audacityteam.org/
+// And some sample sounds: https://archive.org/details/stargate-worlds-sound-effects
+
+@PART[wbiMinigate]:FOR[Blueshift]
+{
+	!EFFECTS {}
+	EFFECTS
+	{	
+		start
+		{
+			AUDIO
+			{
+				channel = Ship
+				// Your sound clip here.
+				clip = PlayGamePatches/StargateSounds/s_prp_gen_gate_open
+				volume = 0.0 0.0
+				volume = 1.0 1.5
+				pitch = 0.0 0.0
+				pitch = 1.0 1.0
+				loop = false
+			}
+		}
+
+		teleport
+		{
+			AUDIO
+			{
+				channel = Ship
+				// Your sound clip here.
+				clip = PlayGamePatches/StargateSounds/m_prp_gen_gate_enter1
+				volume = 0.0 0.0
+				volume = 1.0 1.5
+				pitch = 0.0 0.0
+				pitch = 1.0 1.0
+				loop = false
+			}
+		}
+
+		running
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/jumpgateRunning
+				volume = 0.0 0.0
+				volume = 0.625 0.75
+				volume = 1.0 1.5
+				pitch = 0.0 0.0
+				pitch = 0.625 0.75
+				pitch = 1.0 1.0
+				loop = true
+			}
+
+			MODEL_MULTI_PARTICLE
+			{
+				name = nozzles
+				modelName = WildBlueIndustries/Blueshift/FX/miniJumpgateFX
+				transformName = jumpgateParticleFX
+				emission = 0.0 0.0
+				emission = 0.25 1.0
+				emission = 0.625 1.0
+				emission = 1.0 0.0
+				speed = 0.0 0.0
+				speed = 0.25 1.0
+				speed = 0.625 1.0
+				speed = 1.0 0.0
+				energy = 0.0 0.0
+				energy = 0.25 1.0
+				energy = 0.625 1.0
+				energy = 1.0 0.0
+			}
+		}
+	}
+}
+
+@PART[wbiAstriaPorta,wbiAlienJumpGate]:FOR[Blueshift]
+{
+	!EFFECTS {}
+	EFFECTS
+	{	
+		start
+		{
+			AUDIO
+			{
+				channel = Ship
+				// Your sound clip here.
+				clip = PlayGamePatches/StargateSounds/s_prp_gen_gate_open
+				volume = 0.0 0.0
+				volume = 1.0 1.5
+				pitch = 0.0 0.0
+				pitch = 1.0 1.0
+				loop = false
+			}
+		}
+
+		teleport
+		{
+			AUDIO
+			{
+				channel = Ship
+				// Your sound clip here.
+				clip = PlayGamePatches/StargateSounds/m_prp_gen_gate_enter1
+				volume = 0.0 0.0
+				volume = 1.0 1.5
+				pitch = 0.0 0.0
+				pitch = 1.0 1.0
+				loop = false
+			}
+		}
+
+		running
+		{
+			AUDIO
+			{
+				channel = Ship
+				clip = WildBlueIndustries/Blueshift/FX/jumpgateRunning
+				volume = 0.0 0.0
+				volume = 0.625 0.75
+				volume = 1.0 1.5
+				pitch = 0.0 0.0
+				pitch = 0.625 0.75
+				pitch = 1.0 1.0
+				loop = true
+			}
+
+			MODEL_MULTI_PARTICLE
+			{
+				name = nozzles
+				modelName = WildBlueIndustries/Blueshift/FX/jumpgateFX
+				transformName = jumpgateParticleFX
+				emission = 0.0 0.0
+				emission = 0.25 1.0
+				emission = 0.625 1.0
+				emission = 1.0 0.0
+				speed = 0.0 0.0
+				speed = 0.25 1.0
+				speed = 0.625 1.0
+				speed = 1.0 0.0
+				energy = 0.0 0.0
+				energy = 0.25 1.0
+				energy = 0.625 1.0
+				energy = 1.0 0.0
+			}
+		}
+	}
+}

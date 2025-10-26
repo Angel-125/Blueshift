@@ -9,11 +9,31 @@ GameData
 		Blueshift
 	FireflyAPI
 
+Changes
+- Lifted restriction on adding Graviolium to fuel tanks in the editor when using OmniStorage.
+- Added lighting effects to the jump gates.
+- Added lightIntensity field to the WBIJumpGate part module. It controls how bright to make the jump gate lights. The default value is 5.0.
+- Added new EFFECT entries to the jump gates to play sounds upon gate startup and when a vessel is teleported. If the default sounds in the mod aren't desirable, there's always these (that I can't distribute): https://archive.org/details/stargate-worlds-sound-effects
+- SPACE_ANOMALY: The spawnMode = fixedOrbit now supports randomly generated fixedSMA and fixedEccentricity. 
+  Set fixedSMA = -1, and Blueshift will generate a random orbit between planet Radius + atmosphericDepth (if any) and planet sphereOfInfluence.
+  Set fixedEccentricity = -1, and Blueshift will generate a random eccentricity between 0 and 1.
+
+Extras
+This folder contains optional Module Manager patches to enhance Blueshift.
+
+- SampleCustomGateSoundsPatch: This patch makes it easy to replace the default jumpgate sound effects with custom ones. You'll need to convert any sound clips to ogg format (Audacity, which is free, can do this).
+- JumpgatesElectricChargeToll: This patch swaps out the Graviolium requirements of jump gates to instead require Electric Charge.
+
 Bug Fixes
 
-- Fixed issue in WBIWarpEngine that was causing excessively slow framerates.
+- Removed prototype S1 warp core.
+- Fixed performance issues when a craft has multiple warp engines but only one is running.
+- Fixed issue- FINALLY!- where kerbals who travel through jump gates to a destination gate in space are stuck in walking mode.
 
 ---LICENSE---
+
+Sounds effects courtesy of Pond5 and may NOT be redistributed.
+
 Art Assets, including .mu, .png, and .dds files are copyright 2021-2025 by Michael Billard, All Rights Reserved.
 
 Wild Blue Industries is trademarked by Michael Billard. All rights reserved.

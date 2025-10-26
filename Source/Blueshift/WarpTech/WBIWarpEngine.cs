@@ -484,7 +484,7 @@ namespace Blueshift
         PartResourceDefinition staticChargeDef = null;
         string targetDistanceUnits = string.Empty;
         int vesselPartCount = 0;
-        bool updateBowshockTransform = true;
+        bool updateBowshockTransform = false;
 
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         float generatorInsterstellarResourceMultiplier = 1.0f;
@@ -857,6 +857,9 @@ namespace Blueshift
             {
                 fireflyModule.OverridePhysics = false;
             }
+            DeactivatePowerFX();
+            DeactivateRunningFX();
+            onWarpEffectsUpdated.Fire(part.vessel, this, 0);
         }
 
         public override void UnFlameout(bool showFX = true)
@@ -955,6 +958,8 @@ namespace Blueshift
             {
                 fireflyModule.OverridePhysics = false;
             }
+
+            updateBowshockTransform = false;
         }
 
         public override void DeactivatePowerFX()
@@ -1006,7 +1011,7 @@ namespace Blueshift
             }
 
             // If we aren't supposed to apply warp translation then there's nothing more to do.
-            if (!applyWarpTranslation)
+            if (!applyWarpTranslation || !isOperational)
                 return;
 
             // Update active warp coils
@@ -1017,7 +1022,7 @@ namespace Blueshift
             }
 
             // Update warp effects
-            if (bowShockTransform != null && isOperational && updateBowshockTransform)
+            if (bowShockTransform != null && updateBowshockTransform)
             {
                 // Get vessel length
                 Bounds vesselBounds = part.vessel.GetBounds();
@@ -1771,31 +1776,55 @@ namespace Blueshift
             WBIWarpEngine engine, prevEngine;
             int count = engines.Count;
 
+            // Assume that we don't apply translation.
+            applyWarpTranslation = false;
+
+            // Find all the active engines.
             warpEngines.Clear();
             for (int index = 0; index < count; index++)
             {
                 engine = engines[index];
-                if (engine.EngineIgnited && engine.isOperational)
-                {
-                    warpEngines.Add(engine);
 
-                    //If the index is at the top of the list and we're the topmost engine then we should apply acceleartion.
-                    if (engine == this && index == 0)
+                if (engine.EngineIgnited)
+                    warpEngines.Add(engine);
+            }
+
+            // Now determine if we are the primary active warp engine that should apply warp translations and drive the ship.
+            applyWarpTranslation = warpEngines[0] == this;
+/*
+            count = warpEngines.Count;
+            for (int index = 0; index < count; index++)
+            {
+                engine = warpEngines[index];
+
+                //If the index is at the top of the list and we're the topmost engine then we should apply acceleartion.
+                if (engine == this && index == 0)
+                {
+                    applyWarpTranslation = true;
+                }
+                else
+                {
+                    applyWarpTranslation = true;
+                }
+
+/*
+                //Check previous engine. If it is active then it will be applying translation, so we should not apply translation.
+                else if (engine == this && engine.isOperational)
+                {
+                    prevEngine = engines[index - 1];
+                    if (prevEngine.IsActivated())
+                    {
+                        applyWarpTranslation = false;
+                        break;
+                    }
+                    else
                     {
                         applyWarpTranslation = true;
-                    }
-
-                    //Check previous engine. If it is active and hovering then it will be applying translation, so we should not apply translation.
-                    else if (engine == this)
-                    {
-                        prevEngine = engines[index - 1];
-                        if (prevEngine.IsActivated())
-                            applyWarpTranslation = false;
-                        else
-                            applyWarpTranslation = true;
+                        break;
                     }
                 }
             }
+*/
 
             return applyWarpTranslation;
         }

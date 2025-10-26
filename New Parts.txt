@@ -1,0 +1,14 @@
+New Parts
+
+- MW-5 "Protostar" Jump Engine (Gravity Wave Applications): One of the only early models that worked... barely. It survived just long enough to get real data. Other prototypes? Disintegrated or disappeared.
+- S3/Mk3 "Deneb" Jump Engine (Jump Technologies): Heavy-duty interstellar jump core. Offers unmatched range and charge rate. Also includes a "Flex Grav" contragravity propulsion system.
+- S2/Mk2 "Altair" Jump Engine (Miniature Jump Tech): A general-purpose system for system-wide navigation. Offers solid performance without excessive risk. Also includes a "Flex Grav" contragravity propulsion system.
+- S1 "Rigel" Jump Engine (Miniature Jump Tech): The smallest and safest jump drive available. Designed for short tactical hops and probes. Also includes a "Flex Grav" contragravity propulsion system.
+- Jump Beacon (Advanced Jump Tech): An artificial gravity anchor that pulls jump ships to it- even when undesired.
+- Quantum Astrogation Core (Advanced Jump Tech): Configurable to- 
+  * improve jump range through superior navigation calculations
+  * allow jumps to the destination even if not in line of site
+  * reduce jump drift
+  * reduce mis-jump chance for blind jumps
+- Jump Recovery Optimizer (Advanced Jump Tech): Reduces cooldown timers for jump engines.
+- Targeting Override Array (Advanced Jump Tech): Enables interstellar-only jump engines to target planets and moons instead of just stars.

@@ -117,6 +117,13 @@ namespace Blueshift
             string[] unlockedNodes = new string[0];
             ProtoTechNode techNode = null;
 
+            // Make a random roll to see if we should unlock a tech node.
+            int unlockRoll = UnityEngine.Random.Range(1, dieRoll);
+            if (unlockRoll < unlockTargetNumber)
+            {
+                return;
+            }
+
             // Get the list of unlocked tech nodes (if any).
             if (partNode != null && partNode.HasValue("unlockedTechNode"))
             {
@@ -134,13 +141,6 @@ namespace Blueshift
                 }
                 unlockedNodes = candidates.ToArray();
             }
-            else
-            {
-                // No tech nodes to specifically unlock. Make a random roll to see if we should unlock a random tech node.
-                int unlockRoll = UnityEngine.Random.Range(1, dieRoll);
-                if (unlockRoll < unlockTargetNumber)
-                    return;
-            }
 
             // If we have a specific list of nodes to unlock, then do so now.
             ProtoTechNode node;
@@ -148,9 +148,9 @@ namespace Blueshift
             {
                 ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
 
-                for (int nodeIndex = 0; nodeIndex < unlockedNodes.Length; nodeIndex++)
+                techNode = AssetBase.RnDTechTree.FindTech(unlockedNodes[0]);
+                if (techNode != null)
                 {
-                    techNode = AssetBase.RnDTechTree.FindTech(unlockedNodes[nodeIndex]);
                     unlockTechNode(techNode);
                 }
             }
@@ -164,7 +164,7 @@ namespace Blueshift
                 ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
 
                 // Unlock a random node.
-                int index = UnityEngine.Random.Range(0, unlockedNodes.Length);
+                int index = UnityEngine.Random.Range(0, unlockCandidates.Length);
                 node = unlockCandidates[index];
                 unlockTechNode(node);
             }
