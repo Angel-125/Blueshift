@@ -485,9 +485,39 @@ namespace Blueshift
                 double latitude = latLong.x;
                 double longitude = latLong.y;
 
+                // Calculate altitude
+                double destinationAltitude = calculateDestinationAltitude(destinationVessel, latitude, longitude);
+
                 // Off we go
-                part.StartCoroutine(setVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, distance, inclination, heading));
+                part.StartCoroutine(setVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, destinationAltitude, inclination, heading));
             }
+        }
+
+        private double calculateDestinationAltitude(Vessel destinationVessel, double latitude, double longitude)
+        {
+            double pqsHeight = 0;
+            CelestialBody mainBody = destinationVessel.mainBody;
+            if (mainBody.pqsController != null)
+            {
+                Vector3d relSurfaceNvector = mainBody.GetRelSurfaceNVector(latitude, longitude);
+                pqsHeight = mainBody.pqsController.GetSurfaceHeight(relSurfaceNvector) - mainBody.Radius;
+            }
+
+            double destinationHeight = destinationVessel.altitude - pqsHeight;
+
+            double maxDimension = getMaxDimension(FlightGlobals.ActiveVessel);
+
+            return destinationHeight + maxDimension;
+        }
+
+        private double getMaxDimension(Vessel vessel)
+        {
+            return Math.Round((double)Mathf.Max(new float[3]
+            {
+                vessel.vesselSize.x,
+                vessel.vesselSize.y,
+                vessel.vesselSize.z
+            }), 2) * 0.5 + 5.0;
         }
 
         IEnumerator<YieldInstruction> setOrbitRendezvous(Vessel destinationVessel, Vector3 position)
@@ -500,12 +530,12 @@ namespace Blueshift
             yield return null;
         }
 
-        IEnumerator<YieldInstruction> setVesselPosition(int flightGlobalsIndex, double latitude, double longitude, double distance, double inclination, double heading)
+        IEnumerator<YieldInstruction> setVesselPosition(int flightGlobalsIndex, double latitude, double longitude, double altitude, double inclination, double heading)
         {
             part.Effect(teleportEffect, 1);
             yield return new WaitForFixedUpdate();
 
-            FlightGlobals.fetch.SetVesselPosition(flightGlobalsIndex, latitude, longitude, distance, inclination, heading, true, true);
+            FlightGlobals.fetch.SetVesselPosition(flightGlobalsIndex, latitude, longitude, altitude, inclination, heading, true, true);
             FloatingOrigin.ResetTerrainShaderOffset();
 
             yield return null;
