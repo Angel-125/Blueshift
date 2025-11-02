@@ -41,6 +41,8 @@ Specifies the rendezvous distance. Default is 50 meters away from the gate's ves
 Flag to automatically activate the jumpgate. It requires two gates in the network.
 ### lightIntensity
 How bright to make the lights.
+### gateLightsTransformName
+Name of the lights to turn on
 ### waterfallFXModule
 Optional (but highly recommended) Waterfall effects module
 ### vesselID

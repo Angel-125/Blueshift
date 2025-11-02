@@ -2050,6 +2050,11 @@
             How bright to make the lights.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIJumpGate.gateLightsTransformName">
+            <summary>
+            Name of the lights to turn on
+            </summary>
+        </member>
         <member name="F:Blueshift.WBIJumpGate.waterfallFXModule">
             <summary>
             Optional (but highly recommended) Waterfall effects module

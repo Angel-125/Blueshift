@@ -294,6 +294,12 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public float lightIntensity = 5f;
+
+        /// <summary>
+        /// Name of the lights to turn on
+        /// </summary>
+        [KSPField]
+        public string gateLightsTransformName = "gateLights";
         #endregion
 
         #region Housekeeping
@@ -323,6 +329,7 @@ namespace Blueshift
         Light[] lights = null;
         AudioSource teleportSound = null;
         AudioSource startSound = null;
+        Transform gateLightsTransform = null;
         #endregion
 
         #region IModuleInfo
@@ -676,7 +683,14 @@ namespace Blueshift
             base.OnStart(state);
 
             // Lights
-            lights = part.transform.gameObject.GetComponentsInChildren<Light>();
+            if (!string.IsNullOrEmpty(gateLightsTransformName))
+            {
+                gateLightsTransform = part.FindModelTransform(gateLightsTransformName);
+                if (gateLightsTransform != null)
+                {
+                    lights = gateLightsTransform.gameObject.GetComponentsInChildren<Light>();
+                }
+            }
 
             // Setup GUI
             debugMode = BlueshiftScenario.debugMode;
