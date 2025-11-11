@@ -902,6 +902,35 @@ namespace Blueshift
         }
 
         /// <summary>
+        /// Gets the last moon orbiting the celestial body
+        /// </summary>
+        /// <param name="planet">A celestial body to check for moons.</param>
+        /// <returns>The furthest moon, or null.</returns>
+        public CelestialBody GetLastMoon(CelestialBody planet)
+        {
+            List<CelestialBody> orbitingBodies = planet.orbitingBodies;
+            CelestialBody body, furthestBody = null;
+            int count = orbitingBodies.Count;
+            double furthestDistance = 0;
+
+            for (int index = 0; index < count; index++)
+            {
+                body = orbitingBodies[index];
+                if (isOnBlackList(body))
+                    continue;
+
+                if (body.orbit.semiMajorAxis > furthestDistance)
+                    furthestBody = body;
+            }
+
+            // Ok, we can use the calculated furthest body if we found one and it's not on the blacklist.
+            if (furthestBody != null)
+                Debug.Log("[Blueshift] Last moon orbiting " + planet.name + " is: " + furthestBody.name);
+
+            return furthestBody;
+        }
+
+        /// <summary>
         /// Determines whether or not the celestial body has planets orbiting it.
         /// </summary>
         /// <param name="celestialBody">The CelestialBody to check for planets.</param>

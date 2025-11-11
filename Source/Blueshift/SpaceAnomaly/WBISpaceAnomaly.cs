@@ -275,6 +275,8 @@ namespace Blueshift
 
             if (node.HasValue(kFixedBody))
                 anomaly.fixedBody = node.GetValue(kFixedBody);
+            else if (anomaly.spawnMode == WBIAnomalySpawnModes.homeworld)
+                anomaly.fixedBody = FlightGlobals.GetHomeBodyName();
 
             if (node.HasValue(kFixedSMA))
                 double.TryParse(node.GetValue(kFixedSMA), out anomaly.fixedSMA);
@@ -572,6 +574,7 @@ namespace Blueshift
             ConfigNode vesselNode = null;
             if (!string.IsNullOrEmpty(anomaly.partName))
             {
+                Debug.Log("[WBISpaceAnomaly] - Spawning a single-part vessel for anomaly: " + anomaly.ToString());
                 ConfigNode partNode = ProtoVessel.CreatePartNode(anomaly.partName, 0);
                 ConfigNode[] additionalNodes = new ConfigNode[] { new ConfigNode("ACTIONGROUPS"), discoveryNode };
                 vesselNode = ProtoVessel.CreateVesselNode(anomaly.vesselName, VesselType.SpaceObject, orbit, 0, new ConfigNode[] { partNode }, additionalNodes);
@@ -580,6 +583,8 @@ namespace Blueshift
 
             else if (!string.IsNullOrEmpty(anomaly.protoVesselFilePath))
             {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBISpaceAnomaly] - Spawning a whole vessel...");
                 // Unfortunately this does not work. We can't create a proto vessel config node from a craft file directly.
                 // Maybe something like spawn the vessel from Sandcastle?
                 ConfigNode shipNode = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/" + anomaly.protoVesselFilePath);
@@ -659,11 +664,49 @@ namespace Blueshift
             Orbit orbit = null;
             int bodyIndex = 0;
             CelestialBody body = null;
+            List<CelestialBody> bodies = FlightGlobals.fetch.bodies;
 
             switch (anomaly.spawnMode)
             {
+                case WBIAnomalySpawnModes.homeworld:
+                    body = FlightGlobals.GetHomeBody();
+                    if (body != null)
+                    {
+                        // Find an orbit that will avoid the last moon orbiting the homeworld. If no moon found then we'll set the anomaly at the edge of the homeworld's SOI.
+                        double sma = body.sphereOfInfluence * 0.99f;
+                        CelestialBody lastMoon = BlueshiftScenario.shared.GetLastMoon(body);
+                        if (lastMoon != null)
+                        {
+                            // Try setting orbit past orbit of last moon. If that's too far, then we'll move the orbit inward.
+                            sma = lastMoon.orbit.semiMajorAxis + (lastMoon.sphereOfInfluence * 1.1);
+                            if (sma > body.sphereOfInfluence)
+                                sma = lastMoon.orbit.semiMajorAxis - (lastMoon.sphereOfInfluence * 1.1);
+                        }
+
+                        // Inclination. If < 0 then we generate a random inclination between 0 and 90.
+                        double inclination = anomaly.fixedInclination;
+                        if (inclination < 0)
+                            inclination = UnityEngine.Random.Range(0, 90);
+
+                        // Eccentricity. If < 0 then we generate a random eccentricity between 0 and 1.
+                        double eccentricity = anomaly.fixedEccentricity;
+                        if (eccentricity < 0)
+                            eccentricity = UnityEngine.Random.Range(0f, 1f);
+
+                        return new Orbit(inclination, eccentricity, sma, 0, 0, 0, Planetarium.GetUniversalTime(), body);
+                    }
+                    break;
+
                 case WBIAnomalySpawnModes.fixedOrbit:
-                    body = FlightGlobals.GetBodyByName(anomaly.fixedBody);
+                    if (anomaly.fixedBody.ToLower() == "any")
+                    {
+                        bodyIndex = UnityEngine.Random.Range(0, bodies.Count - 1);
+                        body = bodies[bodyIndex];
+                    }
+                    else
+                    {
+                        body = FlightGlobals.GetBodyByName(anomaly.fixedBody);
+                    }
                     if (body != null)
                     {
                         // Semi-Major Axis.
@@ -701,7 +744,6 @@ namespace Blueshift
                     break;
 
                 case WBIAnomalySpawnModes.randomOrbit:
-                    List<CelestialBody> bodies = FlightGlobals.fetch.bodies;
                     bodyIndex = UnityEngine.Random.Range(0, bodies.Count - 1);
                     body = bodies[bodyIndex];
                     break;
@@ -797,7 +839,7 @@ namespace Blueshift
             }
 
             // Check for existing fixed orbit.
-            if (spawnMode == WBIAnomalySpawnModes.fixedOrbit)
+            if (spawnMode == WBIAnomalySpawnModes.fixedOrbit || spawnMode == WBIAnomalySpawnModes.homeworld)
             {
                 count = filteredAnomalies.Count;
                 for (int index = 0; index < count; index++)

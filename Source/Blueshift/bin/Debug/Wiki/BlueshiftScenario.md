@@ -179,6 +179,14 @@ Finds the last planet in the supplied star system.
 > #### Return value
 > A CelestialBody representing the last planet in the star system (if any)
 
+### GetLastMoon(CelestialBody)
+Gets the last moon orbiting the celestial body
+> #### Parameters
+> **planet:** A celestial body to check for moons.
+
+> #### Return value
+> The furthest moon, or null.
+
 ### HasPlanets(CelestialBody)
 Determines whether or not the celestial body has planets orbiting it.
 > #### Parameters

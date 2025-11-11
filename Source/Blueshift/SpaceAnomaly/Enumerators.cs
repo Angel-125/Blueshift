@@ -56,7 +56,12 @@ namespace Blueshift
         /// <summary>
         /// Spawns in a random orbit of every planet in every star system. One per each planet. Ignores maxInstances. Given the spam, this is mostly for debug purposes.
         /// </summary>
-        everyPlanet
+        everyPlanet,
+
+        /// <summary>
+        /// Spawns in a fixed or random orbit around the homeworld. Only one per homeworld; ignores maxInstances.
+        /// </summary>
+        homeworld
         #endregion
     }
 

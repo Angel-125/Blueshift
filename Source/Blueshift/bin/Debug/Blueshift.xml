@@ -381,6 +381,11 @@
             Spawns in a random orbit of every planet in every star system. One per each planet. Ignores maxInstances. Given the spam, this is mostly for debug purposes.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIAnomalySpawnModes.homeworld">
+            <summary>
+            Spawns in a fixed or random orbit around the homeworld. Only one per homeworld; ignores maxInstances.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIAnomalyOrbitTypes">
             <summary>
             Describes the type of orbit to create when spawning a space anomaly.
@@ -1252,19 +1257,12 @@
             </summary>
             <param name="module">The PartModule representing the FX module.</param>
         </member>
-        <member name="M:Blueshift.WFModuleWaterfallFX.SetControllerOverride(System.String,System.Boolean)">
+        <member name="M:Blueshift.WFModuleWaterfallFX.SetOverride(System.String,System.Boolean)">
             <summary>
             Sets the override state for the specified controller.
             </summary>
             <param name="controllerName">A string containing the name of the controller to override.</param>
             <param name="overriden">A bool indicating whether or not to override the controller.</param>
-        </member>
-        <member name="M:Blueshift.WFModuleWaterfallFX.SetControllerOverrideValue(System.String,System.Single)">
-            <summary>
-            Sets the override value for the specified controller
-            </summary>
-            <param name="controllerName">A string containing the name of the controller to override.</param>
-            <param name="value">A float containing the override value.</param>
         </member>
         <member name="M:Blueshift.WFModuleWaterfallFX.SetControllerValue(System.String,System.Single)">
             <summary>
@@ -1521,6 +1519,13 @@
             </summary>
             <param name="star">A Celestial Body that is the star to check.</param>
             <returns>A CelestialBody representing the last planet in the star system (if any)</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetLastMoon(CelestialBody)">
+            <summary>
+            Gets the last moon orbiting the celestial body
+            </summary>
+            <param name="planet">A celestial body to check for moons.</param>
+            <returns>The furthest moon, or null.</returns>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.HasPlanets(CelestialBody)">
             <summary>

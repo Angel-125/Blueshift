@@ -15,4 +15,6 @@ Spawns in random orbit of every last planet in each star system. One per each pl
 Spawns in a fixed orbit. One anomaly per orbit. Ignores maxInstances and orbitType.
 ### everyPlanet
 Spawns in a random orbit of every planet in every star system. One per each planet. Ignores maxInstances. Given the spam, this is mostly for debug purposes.
+### homeworld
+Spawns in a fixed or random orbit around the homeworld. Only one per homeworld; ignores maxInstances.
 

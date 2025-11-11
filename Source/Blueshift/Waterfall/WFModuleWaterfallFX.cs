@@ -18,19 +18,21 @@ namespace Blueshift
     public class WFModuleWaterfallFX
     {
         static Type typeModuleWaterfallFX;
-        static MethodInfo miSetControllerOverride;
-        static MethodInfo miSetControllerOverrideValue;
+        static Type typeWaterfallController;
+        static MethodInfo miSetOverride;
         static MethodInfo miSetControllerValue;
+        static MethodInfo miFindController;
 
         public PartModule partModule;
 
         public static void InitClass(Assembly assembly)
         {
             typeModuleWaterfallFX = assembly.GetTypes().First(t => t.Name.Equals("ModuleWaterfallFX"));
-
-            miSetControllerOverride = typeModuleWaterfallFX.GetMethod("SetControllerOverride", new[] { typeof(string), typeof(bool) });
-            miSetControllerOverrideValue = typeModuleWaterfallFX.GetMethod("SetControllerOverrideValue", new[] { typeof(string), typeof(float) });
             miSetControllerValue = typeModuleWaterfallFX.GetMethod("SetControllerValue", new[] { typeof(string), typeof(float) });
+            miFindController = typeModuleWaterfallFX.GetMethod("FindController", new[] { typeof(string) });
+
+            typeWaterfallController = assembly.GetTypes().First(t => t.Name.Equals("WaterfallController"));
+            miSetOverride = typeWaterfallController.GetMethod("SetOverride", new[] { typeof(bool) });
         }
 
         /// <summary>
@@ -75,26 +77,14 @@ namespace Blueshift
         /// </summary>
         /// <param name="controllerName">A string containing the name of the controller to override.</param>
         /// <param name="overriden">A bool indicating whether or not to override the controller.</param>
-        public void SetControllerOverride(string controllerName, bool overriden = true)
+        public void SetOverride(string controllerName, bool overriden = true)
         {
-            if (miSetControllerOverride == null || string.IsNullOrEmpty(controllerName))
+            if (miFindController == null || miSetOverride == null)
                 return;
 
-            miSetControllerOverride.Invoke(partModule, new object[] { controllerName, overriden });
-        }
-
-        /// <summary>
-        /// Sets the override value for the specified controller
-        /// </summary>
-        /// <param name="controllerName">A string containing the name of the controller to override.</param>
-        /// <param name="value">A float containing the override value.</param>
-        public void SetControllerOverrideValue(string controllerName, float value)
-        {
-            if (miSetControllerOverrideValue == null || string.IsNullOrEmpty(controllerName))
-                return;
-
-            SetControllerOverride(controllerName);
-            miSetControllerOverrideValue.Invoke(partModule, new object[] { controllerName, value });
+            object waterfallController = miFindController.Invoke(partModule, new object[] { controllerName });
+            if (waterfallController != null)
+                miSetOverride.Invoke(waterfallController, new object[] { overriden });
         }
 
         /// <summary>
@@ -107,6 +97,7 @@ namespace Blueshift
             if (miSetControllerValue == null || string.IsNullOrEmpty(controllerName))
                 return;
 
+            //SetOverride(controllerName, true);
             miSetControllerValue.Invoke(partModule, new object[] { controllerName, value });
         }
     }

@@ -146,9 +146,10 @@ namespace Blueshift
             ProtoTechNode node;
             if (unlockedNodes.Length > 0)
             {
-                ScreenMessages.PostScreenMessage(unlockMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(Localizer.Format(unlockMessage), kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
 
-                techNode = AssetBase.RnDTechTree.FindTech(unlockedNodes[0]);
+                int lastNodeIndex = unlockedNodes.Length - 1;
+                techNode = AssetBase.RnDTechTree.FindTech(unlockedNodes[UnityEngine.Random.Range(0, lastNodeIndex)]);
                 if (techNode != null)
                 {
                     unlockTechNode(techNode);
