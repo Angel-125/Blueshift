@@ -380,28 +380,38 @@ namespace Blueshift
             switch (spawnMode)
             {
                 case WBIAnomalySpawnModes.everyLastPlanet:
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[WBISpaceAnomaly] - Spawning anomaly " + name + " at every last planet");
                     anomalies = createLastPlanetAnomalies(spaceAnomalies);
                     if (anomalies.Count > 0)
                     {
+                        if (BlueshiftScenario.debugMode)
+                            Debug.Log("[WBISpaceAnomaly] - Spawned anomaly " + name + " at every last planet. Total: " + anomalies.Count);
                         setupJumpgateNetwork(anomalies);
                         spaceAnomalies.AddRange(anomalies);
                     }
                     break;
 
                 case WBIAnomalySpawnModes.everyPlanet:
-                    Debug.Log("[Blueshift] - Spawning anomaly " + name + " at each planet");
+                    Debug.Log("[WBISpaceAnomaly] - Spawning anomaly " + name + " at each planet");
                     anomalies = createEachPlanetAnomalies(spaceAnomalies);
                     if (anomalies.Count > 0)
                     {
+                        if (BlueshiftScenario.debugMode)
+                            Debug.Log("[WBISpaceAnomaly] - Spawned anomaly " + name + " at every planet. Total: " + anomalies.Count);
                         setupJumpgateNetwork(anomalies);
                         spaceAnomalies.AddRange(anomalies);
                     }
                     break;
 
                 default:
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[WBISpaceAnomaly] - Spawning anomaly " + name + " at a random location");
                     WBISpaceAnomaly anomaly = createRandomAnomaly();
                     if (anomaly != null)
                     {
+                        if (BlueshiftScenario.debugMode)
+                            Debug.Log("[WBISpaceAnomaly] - Spawned anomaly " + name + " at a random location");
                         setupJumpgateNetwork(anomaly);
                         spaceAnomalies.Add(anomaly);
                     }
@@ -469,7 +479,7 @@ namespace Blueshift
                     if (vesselNode != null)
                     {
                         anomalies.Add(anomaly);
-                        Debug.Log("[Blueshift] - Spawned anomaly " + name + " at " + anomaly.fixedBody);
+                        Debug.Log("[WBISpaceAnomaly] - Spawned anomaly " + name + " at " + anomaly.fixedBody);
                     }
                 }
             }
@@ -523,10 +533,18 @@ namespace Blueshift
                 prefix = prefix.Replace(" <<1>>", "");
                 anomaly.vesselName = anomaly.vesselName.Replace(prefix, kAnomalyPrefix);
                 anomaly.vesselName = anomaly.vesselName.Replace("- ", "-");
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBISpaceAnomaly] - Generated vesselName: " + anomaly.vesselName);
             }
 
             // Generate orbit
             Orbit orbit = generateOrbit(anomaly);
+            if (orbit == null)
+            {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBISpaceAnomaly] - orbit is null!");
+                return null;
+            }
 
             // Determine lifetime
             double minLifetime = anomaly.minLifetime;
@@ -543,17 +561,58 @@ namespace Blueshift
 
             // Create discovery and additional nodes.
             DiscoveryLevels discoveryLevels = !isKnown ? DiscoveryLevels.Presence : DiscoveryLevels.StateVectors;
-            ConfigNode discoveryNode = ProtoVessel.CreateDiscoveryNode(discoveryLevels, objectClass, minLifetime, maxLifetime);
+            ConfigNode discoveryNode = null;
+            try
+            {
+                discoveryNode = ProtoVessel.CreateDiscoveryNode(discoveryLevels, objectClass, minLifetime, maxLifetime);
+                if (discoveryNode == null)
+                {
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[WBISpaceAnomaly] - discoveryNode is null!");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("[WBISpaceAnomaly] - Exception while trying to call ProtoVessel.CreateDiscoveryNode: " + ex);
+                return null;
+            }
 
             // Create vessel node
-            ConfigNode vesselNode = createVesselNode(anomaly, orbit, discoveryNode);
-            if (vesselNode == null)
+            ConfigNode vesselNode = null;
+            try
             {
+                vesselNode = createVesselNode(anomaly, orbit, discoveryNode);
+                if (vesselNode == null)
+                {
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[WBISpaceAnomaly] - vesselNode is null!");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("[WBISpaceAnomaly] - Exception while trying to call createVesselNode: " + ex);
                 return null;
             }
 
             // Add vessel node to the game.
             ProtoVessel protoVessel = HighLogic.CurrentGame.AddVessel(vesselNode);
+            try
+            {
+                protoVessel = HighLogic.CurrentGame.AddVessel(vesselNode);
+                if (protoVessel == null)
+                {
+                    if (BlueshiftScenario.debugMode)
+                        Debug.Log("[WBISpaceAnomaly] - protoVessel is null!");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("[WBISpaceAnomaly] - Exception while trying to call HighLogic.CurrentGame.AddVessel: " + ex);
+                return null;
+            }
 
             // Get vessel ID
             if (vesselNode.HasValue("pid"))
@@ -575,10 +634,37 @@ namespace Blueshift
             if (!string.IsNullOrEmpty(anomaly.partName))
             {
                 Debug.Log("[WBISpaceAnomaly] - Spawning a single-part vessel for anomaly: " + anomaly.ToString());
-                ConfigNode partNode = ProtoVessel.CreatePartNode(anomaly.partName, 0);
+
                 ConfigNode[] additionalNodes = new ConfigNode[] { new ConfigNode("ACTIONGROUPS"), discoveryNode };
-                vesselNode = ProtoVessel.CreateVesselNode(anomaly.vesselName, VesselType.SpaceObject, orbit, 0, new ConfigNode[] { partNode }, additionalNodes);
-                Debug.Log("[WBISpaceAnomaly] - vesselNode: " + vesselNode.ToString());
+
+                ConfigNode partNode = ProtoVessel.CreatePartNode(anomaly.partName, 0);
+                try
+                {
+                    partNode = ProtoVessel.CreatePartNode(anomaly.partName, 0);
+                    if (partNode == null)
+                    {
+                        if (BlueshiftScenario.debugMode)
+                            Debug.Log("[WBISpaceAnomaly] - partNode is null!");
+                        return null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.Log("[WBISpaceAnomaly] - Exception while trying to call ProtoVessel.CreateVesselNode: " + ex);
+                    return null;
+                }
+
+                try
+                {
+                    vesselNode = ProtoVessel.CreateVesselNode(anomaly.vesselName, VesselType.SpaceObject, orbit, 0, new ConfigNode[] { partNode }, additionalNodes);
+                }
+                catch (Exception ex)
+                {
+                    Debug.Log("[WBISpaceAnomaly] - Exception while trying to call ProtoVessel.CreateVesselNode: " + ex);
+                    return null;
+                }
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBISpaceAnomaly] - vesselNode: " + vesselNode.ToString());
             }
 
             else if (!string.IsNullOrEmpty(anomaly.protoVesselFilePath))
@@ -609,7 +695,7 @@ namespace Blueshift
                             else
                             {
                                 if (BlueshiftScenario.debugMode)
-                                    Debug.Log("[Blueshift] - Cannot create anomaly, invalid part found in " + protoVesselFilePath);
+                                    Debug.Log("[WBISpaceAnomaly] - Cannot create anomaly, invalid part found in " + protoVesselFilePath);
                                 return null;
                             }
                             break;
@@ -634,10 +720,20 @@ namespace Blueshift
                 if (nodes.Count > 0)
                 {
                     ConfigNode[] additionalNodes = new ConfigNode[] { actionGroupsNode, discoveryNode, flightPlanNode, ctrlStateNode, vesselModulesNode };
-                    vesselNode = ProtoVessel.CreateVesselNode(anomaly.vesselName, VesselType.SpaceObject, orbit, 0, nodes.ToArray(), additionalNodes);
+                    try
+                    {
+                        vesselNode = ProtoVessel.CreateVesselNode(anomaly.vesselName, VesselType.SpaceObject, orbit, 0, nodes.ToArray(), additionalNodes);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.Log("[WBISpaceAnomaly] - Exception while trying to call ProtoVessel.CreateVesselNode: " + ex);
+                        return null;
+                    }
                 }
                 else if (BlueshiftScenario.debugMode)
-                    Debug.Log("[Blueshift] - Could not find PART nodes in " + protoVesselFilePath);
+                {
+                    Debug.Log("[WBISpaceAnomaly] - Could not find PART nodes in " + protoVesselFilePath);
+                }
             }
 
             return vesselNode;
@@ -809,13 +905,13 @@ namespace Blueshift
         private bool canCreateNewInstance(List<WBISpaceAnomaly> existingAnomalies)
         {
             if (BlueshiftScenario.debugMode)
-                Debug.Log("[Blueshift] - Checking to see if " + name + " can be created...");
+                Debug.Log("[WBISpaceAnomaly] - Checking to see if " + name + " can be created...");
 
             // Only spawn jumpgates if the anomaly type is a jumpgate and jumpgates are enabled.
             if (anomalyType == WBIAnomalyTypes.jumpGate && !BlueshiftSettings.JumpgatesEnabled)
             {
                 if (BlueshiftScenario.debugMode)
-                    Debug.Log("[Blueshift] - Not allowed to spawn jump gates");
+                    Debug.Log("[WBISpaceAnomaly] - Not allowed to spawn jump gates");
                 return false;
             }
 
@@ -823,7 +919,7 @@ namespace Blueshift
             if (UnityEngine.Random.Range(1, 1000) < spawnTargetNumber)
             {
                 if (BlueshiftScenario.debugMode)
-                    Debug.Log("[Blueshift] - Did not roll high enough to spawn " + name);
+                    Debug.Log("[WBISpaceAnomaly] - Did not roll high enough to spawn " + name);
                 return false;
             }
 
@@ -849,10 +945,10 @@ namespace Blueshift
                         if (BlueshiftScenario.shared.GetVessel(filteredAnomalies[index].vesselId) == null)
                         {
                             if (BlueshiftScenario.debugMode)
-                                Debug.Log("[Blueshift] - An anomaly for " + name + " already exists at " + fixedBody + " but the vessel is missing!");
+                                Debug.Log("[WBISpaceAnomaly] - An anomaly for " + name + " already exists at " + fixedBody + " but the vessel is missing!");
                         }
                         if (BlueshiftScenario.debugMode)
-                            Debug.Log("[Blueshift] - An anomaly for " + name + " already exists at " + fixedBody);
+                            Debug.Log("[WBISpaceAnomaly] - An anomaly for " + name + " already exists at " + fixedBody);
                         return false;
                     }
                 }
@@ -882,6 +978,8 @@ namespace Blueshift
                 }
 
                 // No need to spawn at every last planet, we've done that already.
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBISpaceAnomaly] - An anomaly for " + name + " already exists at every last planet.");
                 return false;
             }
 
@@ -889,7 +987,7 @@ namespace Blueshift
             else if (maxInstances > 0 && filteredAnomalies.Count >= maxInstances)
             {
                 if (BlueshiftScenario.debugMode)
-                    Debug.Log("[Blueshift] - Max instances reached for " + name);
+                    Debug.Log("[WBISpaceAnomaly] - Max instances reached for " + name);
                 return false;
             }
 
