@@ -762,6 +762,14 @@ namespace Blueshift
             CelestialBody body = null;
             List<CelestialBody> bodies = FlightGlobals.fetch.bodies;
 
+            if (BlueshiftScenario.debugMode)
+            {
+                Debug.Log("[WBISpaceAnomaly] - generateOrbit requested for: " + anomaly.name);
+                Debug.Log("[WBISpaceAnomaly] - spawnMode: " + anomaly.spawnMode);
+                Debug.Log("[WBISpaceAnomaly] - orbitType: " + anomaly.orbitType);
+                Debug.Log("[WBISpaceAnomaly] - MY orbitType: " + orbitType);
+            }
+
             switch (anomaly.spawnMode)
             {
                 case WBIAnomalySpawnModes.homeworld:
@@ -840,6 +848,7 @@ namespace Blueshift
                     break;
 
                 case WBIAnomalySpawnModes.randomOrbit:
+                default:
                     bodyIndex = UnityEngine.Random.Range(0, bodies.Count - 1);
                     body = bodies[bodyIndex];
                     break;
@@ -862,9 +871,29 @@ namespace Blueshift
                     break;
             }
 
+            if (body == null)
+            {
+                bodyIndex = UnityEngine.Random.Range(0, bodies.Count - 1);
+                body = bodies[bodyIndex];
+
+                if (BlueshiftScenario.debugMode)
+                {
+                    if (body != null)
+                    {
+                        Debug.Log("[WBISpaceAnomaly] - Warning, body is null. Could not determine what body to use for spawn mode: " + anomaly.spawnMode);
+                        Debug.Log("[WBISpaceAnomaly] - Switching to randomBody spawn mode. Selected random body: " + body.name);
+                    }
+                    else
+                    {
+                        Debug.Log("[WBISpaceAnomaly] - Warning, randomly selected body is null. Nothing more that I can do, good luck. o7");
+                        return null;
+                    }
+                }
+            }
+
             if (body != null)
             {
-                switch (orbitType)
+                switch (anomaly.orbitType)
                 {
                     case WBIAnomalyOrbitTypes.elliptical:
                         orbit = Orbit.CreateRandomOrbitAround(body);
@@ -875,6 +904,7 @@ namespace Blueshift
                         break;
 
                     case WBIAnomalyOrbitTypes.random:
+                    default:
                         if (UnityEngine.Random.Range(1, 100) >= anomaly.flyByOrbitChance)
                             orbit = createRandomFlybyOrbit(body, UnityEngine.Random.Range(anomaly.maxDaysToClosestApproach / 2, anomaly.maxDaysToClosestApproach));
                         else
