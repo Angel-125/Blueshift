@@ -285,7 +285,10 @@ namespace Blueshift
             {
                 ConfigNode[] nodes = node.GetNodes(WBISpaceAnomaly.kNodeName);
                 for (int index = 0; index < nodes.Length; index++)
-                    spaceAnomalies.Add(WBISpaceAnomaly.CreateFromNode(nodes[index]));
+                {
+                    WBISpaceAnomaly spaceAnomaly = WBISpaceAnomaly.CreateFromNode(nodes[index]);
+                    spaceAnomalies.Add(spaceAnomaly);
+                }
             }
 
             // Load anomaly templates
@@ -332,7 +335,7 @@ namespace Blueshift
                     {
                         jumpgateID = jumpgateIDs[gateIndex];
 
-                        // Make sure the vessel exists
+                        // Make sure the vessel exists, and don't add duplicates
                         if (!jumpgates.Contains(jumpgateID))
                             jumpgates.Add(jumpgateID);
                     }
@@ -672,6 +675,8 @@ namespace Blueshift
         /// <returns>A Vessel if one can be found, null if not.</returns>
         public Vessel GetVessel(string vesselID)
         {
+            if (debugMode)
+                Debug.Log("[Blueshift] - GetVessel: Looking for a vessel with ID: " + vesselID);
             // Check unloaded vessels first.
             int count = FlightGlobals.VesselsUnloaded.Count;
             string pid;
@@ -681,9 +686,15 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 vessel = FlightGlobals.VesselsUnloaded[index];
+                if (vessel == null)
+                    continue;
                 pid = vessel.id.ToString().Replace("-", "");
                 if (pid == vesselPID)
+                {
+                    if (debugMode)
+                        Debug.Log("[Blueshift] - GetVessel: Found Unloaded vessel with ID: " + vesselID);
                     return vessel;
+                }
             }
 
             // Check loaded vessels.
@@ -691,9 +702,15 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 vessel = FlightGlobals.VesselsLoaded[index];
+                if (vessel == null)
+                    continue;
                 pid = vessel.id.ToString().Replace("-", "");
                 if (pid == vesselPID)
+                {
+                    if (debugMode)
+                        Debug.Log("[Blueshift] - GetVessel: Found Loaded vessel with ID: " + vesselID);
                     return vessel;
+                }
             }
 
             return null;
@@ -1060,7 +1077,11 @@ namespace Blueshift
 
                 vessel = GetVessel(anomaly.vesselId);
                 if (vessel != null)
+                {
+                    if (debugMode)
+                        Debug.Log("[Blueshift] - removeJumpgates: I am removing a vessel! It is: " + anomaly.vesselId);
                     FlightGlobals.RemoveVessel(vessel);
+                }
                 doomedAnomalies.Add(anomaly);
             }
 
@@ -1087,7 +1108,11 @@ namespace Blueshift
                 anomaly = spaceAnomalies[index];
                 vessel = GetVessel(anomaly.vesselId);
                 if (vessel != null)
+                {
+                    if (debugMode)
+                        Debug.Log("[Blueshift] - removeSpaceAnomalies (no vessel found): I am removing a vessel! It is: " + anomaly.vesselId);
                     FlightGlobals.RemoveVessel(vessel);
+                }
                 doomedAnomalies.Add(anomaly);
             }
 
@@ -1110,6 +1135,8 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
             {
                 vessel = doomedVessels[index];
+                if (debugMode)
+                    Debug.Log("[Blueshift] - removeSpaceAnomalies (orphans): I am removing a vessel! It is: " + vessel.id);
                 FlightGlobals.RemoveVessel(vessel);
             }
         }
@@ -1120,12 +1147,17 @@ namespace Blueshift
                 Debug.Log("[Blueshift] - Checking for new anomalies...");
             int count = anomalyTemplates.Count;
             WBISpaceAnomaly anomalyTemplate;
+            bool saveGame = false;
 
             for (int index = 0; index < count; index++)
             {
                 anomalyTemplate = anomalyTemplates[index];
-                anomalyTemplate.CreateNewInstancesIfNeeded(spaceAnomalies);
+                if (anomalyTemplate.CreateNewInstancesIfNeeded(spaceAnomalies))
+                    saveGame = true;
             }
+
+            if (saveGame)
+                GamePersistence.SaveGame("persistent", HighLogic.SaveFolder, SaveMode.BACKUP);
         }
 
         private void removeExpiredAnomalies()
@@ -1167,7 +1199,11 @@ namespace Blueshift
                 {
                     Vessel doomed = GetVessel(anomaly.vesselId);
                     if (doomed != null && doomed.DiscoveryInfo.Level == DiscoveryLevels.Presence)
+                    {
+                        if (debugMode)
+                            Debug.Log("[Blueshift] - removeExpiredAnomalies: I am removing a vessel! It is: " + anomaly.vesselId);
                         FlightGlobals.RemoveVessel(doomed);
+                    }
 
                     doomedAnomalies.Add(anomaly);
                 }

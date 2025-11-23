@@ -372,12 +372,28 @@ namespace Blueshift
         public void OnTriggerEnter(Collider collider)
         {
             if (collider.attachedRigidbody == null || !collider.CompareTag("Untagged") || destinationVessel == null)
+            {
+                if (BlueshiftScenario.debugMode)
+                {
+                    Debug.Log("[WBIJumpgate] - Trigger entered but exiting.");
+                    if (collider.attachedRigidbody == null)
+                        Debug.Log("[WBIJumpgate] - collider.attachedRigidbody == null");
+                    if (!collider.CompareTag("Untagged"))
+                        Debug.Log("[WBIJumpgate] - !collider.CompareTag(Untagged)");
+                    if (destinationVessel == null)
+                        Debug.Log("[WBIJumpgate] - destinationVessel == null");
+                }
                 return;
+            }
 
             //Get the vessel that collided with the trigger
             Part collidedPart = collider.attachedRigidbody.GetComponent<Part>();
             if (collidedPart == null)
+            {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBIJumpgate] - collidedPart == null");
                 return;
+            }
             Vessel vesselToTeleport = collidedPart.vessel;
 
             // Parts stuck in the startup wash go boom.
@@ -449,6 +465,8 @@ namespace Blueshift
                     errorMessageShown = true;
                     ScreenMessages.PostScreenMessage(statusMessage, kMessageDuration, ScreenMessageStyle.UPPER_CENTER);
                 }
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBIJumpgate] - Can't pay the toll");
                 return;
             }
 
@@ -468,6 +486,9 @@ namespace Blueshift
             double distance = Math.Round(Mathf.Max(size.x, size.y, size.z), 2) / 2 + 5.0;
             if (BlueshiftScenario.shared.IsInSpace(destinationVessel))
             {
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBIJumpgate] - About to rendezvous with another vessel: " + destinationVessel.vesselName);
+
                 Vector3 position = destinationVessel.transform.up.normalized * (rendezvousDistance + (float)distance);
                 //position = UnityEngine.Random.onUnitSphere * (rendezvousDistance + (float)distance);
                 // Start the coroutine to rendezvous so we don't do this while in the trigger. Helps the game figure out the vessel's proper state.
@@ -494,6 +515,9 @@ namespace Blueshift
 
                 // Calculate altitude
                 double destinationAltitude = calculateDestinationAltitude(destinationVessel, latitude, longitude);
+
+                if (BlueshiftScenario.debugMode)
+                    Debug.Log("[WBIJumpgate] - About to land next to another vessel: " + destinationVessel.vesselName);
 
                 // Off we go
                 part.StartCoroutine(setVesselPosition(destinationVessel.mainBody.flightGlobalsIndex, latitude, longitude, destinationAltitude, inclination, heading));
@@ -1095,6 +1119,7 @@ namespace Blueshift
 
         private void updateJumpgatePAW()
         {
+            // If there is only one gat in our network then just activate immediately.
             if (jumpgates.Count == 1 && !isActivated && autoActivate)
             {
                 if (BlueshiftScenario.debugMode)

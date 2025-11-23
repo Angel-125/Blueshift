@@ -453,7 +453,7 @@
         </member>
         <member name="T:Blueshift.WBIVesselTypeFixer">
             <summary>
-            This part module is a small helper class to fix 
+            This part module is a small helper class to fix an issue where the the player claims the space anomaly and it's uncontrollable.
             </summary>
         </member>
         <member name="T:Blueshift.WBIModuleGeneratorFX">
@@ -1719,11 +1719,22 @@
             ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
             </summary>
         </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.persistentId">
+            <summary>
+            Persistent ID of the vessel
+            </summary>
+        </member>
         <member name="F:Blueshift.WBISpaceAnomaly.isKnown">
             <summary>
             Flag to indicate whether or not the gate should automatically be added to the network's known gates and/or is automatically tracked by the Tracking Station.
             If set to false (the default), then players must visit the gate in order for it to be added to the network.
             Applies to anomalyType = jumpGate.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBISpaceAnomaly.forceAddToNetwork">
+            <summary>
+            Indicates that the jumpgate anomaly should be added to the network even if isKnown = false.
+            This allows anomalies like wormholes to work, where you only find one end of the wormhole.
             </summary>
         </member>
         <member name="F:Blueshift.WBISpaceAnomaly.networkID">

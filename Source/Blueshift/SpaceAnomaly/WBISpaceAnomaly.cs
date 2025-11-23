@@ -50,6 +50,7 @@ namespace Blueshift
         public const string kFlyByOrbitChance = "flyByOrbitChance";
         public const string kMaxDaysToClosestApproach = "maxDaysToClosestApproach";
         public const string kIsKnown = "isKnown";
+        public const string kForceAddToNetwork = "forceAddToNetwork";
         public const string kNetworkID = "networkID";
         public const string kAnomalyType = "anomalyType";
         public const string kExpirationDate = "expirationDate";
@@ -163,11 +164,22 @@ namespace Blueshift
         public string vesselId = string.Empty;
 
         /// <summary>
+        /// Persistent ID of the vessel
+        /// </summary>
+        public string persistentId = string.Empty;
+
+        /// <summary>
         /// Flag to indicate whether or not the gate should automatically be added to the network's known gates and/or is automatically tracked by the Tracking Station.
         /// If set to false (the default), then players must visit the gate in order for it to be added to the network.
         /// Applies to anomalyType = jumpGate.
         /// </summary>
         public bool isKnown = false;
+
+        /// <summary>
+        /// Indicates that the jumpgate anomaly should be added to the network even if isKnown = false.
+        /// This allows anomalies like wormholes to work, where you only find one end of the wormhole.
+        /// </summary>
+        public bool forceAddToNetwork = false;
 
         /// <summary>
         /// Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network.
@@ -235,7 +247,9 @@ namespace Blueshift
             spawnTargetNumber = copyFrom.spawnTargetNumber;
             maxInstances = copyFrom.maxInstances;
             vesselId = copyFrom.vesselId;
+            persistentId = copyFrom.persistentId;
             isKnown = copyFrom.isKnown;
+            forceAddToNetwork = copyFrom.forceAddToNetwork;
             networkID = copyFrom.networkID;
             rendezvousDistance = copyFrom.rendezvousDistance;
             expirationDate = copyFrom.expirationDate;
@@ -302,6 +316,9 @@ namespace Blueshift
             if (node.HasValue(kVesselId))
                 anomaly.vesselId = node.GetValue(kVesselId);
 
+            if (node.HasValue("persistentId"))
+                anomaly.persistentId = node.GetValue("persistentId");
+
             if (node.HasValue(kOrbitType))
                 Enum.TryParse(node.GetValue(kOrbitType), out anomaly.orbitType);
 
@@ -313,6 +330,9 @@ namespace Blueshift
 
             if (node.HasValue(kIsKnown))
                 bool.TryParse(node.GetValue(kIsKnown), out anomaly.isKnown);
+
+            if (node.HasValue(kForceAddToNetwork))
+                bool.TryParse(node.GetValue(kForceAddToNetwork), out anomaly.forceAddToNetwork);
 
             if (node.HasValue(kNetworkID))
                 anomaly.networkID = node.GetValue(kNetworkID);
@@ -357,6 +377,7 @@ namespace Blueshift
             node.AddValue(kSpawnTargetNumber, spawnTargetNumber.ToString());
             node.AddValue(kMaxInstances, maxInstances.ToString());
             node.AddValue(kVesselId, vesselId);
+            node.AddValue("persistentId", persistentId);
             node.AddValue(kNetworkID, networkID);
             node.AddValue(kExpirationDate, expirationDate.ToString());
             node.AddValue(kRendezvousDistance, rendezvousDistance.ToString());
@@ -370,11 +391,11 @@ namespace Blueshift
         /// <summary>
         /// Checks to see if we should create a new instance.
         /// </summary>
-        public virtual void CreateNewInstancesIfNeeded(List<WBISpaceAnomaly> spaceAnomalies)
+        public virtual bool CreateNewInstancesIfNeeded(List<WBISpaceAnomaly> spaceAnomalies)
         {
             // Make sure that we can create at least one new instance.
             if (!canCreateNewInstance(spaceAnomalies))
-                return;
+                return false;
 
             List<WBISpaceAnomaly> anomalies = null;
             switch (spawnMode)
@@ -406,17 +427,21 @@ namespace Blueshift
 
                 default:
                     if (BlueshiftScenario.debugMode)
-                        Debug.Log("[WBISpaceAnomaly] - Spawning anomaly " + name + " at a random location");
-                    WBISpaceAnomaly anomaly = createRandomAnomaly();
+                    {
+                        Debug.Log("[WBISpaceAnomaly] - Spawning anomaly " + name + " of type: " + spawnMode.ToString());
+                    }
+                    WBISpaceAnomaly anomaly = createAnomaly();
                     if (anomaly != null)
                     {
                         if (BlueshiftScenario.debugMode)
-                            Debug.Log("[WBISpaceAnomaly] - Spawned anomaly " + name + " at a random location");
+                            Debug.Log("[WBISpaceAnomaly] - Spawned anomaly " + name + " of type: " + spawnMode.ToString());
                         setupJumpgateNetwork(anomaly);
                         spaceAnomalies.Add(anomaly);
                     }
                     break;
             }
+
+            return true;
         }
         #endregion
 
@@ -425,7 +450,7 @@ namespace Blueshift
         {
             if (anomaly.anomalyType != WBIAnomalyTypes.jumpGate)
                 return;
-            if (!anomaly.isKnown)
+            if (!anomaly.isKnown && !anomaly.forceAddToNetwork)
                 return;
 
             BlueshiftScenario.shared.AddJumpgateToNetwork(anomaly);
@@ -438,7 +463,7 @@ namespace Blueshift
                 setupJumpgateNetwork(anomalies[index]);
         }
 
-        private WBISpaceAnomaly createRandomAnomaly()
+        private WBISpaceAnomaly createAnomaly()
         {
             WBISpaceAnomaly anomaly = new WBISpaceAnomaly(this);
             ConfigNode vesselNode = createAnomalyVessel(anomaly);
@@ -597,7 +622,7 @@ namespace Blueshift
             }
 
             // Add vessel node to the game.
-            ProtoVessel protoVessel = HighLogic.CurrentGame.AddVessel(vesselNode);
+            ProtoVessel protoVessel = null;
             try
             {
                 protoVessel = HighLogic.CurrentGame.AddVessel(vesselNode);
@@ -624,6 +649,12 @@ namespace Blueshift
                 vesselNode.SetValue("pid", Guid.NewGuid().ToString());
                 anomaly.vesselId = vesselNode.GetValue("pid").Replace("-", "");
             }
+
+            // And the persistentID
+            anomaly.persistentId = protoVessel.persistentId.ToString();
+
+            // And save
+            GamePersistence.SaveGame("persistent", HighLogic.SaveFolder, SaveMode.BACKUP);
 
             return vesselNode;
         }
@@ -776,6 +807,7 @@ namespace Blueshift
                     body = FlightGlobals.GetHomeBody();
                     if (body != null)
                     {
+                        anomaly.fixedBody = body.bodyName;
                         // Find an orbit that will avoid the last moon orbiting the homeworld. If no moon found then we'll set the anomaly at the edge of the homeworld's SOI.
                         double sma = body.sphereOfInfluence * 0.99f;
                         CelestialBody lastMoon = BlueshiftScenario.shared.GetLastMoon(body);
@@ -851,23 +883,27 @@ namespace Blueshift
                 default:
                     bodyIndex = UnityEngine.Random.Range(0, bodies.Count - 1);
                     body = bodies[bodyIndex];
+                    anomaly.fixedBody = body.bodyName;
                     break;
 
                 case WBIAnomalySpawnModes.randomSolarOrbit:
                     List<CelestialBody> stars = BlueshiftScenario.shared.GetStars();
                     bodyIndex = UnityEngine.Random.Range(0, stars.Count - 1);
                     body = stars[bodyIndex];
+                    anomaly.fixedBody = body.bodyName;
                     break;
 
                 case WBIAnomalySpawnModes.randomPlanetOrbit:
                     List<CelestialBody> planets = BlueshiftScenario.shared.GetPlanets();
                     bodyIndex = UnityEngine.Random.Range(0, planets.Count - 1);
                     body = planets[bodyIndex];
+                    anomaly.fixedBody = body.bodyName;
                     break;
 
                 case WBIAnomalySpawnModes.everyLastPlanet:
                 case WBIAnomalySpawnModes.everyPlanet:
                     body = FlightGlobals.GetBodyByName(anomaly.fixedBody);
+                    anomaly.fixedBody = body.bodyName;
                     break;
             }
 
@@ -893,6 +929,7 @@ namespace Blueshift
 
             if (body != null)
             {
+                anomaly.fixedBody = body.bodyName;
                 switch (anomaly.orbitType)
                 {
                     case WBIAnomalyOrbitTypes.elliptical:
@@ -960,25 +997,42 @@ namespace Blueshift
             {
                 if (existingAnomalies[index].partName == partName && existingAnomalies[index].spawnMode == spawnMode)
                     filteredAnomalies.Add(existingAnomalies[index]);
-                else if (existingAnomalies[index].protoVesselFilePath == protoVesselFilePath && existingAnomalies[index].spawnMode == spawnMode)
+                else if (!string.IsNullOrEmpty(protoVesselFilePath) && existingAnomalies[index].protoVesselFilePath == protoVesselFilePath && existingAnomalies[index].spawnMode == spawnMode)
                     filteredAnomalies.Add(existingAnomalies[index]);
             }
 
             // Check for existing fixed orbit.
+            Vessel vessel = null;
             if (spawnMode == WBIAnomalySpawnModes.fixedOrbit || spawnMode == WBIAnomalySpawnModes.homeworld)
             {
                 count = filteredAnomalies.Count;
+                vessel = null;
                 for (int index = 0; index < count; index++)
                 {
                     if (filteredAnomalies[index].fixedBody == fixedBody)
                     {
-                        if (BlueshiftScenario.shared.GetVessel(filteredAnomalies[index].vesselId) == null)
+                        vessel = BlueshiftScenario.shared.GetVessel(filteredAnomalies[index].vesselId);
+                        if (vessel == null)
+                        {
+                            uint persistentId = uint.Parse(filteredAnomalies[index].persistentId);
+                            if (BlueshiftScenario.debugMode)
+                                Debug.Log("[WBISpaceAnomaly] - Searching for " + name + " by persistentId: " + persistentId);
+                            if (FlightGlobals.FindVessel(persistentId, out vessel))
+                            {
+                                if (BlueshiftScenario.debugMode)
+                                    Debug.Log("[WBISpaceAnomaly] - Found " + name + " by persistentId: " + persistentId);
+                            }
+                        }
+                        if (vessel == null)
                         {
                             if (BlueshiftScenario.debugMode)
                                 Debug.Log("[WBISpaceAnomaly] - An anomaly for " + name + " already exists at " + fixedBody + " but the vessel is missing!");
                         }
-                        if (BlueshiftScenario.debugMode)
-                            Debug.Log("[WBISpaceAnomaly] - An anomaly for " + name + " already exists at " + fixedBody);
+                        else
+                        {
+                            if (BlueshiftScenario.debugMode)
+                                Debug.Log("[WBISpaceAnomaly] - An anomaly for " + name + " already exists at " + fixedBody);
+                        }
                         return false;
                     }
                 }

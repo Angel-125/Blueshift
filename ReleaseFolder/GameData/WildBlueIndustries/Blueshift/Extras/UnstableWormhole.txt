@@ -3,10 +3,10 @@
 // When creating a paired gate, be sure to NOT use spawnMode = everyLastPlanet. Ideally, use spawnMode = fixedOrbit instead.
 // Paired gates are easy to make- just give both gates the same networkID and make it unique.
 // Also, set isKnown = true.
-SPACE_ANOMALY:NEEDS[GU]
+SPACE_ANOMALY
 {
 	// Identifier for the space anomaly.
-	name = wormholeJool
+	name = wormholeFixedEnd
 
 	// Name of the part to spawn
 	partName = wbiWormhole
@@ -36,7 +36,7 @@ SPACE_ANOMALY:NEEDS[GU]
 //	flyByOrbitChance = 50
 
 	// For fixedOrbit, the celestial body to spawn around.
-	fixedBody = Jool
+	fixedBody = Kerbin
 	
 	// For fixedOrbit, the Semi-Major axis of the orbit.
 	fixedSMA = 2000000
@@ -68,34 +68,44 @@ SPACE_ANOMALY:NEEDS[GU]
 
 	// Determines whether or not the jumpgate is already known and should be added to the network. Default is false.
 	// Applies to anomalyType = jumpGate.
-	isKnown = true
+	isKnown = false
+
+	// Indicates that the jumpgate anomaly should be added to the network even if isKnown = false.
+	// This allows anomalies like wormholes to work, where you only find one end of the wormhole.
+	forceAddToNetwork = true
 
 	// Assign the jumpgate to this network. Overrides networkID set in WBIJumpGate. Make this a unique value.
 	// Applies to anomalyType = jumpGate.
-	networkID = Jool-SgrA
+	networkID = UnstableWormholeWithOneFixedEnd
 
 	// Overrides the default rendezvous distance set in WBIJumpGate.
 	rendezvousDistance = 1100
 }
 
-// The other half of the wormhole
-SPACE_ANOMALY:NEEDS[GU]
+// The other half of the wormhole. This is the unstable end.
+SPACE_ANOMALY
 {
-	name = wormholeSgrA
+	name = wormholeUnstableEnd
 	partName = wbiWormhole
 	sizeClass = I
-	spawnMode = fixedOrbit
+	spawnMode = randomOrbit
+
+	// By rights you SHOULD be able to set spawnMode = randomOrbit BUT for reasons unknown
+	// KSP keeps deleting the vessel definition. fixedOrbit does seem to work though.
+//	spawnMode = fixedOrbit
+//	fixedBody = any
+//	fixedSMA = -1
+//	fixedEccentricity = -1
+//	fixedInclination = -1
+
 	orbitType = elliptical
-	fixedBody = SgrA
-	fixedSMA = 4815162342
-	fixedInclination = 0
-	fixedEccentricity = 0
-	minLifetime = -1
-	maxLifetime = -1
+	minLifetime = 86400
+	maxLifetime = 1728000
 	spawnTargetNumber = 1
 	maxInstances = 1
 	anomalyType = jumpGate
-	isKnown = true
-	networkID = Jool-SgrA
+	isKnown = false
+	forceAddToNetwork = true
+	networkID = UnstableWormholeWithOneFixedEnd
 	rendezvousDistance = 1100
 }

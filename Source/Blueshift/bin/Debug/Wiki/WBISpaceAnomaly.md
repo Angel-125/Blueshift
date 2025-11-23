@@ -43,8 +43,12 @@ Spawn chance in a roll between 1 and 1000
 Maximum number of objects of this type that may exist at any given time. Default is 10. Set to -1 for unlimited number.
 ### vesselId
 ID of the vessel as found in the FlightGlobals.VesselsUnloaded.
+### persistentId
+Persistent ID of the vessel
 ### isKnown
 Flag to indicate whether or not the gate should automatically be added to the network's known gates and/or is automatically tracked by the Tracking Station. If set to false (the default), then players must visit the gate in order for it to be added to the network. Applies to anomalyType = jumpGate.
+### forceAddToNetwork
+Indicates that the jumpgate anomaly should be added to the network even if isKnown = false. This allows anomalies like wormholes to work, where you only find one end of the wormhole.
 ### networkID
 Only gates with matching network IDs can connect to each other. Leave blank if the gate connects to any network. If there are only two gates in the network then there is no need to select the other gate from the list. You can add additional networks by adding a semicolon character in between network IDs. Applies to anomalyType = jumpGate.
 ### rendezvousDistance

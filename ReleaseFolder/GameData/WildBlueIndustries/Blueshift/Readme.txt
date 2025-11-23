@@ -10,8 +10,19 @@ GameData
 	FireflyAPI
 
 Changes
+
+SPACE_ANOMALY:
 - Added "fixedBody = any" option, which will allow space anomalies with spawnMode = fixedOrbit to appear around a random celestial body (yes, I know, it's weird...)
 - Added spawnMode = homeworld option, which will allow space anomalies to spawn in orbit of the homeworld. SMA will automatically be set to the edge of the homeworld's Sphere of Influence. The rest of the parameters are taken from the Fixed Orbit parameters.
+- Added forceAddToNetwork flag. If set to true, the jumpgate anomaly will be added to the jumpgate network even if isKnown = false. This allows gates to be discovered and pre-populated with destinations.
+
+Patches
+
+- Removed ModuleManager patch for defunct Galaxies Unlimited and repurposed it.
+
+Extras
+
+- Added UnstableWormhole.txt - This config file provides an example of defining a wormhole that is fixed at one end (Kerbin), and unstable at the other end (it will jump around to various other celestial bodies).
 
 Bug Fixes
 
@@ -19,6 +30,7 @@ Bug Fixes
 - Fixes issue where vessels are teleported underneath statics when the jump gate is placed on a static.
 - Fixes issue where all the lights on a vessel would be activated upon activating a jump gate.
 - Fixes NullRefException in WBIModuleGeneratorFX.
+- Fixed an issue in space anomalies where the anomaly wouldn't spawn when protoVesselFilePath was null.
 
 ---LICENSE---
 
