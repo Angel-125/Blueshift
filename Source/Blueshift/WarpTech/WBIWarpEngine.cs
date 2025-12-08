@@ -485,6 +485,7 @@ namespace Blueshift
         string targetDistanceUnits = string.Empty;
         int vesselPartCount = 0;
         bool updateBowshockTransform = false;
+        WFModuleWaterfallFX waterfallFXModule = null;
 
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
         float generatorInsterstellarResourceMultiplier = 1.0f;
@@ -843,6 +844,9 @@ namespace Blueshift
 
             // Firefly
             setupFireflyModule();
+
+            // Get Waterfall module (if any)
+            waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
         }
 
         public override void Flameout(string message, bool statusOnly = false, bool showFX = true)
@@ -1059,6 +1063,14 @@ namespace Blueshift
                     reconfigureFireflyModule();
                 }
             }
+
+            // Update Waterfall
+            /*
+            if (waterfallFXModule != null && !string.IsNullOrEmpty(waterfallEffectController))
+            {
+                waterfallFXModule.SetControllerValue(waterfallEffectController, effectsPowerLevel);
+            }
+            */
 
             onWarpEffectsUpdated.Fire(part.vessel, this, effectsPowerLevel);
         }
