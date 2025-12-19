@@ -115,28 +115,6 @@ Name of the node to check for other gate segments.
 ### secondaryNodeName
 Name of the node to check for other gate segments.
 
-# WBIInertialDampener
-            
-This part module enhances engine thrust and Isp. While the vessel's reported mass will remain unchanged, thrust, Isp, TWR, and delta-v values will be affected.
-        
-## Fields
-
-### onDampenerUpdated
-Signals that the inertial dampener was updated.
-### onDampenerUpdatedEditor
-Signals that the inertial dampener was updated in the editor.
-### inertialDampeningFactor
-How much internal dampening to produce
-### ecMassPercentIncrease
-Amount of increase in Electric Charge that it costs to run the generator. Computed as a percentage of vessel mass. So, if this value is 0.05 (the default), and the vessel is 100 tonnes, then the EC cost increases by 5. This is a value between 0 and 1.
-### inertialDampeners
-List of inertial dampeners on the vessel.
-
-# WBIInertialDampeningField
-            
-Applies the inertial dampening field to engines and RCS thrusters, improving their thrust and Isp.
-        
-
 # WBIModuleResourceSponge
             
 This small part module soaks up the input resource(s)
@@ -533,6 +511,10 @@ Name of optional bow shock transform.
 (Debug visible) Total warp capacity calculated from all active warp engines.
 ### effectiveWarpCapacity
 (Debug visible) Effective warp capacity after accounting for vessel mass
+### effectiveWarpCapacityCrewed
+(Debug visible) Effective warp capacity after accounting for vessel mass
+### crewEfficiencyBonus
+Efficiency bonus that the crew provides; it's already factored into effectiveWarpCapacityCrewed, this is just for display purposes.
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
 ### warpResourceProduced

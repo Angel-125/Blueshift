@@ -140,19 +140,19 @@ namespace Blueshift
         /// <summary>
         /// Minimum altitude at which the engine can go to warp. The engine will flame-out unless this altitude requirement is met.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_minWarpAltitude", guiUnits = "m", guiFormat = "n1")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_minWarpAltitude", guiUnits = " m", guiFormat = "n1")]
         public double minWarpAltitudeDisplay = 500000.0f;
 
         /// <summary>
         /// The FTL display velocity of the ship, measured in C, that is adjusted for throttle setting and thrust limiter.
         /// </summary>
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpSpeed", guiFormat = "n3", guiUnits = "C")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_warpSpeed", guiFormat = "n3", guiUnits = " c")]
         protected float warpSpeedDisplay = 0;
 
         /// <summary>
         /// (Debug visible) Maximum possible warp speed.
         /// </summary>
-        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_maxWarpSpeed", guiFormat = "n3", guiUnits = "C")]
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_maxWarpSpeed", guiFormat = "n3", guiUnits = " c")]
         protected float maxWarpSpeedDisplay = 0;
 
         /// <summary>
@@ -267,7 +267,7 @@ namespace Blueshift
         /// <summary>
         /// The ratio between the total mass displaced by the warp coils to the vessel's total mass.
         /// </summary>
-        [KSPField(guiActive = false, guiActiveEditor = true, guiFormat = "n3", guiName = "#LOC_BLUESHIFT_displacementMultiplier")]
+        [KSPField(guiActive = false, guiActiveEditor = true, guiFormat = "n3", guiName = "#LOC_BLUESHIFT_displacementMultiplier", guiUnits = " t")]
         public float displacementMultiplier = 0;
 
         /// <summary>
@@ -288,7 +288,7 @@ namespace Blueshift
         /// This is a percentage value between 0 and 99.999. Anything outside this range will be ignored.
         /// Default is 10%, which reduces resource consumption by 10% while in interstellar space.
         /// </summary>
-        [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
+        [KSPField(guiActive = false, guiFormat = "n3", guiUnits = " u")]
         public float interstellarResourceConsumptionModifier = -1f;
 
         /// <summary>
@@ -360,43 +360,55 @@ namespace Blueshift
         /// <summary>
         /// (Debug visible) Total displacement impulse calculated from all active warp engines.
         /// </summary>
-        [KSPField]
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Total Displacement Impulse", guiFormat = "n3", guiUnits = " t")]
         protected float totalDisplacementImpulse = 0;
 
         /// <summary>
         /// (Debug visible) Total warp capacity calculated from all active warp engines.
         /// </summary>
-        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilTotalCapacity", guiFormat = "n2", guiUnits = "Ko")]
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilTotalCapacity", guiFormat = "n2", guiUnits = " Ko")]
         protected float totalWarpCapacity = 0;
 
         /// <summary>
         /// (Debug visible) Effective warp capacity after accounting for vessel mass
         /// </summary>
-        [KSPField(guiName = "Effective Warp Capacity", guiFormat = "n3", guiUnits = "Ko")]
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Effective Warp Capacity", guiFormat = "n3", guiUnits = " Ko")]
         protected float effectiveWarpCapacity = 0;
+
+        /// <summary>
+        /// (Debug visible) Effective warp capacity after accounting for vessel mass
+        /// </summary>
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Effective Warp Capacity (Crewed)", guiFormat = "n3", guiUnits = " Ko")]
+        protected float effectiveWarpCapacityCrewed = 0;
+
+        /// <summary>
+        /// Efficiency bonus that the crew provides; it's already factored into effectiveWarpCapacityCrewed, this is just for display purposes.
+        /// </summary>
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Crew Efficiency Bonus", guiFormat = "n0", guiUnits = "%")]
+        protected float crewEfficiencyBonus = 1.0f;
 
         /// <summary>
         /// (Debug visible) Distance per physics update that the vessel will move.
         /// </summary>
-        [KSPField(guiName = "Distance per update", guiFormat = "n2", guiUnits = "m")]
+        [KSPField(guiName = "Distance per update", guiFormat = "n2", guiUnits = " m")]
         protected float warpDistance = 0;
 
         /// <summary>
         /// (Debug visible) amount of simulation resource produced.
         /// </summary>
-        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = " u/s")]
         double warpResourceProduced = 0;
 
         /// <summary>
         /// (Debug visible) amount of simulation resource consumed.
         /// </summary>
-        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u/s")]
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = " u/s")]
         double warpResourceRequired = 0;
 
-        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u")]
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = " u")]
         double warpResourceAmount = 0;
 
-        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = "u")]
+        [KSPField(guiActive = true, guiFormat = "n3", guiUnits = " u")]
         double warpResourceMaxAmount = 0;
 
         /// <summary>
@@ -610,6 +622,7 @@ namespace Blueshift
             if (HighLogic.LoadedSceneIsEditor)
             {
                 GameEvents.onEditorShipModified.Remove(onEditorShipModified);
+                GameEvents.onEditorShipCrewModified.Remove(onEditorShipCrewModified);
             }
             else if (HighLogic.LoadedSceneIsFlight)
             {
@@ -802,10 +815,7 @@ namespace Blueshift
             Fields["meetsWarpAltitude"].guiActive = debugMode;
             Fields["hasWarpCapacity"].guiActive = debugMode;
             Fields["applyWarpTranslation"].guiActive = debugMode;
-            Fields["totalDisplacementImpulse"].guiActive = debugMode;
-            Fields["totalWarpCapacity"].guiActive = debugMode;
             Fields["minPlanetaryRadius"].guiActive = debugMode;
-            Fields["effectiveWarpCapacity"].guiActive = debugMode;
             Fields["warpDistance"].guiActive = debugMode;
             Fields["warpResourceProduced"].guiActive = debugMode;
             Fields["warpResourceRequired"].guiActive = debugMode;
@@ -817,8 +827,8 @@ namespace Blueshift
             // Editor events
             if (HighLogic.LoadedSceneIsEditor)
             {
-                Fields["effectiveWarpCapacity"].guiActiveEditor = true;
                 GameEvents.onEditorShipModified.Add(onEditorShipModified);
+                GameEvents.onEditorShipCrewModified.Add(onEditorShipCrewModified);
                 if (EditorLogic.fetch != null && EditorLogic.fetch.ship != null)
                     onEditorShipModified(EditorLogic.fetch.ship);
 
@@ -1330,6 +1340,22 @@ namespace Blueshift
         }
 
 
+        void onEditorShipCrewModified(VesselCrewManifest crewManifest)
+        {
+            return;
+            ShipConstruct ship = EditorLogic.fetch.ship;
+            if (ship != null)
+            {
+                getTotalWarpCapacity();
+                calculateBestWarpSpeed();
+                updateFTLPreflightStatus();
+                updateWarpSpedometer();
+
+                //Dirty the GUI
+                MonoUtilities.RefreshContextWindows(this.part);
+            }
+        }
+
         void onEditorShipModified(ShipConstruct ship)
         {
             int count = ship.parts.Count;
@@ -1451,6 +1477,7 @@ namespace Blueshift
             float origPowerMultiplier = powerMultiplier;
             float origDisplacementMultiplier = displacementMultiplier;
             float origEffectiveWarpCapacity = effectiveWarpCapacity;
+            float origEffectiveWarpCapacityCrewed = effectiveWarpCapacityCrewed;
             double origWarpResourceProduced = warpResourceProduced;
             double origWarpResourceRequired = warpResourceRequired;
             double origConsumptionMultiplier = consumptionMultiplier;
@@ -1469,6 +1496,7 @@ namespace Blueshift
             powerMultiplier = origPowerMultiplier;
             displacementMultiplier = origDisplacementMultiplier;
             effectiveWarpCapacity = origEffectiveWarpCapacity;
+            effectiveWarpCapacityCrewed = origEffectiveWarpCapacityCrewed;
             warpResourceProduced = origWarpResourceProduced;
             warpResourceRequired = origWarpResourceRequired;
             consumptionMultiplier = origConsumptionMultiplier;
@@ -1493,7 +1521,7 @@ namespace Blueshift
             }
             for (int index = 0; index < count; index++)
             {
-                warpCurveSpeed = warpEngines[index].warpCurve.Evaluate(effectiveWarpCapacity);
+                warpCurveSpeed = warpEngines[index].warpCurve.Evaluate(effectiveWarpCapacityCrewed); // use effectiveWarpCapacityCrewed here to account for engineers. effectiveWarpCapacity doesn't take the crew into account.
                 if (warpCurveSpeed > bestWarpSpeed)
                     bestWarpSpeed = warpCurveSpeed;
             }
@@ -1511,6 +1539,15 @@ namespace Blueshift
                 {
                     maxWarpSpeed = absoluteMaxSpeed;
                 }
+            }
+
+            // Account for throttle setting and thrust limiter.
+            if (throttleLevel <= 0 || maxWarpSpeed <= 0)
+            {
+                warpSpeed = 0;
+                if (spatialLocation == WBISpatialLocations.Interstellar)
+                    speedStartTime = Planetarium.GetUniversalTime();
+                return;
             }
 
             // Adjust warp speed based on spatial location.
@@ -1542,6 +1579,18 @@ namespace Blueshift
                     break;
             }
 
+            // Finalize warp speed.
+            warpSpeed = maxWarpSpeed * throttleLevel;
+
+            // If the absoluteMaxSpeed is enabled, then limit max speed.
+            if (absoluteMaxSpeed > 0 && absoluteMaxSpeed < warpSpeed)
+            {
+                warpSpeed = absoluteMaxSpeed;
+            }
+        }
+
+        private float getMiracleWorkerFactor()
+        {
             // Account for miracle workers
             int highestRank = 0;
             ProtoCrewMember astronaut;
@@ -1554,30 +1603,17 @@ namespace Blueshift
                 ShipConstruct ship = EditorLogic.fetch.ship;
                 highestRank = BlueshiftScenario.shared.GetHighestRank(ship, warpEngineerSkill, out astronaut);
             }
-            float skillMultiplier = 0f;
+
+            highestRank = Math.Min(highestRank, 6);
+            float skillMultiplier = 1f;
             if (highestRank >= warpSpeedBoostRank)
             {
+                crewEfficiencyBonus = warpSpeedSkillMultiplier * highestRank * 100f;
                 skillMultiplier = 1.0f + (warpSpeedSkillMultiplier * highestRank);
-                maxWarpSpeed *= skillMultiplier;
             }
 
-            // Account for throttle setting and thrust limiter.
-            if (throttleLevel <= 0 || maxWarpSpeed <= 0)
-            {
-                warpSpeed = 0;
-                if (spatialLocation == WBISpatialLocations.Interstellar)
-                    speedStartTime = Planetarium.GetUniversalTime();
-                return;
-            }
 
-            // Finalize warp speed.
-            warpSpeed = maxWarpSpeed * throttleLevel;
-
-            // If the absoluteMaxSpeed is enabled, then limit max speed.
-            if (absoluteMaxSpeed > 0 && absoluteMaxSpeed < warpSpeed)
-            {
-                warpSpeed = absoluteMaxSpeed;
-            }
+            return skillMultiplier;
         }
 
         /// <summary>
@@ -1591,13 +1627,14 @@ namespace Blueshift
             float vesselMass = 0;
             double totalResourceRequired = 0;
             double totalResourceProduced = 0;
-            float totalDisplacement = 0;
 
             totalWarpCapacity = 0;
             totalDisplacementImpulse = 0;
             powerMultiplier = 0;
             displacementMultiplier = 0;
             effectiveWarpCapacity = 0;
+            effectiveWarpCapacityCrewed = 0;
+            crewEfficiencyBonus = 0;
             warpResourceProduced = 0;
             warpResourceRequired = 0;
             consumptionMultiplier = 0;
@@ -1677,15 +1714,16 @@ namespace Blueshift
                 if (consumeCoilResources(warpCoil, consumptionMultiplier, simulated))
                 {
                     totalWarpCapacity += warpCoil.totalWarpCapacity;
-                    totalDisplacement += warpCoil.displacementImpulse;
+                    totalDisplacementImpulse += warpCoil.displacementImpulse;
                 }
             }
 
             // Calculate displacement multiplier
-            displacementMultiplier = totalDisplacement / vesselMass;
+            displacementMultiplier = totalDisplacementImpulse / vesselMass;
 
             // Get effective warp capacity
             effectiveWarpCapacity = totalWarpCapacity * displacementMultiplier * powerMultiplier;
+            effectiveWarpCapacityCrewed = effectiveWarpCapacity * getMiracleWorkerFactor();
         }
 
         private float getTotalVesselMass()
@@ -1987,6 +2025,8 @@ namespace Blueshift
             warpDistance = 0;
             speedStartTime = 0f;
             effectiveWarpCapacity = 0;
+            effectiveWarpCapacityCrewed = 0;
+            crewEfficiencyBonus = 0;
             hasExceededLightSpeed = false;
             FlightInputHandler.state.mainThrottle = 0;
             circularizationState = WBICircularizationStates.doNotCircularize;

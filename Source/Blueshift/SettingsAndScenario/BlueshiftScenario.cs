@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using KSP.Localization;
+using KSP.UI;
 
 namespace Blueshift
 {
@@ -497,31 +498,41 @@ namespace Blueshift
         public int GetHighestRank(ShipConstruct ship, string skillName, out ProtoCrewMember astronaut)
         {
             astronaut = null;
-            return 0;
             if (string.IsNullOrEmpty(skillName))
                 return 0;
-
+            VesselCrewManifest manifest = CrewAssignmentDialog.Instance.GetManifest();
             string[] skillsToCheck = skillName.Split(new char[] { ';' });
             string checkSkill;
             int highestRank = 0;
             int crewRank = 0;
-            Part[] parts;
             ProtoCrewMember[] crewMembers;
             for (int skillIndex = 0; skillIndex < skillsToCheck.Length; skillIndex++)
             {
                 checkSkill = skillsToCheck[skillIndex];
+                if (debugMode)
+                    Debug.Log("[Blueshift] - Checking skill: " + checkSkill);
 
                 //Find the highest racking kerbal with the desired skill (if any)
-                parts = ship.Parts.ToArray();
-                for (int partIndex = 0; partIndex < parts.Length; partIndex++)
+                foreach (PartCrewManifest partCrewManifest in manifest.PartManifests)
                 {
-                    crewMembers = parts[partIndex].protoModuleCrew.ToArray();
-                    crewRank = GetHighestRank(crewMembers, checkSkill, out astronaut);
-                    if (crewRank > highestRank)
-                        highestRank = crewRank;
+                    crewMembers = partCrewManifest.GetPartCrew();
+                    if (crewMembers.Length > 0)
+                    {
+                        if (debugMode)
+                            Debug.Log("[Blueshift] - Checking part: " + partCrewManifest.PartInfo.name + " with " + crewMembers.Length + " crew members");
+
+                        crewRank = GetHighestRank(crewMembers, checkSkill, out astronaut);
+                        if (debugMode && astronaut != null)
+                            Debug.Log("[Blueshift] - " + astronaut.name + " has the highest rank in the part. Rank: " + crewRank);
+
+                        if (crewRank > highestRank)
+                            highestRank = crewRank;
+                    }
                 }
             }
 
+            if (debugMode)
+                Debug.Log("[Blueshift] - The highest rank found: " + highestRank);
             return highestRank;
         }
 
@@ -530,22 +541,27 @@ namespace Blueshift
             astronaut = null;
             int highestRank = 0;
             int crewRank = 0;
+            ProtoCrewMember crewMember;
 
             for (int index = 0; index < crewMembers.Length; index++)
             {
-                if (crewMembers[index].HasEffect(checkSkill))
+                crewMember = crewMembers[index];
+                if (crewMember == null)
+                    continue;
+
+                if (crewMember.HasEffect(checkSkill))
                 {
-                    crewRank = crewMembers[index].experienceTrait.CrewMemberExperienceLevel();
+                    crewRank = crewMember.experienceTrait.CrewMemberExperienceLevel();
                     if (crewRank > highestRank)
                     {
                         highestRank = crewRank;
-                        astronaut = crewMembers[index];
+                        astronaut = crewMember;
 
-                        if (crewMembers[index].isBadass)
+                        if (crewMember.isBadass)
                             highestRank += 1;
-                        if (crewMembers[index].veteran)
+                        if (crewMember.veteran)
                             highestRank += 1;
-                        if (crewMembers[index].isHero)
+                        if (crewMember.isHero)
                             highestRank += 1;
                     }
                 }

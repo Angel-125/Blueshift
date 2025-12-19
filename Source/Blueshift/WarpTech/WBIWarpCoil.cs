@@ -78,7 +78,7 @@ namespace Blueshift
         /// <summary>
         /// The total warp capacity based on warpCapacity * capacityMultiplier.
         /// </summary>
-        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilCapacity", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup", guiFormat = "n2", guiUnits = "Ko")]
+        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilCapacity", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup", guiFormat = "n2", guiUnits = " Ko")]
         public float totalWarpCapacity = 1;
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace Blueshift
         /// Going over this limit incurs performance penalties, but staying under this value provides benefits.
         /// The displacement value is rated in metric tons.
         /// </summary>
-        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilDisplacementImpulse", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup", guiFormat = "n2", guiUnits = "t")]
+        [KSPField(guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_warpCoilDisplacementImpulse", groupName = "#LOC_BLUESHIFT_warpCoilGroup", groupDisplayName = "#LOC_BLUESHIFT_warpCoilGroup", guiFormat = "n2", guiUnits = " t")]
         public float displacementImpulse = 10;
 
         /// <summary>
@@ -331,6 +331,11 @@ namespace Blueshift
             for (int index = 0; index < count; index++)
                 resourceMaxAmounts.Add(part.Resources[index].resourceName, part.Resources[index].maxAmount);
 
+            // Compute initial totalWarpCapacity, assuming no part variants.
+            capacityMultiplier = 1.0f;
+            totalWarpCapacity = warpCapacity * capacityMultiplier;
+            displacementImpulse = originalDisplacementImpulse;
+
             // Game events
             if (HighLogic.LoadedSceneIsFlight)
             {
@@ -373,7 +378,9 @@ namespace Blueshift
         private void onVariantApplied(Part variantPart, PartVariant variant)
         {
             if (variantPart != part)
+            {
                 return;
+            }
 
             // Get the capacityMultiplier entry
             string multiplier = variant.GetExtraInfoValue(kCapacityMultiplier);

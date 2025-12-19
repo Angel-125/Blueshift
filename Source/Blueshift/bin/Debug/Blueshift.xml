@@ -236,44 +236,6 @@
             Max amount of mass that the generator can support before experiencing reductions in gravitic acceleration.
             </summary>
         </member>
-        <member name="T:Blueshift.WBIInertialDampener">
-            <summary>
-            This part module enhances engine thrust and Isp. While the vessel's reported mass will remain unchanged, thrust, Isp, TWR, and delta-v values will be affected.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIInertialDampener.onDampenerUpdated">
-            <summary>
-            Signals that the inertial dampener was updated.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIInertialDampener.onDampenerUpdatedEditor">
-            <summary>
-            Signals that the inertial dampener was updated in the editor.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIInertialDampener.inertialDampeningFactor">
-            <summary>
-            How much internal dampening to produce
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIInertialDampener.ecMassPercentIncrease">
-            <summary>
-            Amount of increase in Electric Charge that it costs to run the generator.
-            Computed as a percentage of vessel mass. So, if this value is 0.05 (the default),
-            and the vessel is 100 tonnes, then the EC cost increases by 5.
-            This is a value between 0 and 1.
-            </summary>
-        </member>
-        <member name="F:Blueshift.WBIInertialDampener.inertialDampeners">
-            <summary>
-            List of inertial dampeners on the vessel.
-            </summary>
-        </member>
-        <member name="T:Blueshift.WBIInertialDampeningField">
-            <summary>
-            Applies the inertial dampening field to engines and RCS thrusters, improving their thrust and Isp.
-            </summary>
-        </member>
         <member name="M:Blueshift.WBIModuleResourceCapacitor.RepairPart">
             <summary>
             Repairs the part.
@@ -1070,6 +1032,16 @@
         <member name="F:Blueshift.WBIWarpEngine.effectiveWarpCapacity">
             <summary>
             (Debug visible) Effective warp capacity after accounting for vessel mass
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.effectiveWarpCapacityCrewed">
+            <summary>
+            (Debug visible) Effective warp capacity after accounting for vessel mass
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIWarpEngine.crewEfficiencyBonus">
+            <summary>
+            Efficiency bonus that the crew provides; it's already factored into effectiveWarpCapacityCrewed, this is just for display purposes.
             </summary>
         </member>
         <member name="F:Blueshift.WBIWarpEngine.warpDistance">

@@ -91,9 +91,6 @@
     <Compile Include="JumpTech\DEPRECATEDWBIGateAssemblyChecker.cs" />
     <Compile Include="JumpTech\WBIJumpEngine.cs" />
     <Compile Include="GravTech\WBIGravityGenerator.cs" />
-    <Compile Include="MassTech\WBIInertialDampener.cs" />
-    <Compile Include="MassTech\WBIInertialDampeningField.cs" />
-    <Compile Include="MassTech\WBIDampeningFieldLoader.cs" />
     <Compile Include="Resources\WBIModuleResourceCapacitor.cs" />
     <Compile Include="Resources\WBIModuleResourceSponge.cs" />
     <Compile Include="SettingsAndScenario\BlueshiftExportApp.cs" />

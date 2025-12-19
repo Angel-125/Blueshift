@@ -630,7 +630,7 @@ namespace Blueshift
             double minutes = Math.Floor(seconds / secondsPerMinute);
             seconds -= minutes * secondsPerMinute;
 
-            timeString = string.Format("{0:f0}d {1:f0}h {2:f0}m {3:f2}s", days, hours, minutes, seconds);
+            timeString = string.Format("{0:f0} d {1:f0} h {2:f0} m {3:f2} s", days, hours, minutes, seconds);
             if (timeSeconds < 0f)
                 timeString = "-" + timeString;
 

@@ -18,6 +18,7 @@ namespace Blueshift
         private Vector2 scrollPosDestinations;
         private string kDialogTitle;
         private string kBurnTimeTitle;
+        private string kTimeToTarget;
         private string kMaxWarpFactorTitle;
         private string kRangeTitle;
         private string kResourceBalancingTitle;
@@ -29,6 +30,8 @@ namespace Blueshift
         GUILayoutOption[] iconDimensions = new GUILayoutOption[] { GUILayout.Width(16), GUILayout.Height(16) };
         private string status = "";
         private double burnTime = 0;
+        private double distanceToTargetMeters = 0;
+        private double timeToTarget = 0;
         private double maxWarpFactor = 0;
         private double rangeLightYears = 0;
         private double distanceTraveledMeters = 0;
@@ -90,6 +93,8 @@ namespace Blueshift
             drawLineItem(kBurnTimeTitle, "#LOC_BLUESHIFT_plannerBurnTimeDesc", BlueshiftUtilities.FormatTime(burnTime));
             drawLineItem(kMaxWarpFactorTitle, "#LOC_BLUESHIFT_plannerMaxWarpFactorDesc", maxWarpFactor);
             drawLineItem(kRangeTitle, "#LOC_BLUESHIFT_plannerRangeDesc", rangeLightYears, "N5");
+            if (HighLogic.LoadedSceneIsFlight)
+                drawLineItem(kTimeToTarget, "#LOC_BLUESHIFT_plannerTimeToTargetDesc", BlueshiftUtilities.FormatTime(timeToTarget));
 
             if (string.IsNullOrEmpty(status) == false)
             {
@@ -155,6 +160,7 @@ namespace Blueshift
 
             // Calculate the distance to the selected target (if any).
             double distanceMeters;
+            double distanceToTarget;
             double distanceLightYears;
             bool canReachStar = false;
             string colorNotInRange = "grey";
@@ -168,8 +174,13 @@ namespace Blueshift
                     ITargetable targetObject = activeVessel.targetObject;
                     string units;
                     string targetName;
-                    distanceMeters = BlueshiftScenario.shared.GetDistanceToTarget(FlightGlobals.ActiveVessel, out units, out targetName);
+                    distanceToTarget = BlueshiftScenario.shared.GetDistanceToTarget(FlightGlobals.ActiveVessel, out units, out targetName);
+                    distanceMeters = Math.Abs((activeVessel.GetWorldPos3D() - (Vector3d)targetObject.GetTransform().position).magnitude);
                     distanceLightYears = distanceMeters / BlueshiftScenario.shared.kLightYear;
+
+                    distanceToTargetMeters = distanceMeters;
+                    if (maxWarpFactor > 0)
+                        timeToTarget = distanceToTargetMeters / (maxWarpFactor * BlueshiftScenario.shared.kLightSpeed);
 
                     bool canReachTarget = rangeLightYears >= distanceLightYears;
                     textColor = canReachTarget ? colorInRange : colorNotInRange;
@@ -178,7 +189,7 @@ namespace Blueshift
                     GUILayout.Label(canReachTarget ? greenCheckMark : redXIcon, iconDimensions);
                     GUILayout.Label("<color=" + textColor + "><b>" + targetName + "</b></color>");
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label("<color=" + textColor + "><b>" + distanceMeters.ToString("N5") + " " + units + "</b></color>");
+                    GUILayout.Label("<color=" + textColor + "><b>" + distanceToTarget.ToString("N5") + " " + units + "</b></color>");
                     GUILayout.EndHorizontal();
                 }
 
@@ -296,6 +307,8 @@ namespace Blueshift
             // Warp Range
             rangeLightYears = BlueshiftUtilities.CalculateRange(burnTime, maxWarpFactor, out distanceTraveledMeters);
 
+            // Flight Time
+
             // Balanced resources
             balancedResourceAmounts = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.GetBalancedResources(EditorLogic.fetch.ship) : BlueshiftUtilities.GetBalancedResources(FlightGlobals.ActiveVessel);
             if (balancedResourceAmounts != null)
@@ -306,6 +319,7 @@ namespace Blueshift
         {
             kDialogTitle = Localizer.Format("#LOC_BLUESHIFT_warpTravelPlannerTitle");
             kBurnTimeTitle = Localizer.Format("#LOC_BLUESHIFT_plannerBurnTimeTitle");
+            kTimeToTarget = Localizer.Format("#LOC_BLUESHIFT_plannerTimeToTargetTitle");
             kMaxWarpFactorTitle = Localizer.Format("#LOC_BLUESHIFT_plannerMaxWarpFactorTitle");
             kRangeTitle = Localizer.Format("#LOC_BLUESHIFT_plannerRangeTitle");
             kResourceBalancingTitle = Localizer.Format("#LOC_BLUESHIFT_plannerResourceBalancingTitle");

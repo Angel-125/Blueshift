@@ -83,6 +83,10 @@ Name of optional bow shock transform.
 (Debug visible) Total warp capacity calculated from all active warp engines.
 ### effectiveWarpCapacity
 (Debug visible) Effective warp capacity after accounting for vessel mass
+### effectiveWarpCapacityCrewed
+(Debug visible) Effective warp capacity after accounting for vessel mass
+### crewEfficiencyBonus
+Efficiency bonus that the crew provides; it's already factored into effectiveWarpCapacityCrewed, this is just for display purposes.
 ### warpDistance
 (Debug visible) Distance per physics update that the vessel will move.
 ### warpResourceProduced

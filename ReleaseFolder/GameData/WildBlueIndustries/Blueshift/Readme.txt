@@ -11,9 +11,19 @@ GameData
 
 Changes
 
+- Removed Spacehenge part- it wasn't supposed be included in the release version of Blueshift.
+- Updated the warp curves for warp engines and warp cores; you should see better gains earlier in the curve, but diminishing returns later on.
+- Updated how units are displayed to be more SI-adjacent.
+- Updated the warp engine PAW to always show Effective Warp Capacity and Total Displacement Impulse.
+- Updated the warp engine PAW to show how the crew can affect Effective Warp Capacity.
+- Added travel time to target to the Warp Trip Planner (in-flight only).
+- Engineers now affect a ship's Effective Warp Capacity instead of directly affecting max warp speed.
+
 Bug Fixes
 
-- Fixes issue where Waterfall Effects were continually showing for the S3 "Star Frontier" Warp Engine. Again...
+- Fixed an issue in warp coils that would incorrectly compute their total warp capacity if the part had no part variants.
+- Fixed issue in Warp Travel Planner that was incorrectly computing the distance in light-years to the target.
+- Fixed issue where the highest rank reported was always 0 in the editor.
 
 ---LICENSE---
 
