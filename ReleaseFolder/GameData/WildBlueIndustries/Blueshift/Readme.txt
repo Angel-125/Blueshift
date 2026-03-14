@@ -11,19 +11,22 @@ GameData
 
 Changes
 
-- Removed Spacehenge part- it wasn't supposed be included in the release version of Blueshift.
-- Updated the warp curves for warp engines and warp cores; you should see better gains earlier in the curve, but diminishing returns later on.
-- Updated how units are displayed to be more SI-adjacent.
-- Updated the warp engine PAW to always show Effective Warp Capacity and Total Displacement Impulse.
-- Updated the warp engine PAW to show how the crew can affect Effective Warp Capacity.
-- Added travel time to target to the Warp Trip Planner (in-flight only).
-- Engineers now affect a ship's Effective Warp Capacity instead of directly affecting max warp speed.
+This release focuses on flight control improvements to the FlexGrav generator.
 
-Bug Fixes
+- FlexGrav Generator:
+  - Added status display: FlexGrav Output %
+  - Added status display: FlexGrav Acceleration m/sec^2
+  - Changed Vertical Percentage slider (0-100%) into Lift Angle slider (0 - 90 degrees)
+  - Removed Horizontal and Vertical acceleration toggles and associated Action Group actions.
+  - Replaced above with Output Control toggle that can switch between Throttle and Manual.
+  - Added new Toggle Throttle Control Action Group action to switch between Throttle and Manual.
+  - Added new Toggle Propulsion Mode Action Group action to switch between forward and reverse accelerations.
+  - Added new Toggle Lift Angle Action Group action to switch between forward/reverse and lift acceleration angles.
+  - Added FlexGrav Output slider to manually control the generator output when in Manual control mode.
+  - Added toggle to switch between forward and reverse propulsion modes.
+  - You can use the Up/Down translation keys to change the gravitic lift angle.
 
-- Fixed an issue in warp coils that would incorrectly compute their total warp capacity if the part had no part variants.
-- Fixed issue in Warp Travel Planner that was incorrectly computing the distance in light-years to the target.
-- Fixed issue where the highest rank reported was always 0 in the editor.
+- Added new WBIFlexGravGeneratorAnimated part module. This part module enhances WBIFlexGravGenerator with animation effects similar to those found in the WBIGraviticEngine found in Kerbal Flying Saucers.
 
 ---LICENSE---
 

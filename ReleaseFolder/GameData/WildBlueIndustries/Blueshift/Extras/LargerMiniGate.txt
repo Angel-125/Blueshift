@@ -1,0 +1,242 @@
+// Makes the mini jump gate larger, so that the overall diameter is 3.2 m and the aperature size is 2.75 m.
+// Also increases the mass- bud decreases the cost.
+@PART[wbiMinigate]:FOR[Blueshift]
+{
+	@rescaleFactor = 1.27
+	@mass = 10
+	@cost = 5000000
+	@entryCost = 5000000
+
+	@MODULE[WBIJumpGate]
+	{
+		@jumpMaxDimensions = 2.75,2.75,10
+	}
+
+	!MODULE[ModuleWaterfallFX]{}
+MODULE
+{
+	name = ModuleWaterfallFX
+	moduleID = 
+	CONTROLLER
+	{
+		name = gateEffectsController
+		linkedTo = custom
+	}
+	EFFECT
+	{
+		name = portalEffect
+		parentName = waterfallTransform
+		MODEL
+		{
+			path = WildBlueIndustries/Blueshift/FX/Waterfall/jumpGatePortal
+			positionOffset = 0,0,0
+			rotationOffset = 90,0,0
+			scaleOffset = 1.04999995,1.04999995,5
+			MATERIAL
+			{
+				transform = portal
+				shader = Waterfall/Additive Directional
+				randomizeSeed = True
+				TEXTURE
+				{
+					textureSlotName = _MainTex
+					texturePath = Waterfall/FX/fx-noise-1
+					textureScale = 1,1
+					textureOffset = 0,0
+				}
+				COLOR
+				{
+					colorName = _EndTint
+					colorValue = 0.407843143,0.800000012,1,1
+				}
+				COLOR
+				{
+					colorName = _StartTint
+					colorValue = 0.839215696,0.996078432,0.992156863,1
+				}
+				FLOAT
+				{
+					floatName = _Brightness
+					value = 0.443889767
+				}
+				FLOAT
+				{
+					floatName = _Noise
+					value = 1.97166359
+				}
+				FLOAT
+				{
+					floatName = _Falloff
+					value = 0.60666573
+				}
+				FLOAT
+				{
+					floatName = _SpeedY
+					value = 5
+				}
+				FLOAT
+				{
+					floatName = _Fresnel
+					value = 0
+				}
+				FLOAT
+				{
+					floatName = _TintFalloff
+					value = 5
+				}
+			}
+		}
+		SCALEMODIFIER
+		{
+			name = scaleEffect
+			controllerName = gateEffectsController
+			transformName = WildBlueIndustries/Blueshift/FX/Waterfall/jumpGatePortal(Clone)
+			combinationType = REPLACE
+			useRandomness = False
+			randomnessController = random
+			randomnessScale = 1
+			xCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.12065 0 0
+				key = 0.625 0.12065 0 0
+				key = 1 0.12065 0 0
+			}
+			yCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.12065 0 0
+				key = 0.625 0.12065 0 0
+				key = 1 0.12065 0 0
+			}
+			zCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.12065 0 0
+				key = 0.625 5 0 0
+				key = 1 0.12065 0 0
+			}
+		}
+	}
+	EFFECT
+	{
+		name = portalEffectRipple
+		parentName = waterfallTransform
+		MODEL
+		{
+			path = WildBlueIndustries/Blueshift/FX/Waterfall/jumpGatePortal
+			positionOffset = 0,0,0
+			rotationOffset = 90,0,0
+			scaleOffset = 1.04999995,1.04999995,5
+			MATERIAL
+			{
+				transform = portal
+				shader = Waterfall/Additive Directional
+				randomizeSeed = True
+				TEXTURE
+				{
+					textureSlotName = _MainTex
+					texturePath = Waterfall/FX/fx-noise-6
+					textureScale = 1,1
+					textureOffset = 0,0
+				}
+				COLOR
+				{
+					colorName = _EndTint
+					colorValue = 0.407843143,0.800000012,1,1
+				}
+				COLOR
+				{
+					colorName = _StartTint
+					colorValue = 0.839215696,0.996078432,0.992156863,1
+				}
+				FLOAT
+				{
+					floatName = _Brightness
+					value = 0.140556902
+				}
+				FLOAT
+				{
+					floatName = _Noise
+					value = 1.97166359
+				}
+				FLOAT
+				{
+					floatName = _Falloff
+					value = 0.959999979
+				}
+				FLOAT
+				{
+					floatName = _SpeedY
+					value = 15
+				}
+				FLOAT
+				{
+					floatName = _Fresnel
+					value = 0
+				}
+				FLOAT
+				{
+					floatName = _TintFalloff
+					value = 5
+				}
+			}
+		}
+		SCALEMODIFIER
+		{
+			name = scaleEffect
+			controllerName = gateEffectsController
+			transformName = WildBlueIndustries/Blueshift/FX/Waterfall/jumpGatePortal(Clone)
+			combinationType = REPLACE
+			useRandomness = False
+			randomnessController = random
+			randomnessScale = 1
+			xCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.12065 0 0
+				key = 0.625 0.12065 0 0
+				key = 1 0.12065 0 0
+			}
+			yCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.12065 0 0
+				key = 0.625 0.12065 0 0
+				key = 1 0.12065 0 0
+			}
+			zCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.12065 0 0
+				key = 0.625 5 0 0
+				key = 1 0.12065 0 0
+			}
+		}
+		FLOATMODIFIER
+		{
+			name = rippleBright
+			controllerName = gateEffectsController
+			transformName = portal
+			combinationType = REPLACE
+			useRandomness = False
+			randomnessController = random
+			randomnessScale = 1
+			floatName = _Brightness
+			floatCurve
+			{
+				key = 0 0 0 0
+				key = 0.25 0.1405569 0 0
+				key = 0.625 0.75 0 0
+				key = 1 0.1405569 0 0
+			}
+		}
+	}
+}
+
+}
+
+@PART[wbiMiniGatePlatform]:FOR[Blueshift]
+{
+	@rescaleFactor = 1.27
+}

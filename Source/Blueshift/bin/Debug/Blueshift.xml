@@ -4,6 +4,11 @@
         <name>Blueshift</name>
     </assembly>
     <members>
+        <member name="T:Blueshift.WBIFlexGravGeneratorAnimated">
+            <summary>
+            Counters the pull of gravity up to a maximum amount of gravitic acceleration.
+            </summary>
+        </member>
         <member name="T:Blueshift.BlueshiftUtilities">
             <summary>
             A collection of utility functions that Blueshift uses.
@@ -2123,9 +2128,19 @@
             A value between 0 and 100, this field represents the maximum percentage of local gravity that can be negated. If multiple generators are present, then this value is averaged between the active generators.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIFlexGravGenerator.verticalAccelerationPercent">
+        <member name="F:Blueshift.WBIFlexGravGenerator.flexGravOutput">
             <summary>
-            Redirects gravity forward (0) or upward (100)
+            Shows percentage of output of the FlexGrav generator; based on current throttle setting.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.gravityCoupling">
+            <summary>
+            Shows percentage of how well the generator can interact with local gravity.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.flexGravAcceleration">
+            <summary>
+            Shows amount of acceleration available.
             </summary>
         </member>
         <member name="F:Blueshift.WBIFlexGravGenerator.horizontalAcceleration">
@@ -2138,14 +2153,24 @@
             Display value of the vessel's vertical acceleration, in units of m/s^2.
             </summary>
         </member>
-        <member name="F:Blueshift.WBIFlexGravGenerator.horizontalAccelerationThrottled">
+        <member name="F:Blueshift.WBIFlexGravGenerator.verticalLiftAngle">
             <summary>
-            Flag to indicate whether or not to control horizontal acceleration via main throttle.
+            Redirects gravity forward (0) or upward (90)
             </summary>
         </member>
-        <member name="F:Blueshift.WBIFlexGravGenerator.verticalAccelerationThrottled">
+        <member name="F:Blueshift.WBIFlexGravGenerator.flexGravManualOutput">
             <summary>
-            Flag to indicate whether or not to control vertical acceleration via main throttle.
+            Sets output of the generator in manual mode.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.throttleControlEnabled">
+            <summary>
+            Flag to indicate whether or not to use the main throttle to control generator output.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGenerator.useForwardVector">
+            <summary>
+            Flag to indicate whether or not to forward or reverse acceleration
             </summary>
         </member>
         <member name="F:Blueshift.WBIFlexGravGenerator.ecMassPercentIncrease">
@@ -2172,6 +2197,12 @@
             </summary>
             <param name="param"></param>
         </member>
+        <member name="M:Blueshift.WBIFlexGravGenerator.SetReversedAccelerationAction(KSPActionParam)">
+            <summary>
+            Sets acceleration fully reverse.
+            </summary>
+            <param name="param"></param>
+        </member>
         <member name="M:Blueshift.WBIFlexGravGenerator.SetVerticalAccelerationAction(KSPActionParam)">
             <summary>
             Sets acceleration fully vertical.
@@ -2180,13 +2211,19 @@
         </member>
         <member name="M:Blueshift.WBIFlexGravGenerator.ToggleVerticalAccelerationThrottleAction(KSPActionParam)">
             <summary>
-            Toggles vertical acceleration throttle.
+            Toggles lift angle.
             </summary>
             <param name="param"></param>
         </member>
-        <member name="M:Blueshift.WBIFlexGravGenerator.ToggleHorizontalAccelerationThrottleAction(KSPActionParam)">
+        <member name="M:Blueshift.WBIFlexGravGenerator.ToggleVerticalAccelerationVectorAction(KSPActionParam)">
             <summary>
-            Toggles horizontal acceleration throttle.
+            Toggles lift angle.
+            </summary>
+            <param name="param"></param>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGenerator.ToggleThrottleControlAction(KSPActionParam)">
+            <summary>
+            Toggles throttle control.
             </summary>
             <param name="param"></param>
         </member>

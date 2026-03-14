@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
+    <Compile Include="GravTech\WBIFlexGravGeneratorAnimated.cs" />
     <Compile Include="GUI\WarpTravelPlanner.cs" />
     <Compile Include="HelperClasses\BlueshiftUtilities.cs" />
     <Compile Include="HelperClasses\EngineCurves.cs" />

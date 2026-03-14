@@ -15,7 +15,7 @@ namespace Blueshift
     public class WBIFlexGravGenerator : WBIModuleGeneratorFX
     {
         #region Constants
-        const double standardGee = 9.81;
+        protected const double standardGee = 9.81;
         #endregion
 
         #region Fields
@@ -32,37 +32,62 @@ namespace Blueshift
         float maxGravityNegatedPercent = 95.0f;
 
         /// <summary>
-        /// Redirects gravity forward (0) or upward (100)
+        /// Shows percentage of output of the FlexGrav generator; based on current throttle setting.
         /// </summary>
-        [KSPField(isPersistant = true, guiName = "#LOC_BLUESHIFT_flexGravVerticalSlider", guiUnits = "%", guiActive = true, guiActiveEditor = true)]
-        [UI_FloatRange(stepIncrement = 1f, minValue = 0f, maxValue = 100f)]
-        public float verticalAccelerationPercent = 100f;
+        [KSPField(guiName = "#LOC_BLUESHIFT_flexGravOutput", guiUnits = "%", guiFormat = "f2", guiActive = true)]
+        public double flexGravOutput;
+
+        /// <summary>
+        /// Shows percentage of how well the generator can interact with local gravity.
+        /// </summary>
+        [KSPField(guiName = "#LOC_BLUESHIFT_flexGravCoupling", guiUnits = "%", guiFormat = "f2", guiActive = true)]
+        public double gravityCoupling;
+
+        /// <summary>
+        /// Shows amount of acceleration available.
+        /// </summary>
+        [KSPField(guiName = "#LOC_BLUESHIFT_flexGravAcceleration", guiActive = true, guiUnits = " m/s^2", guiFormat = "f2")]
+        public double flexGravAcceleration;
 
         /// <summary>
         /// Display value of the vessel's horizontal acceleration, in units of m/s^2.
         /// </summary>
-        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_flexGravHorizontalG", guiUnits = "m/s^2", guiFormat = "f2")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_flexGravHorizontalG", guiUnits = " m/s^2", guiFormat = "f2")]
         public double horizontalAcceleration = 1f;
 
         /// <summary>
         /// Display value of the vessel's vertical acceleration, in units of m/s^2.
         /// </summary>
-        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_flexGravVerticalG", guiUnits = "m/s^2", guiFormat = "f2")]
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_flexGravVerticalG", guiUnits = " m/s^2", guiFormat = "f2")]
         public double verticalAcceleration = 1f;
 
         /// <summary>
-        /// Flag to indicate whether or not to control horizontal acceleration via main throttle.
+        /// Redirects gravity forward (0) or upward (90)
         /// </summary>
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_flexGravHorizThrottle")]
-        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_enabled", disabledText = "#LOC_BLUESHIFT_disabled")]
-        public bool horizontalAccelerationThrottled = false;
+        [KSPField(isPersistant = true, guiName = "#LOC_BLUESHIFT_flexGravVerticalSlider", guiUnits = "deg", guiActive = true, guiActiveEditor = true)]
+        [UI_FloatRange(stepIncrement = 1f, minValue = 0f, maxValue = 90f)]
+        public float verticalLiftAngle = 90f;
 
         /// <summary>
-        /// Flag to indicate whether or not to control vertical acceleration via main throttle.
+        /// Sets output of the generator in manual mode.
         /// </summary>
-        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_flexGravVertThrottle")]
-        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_enabled", disabledText = "#LOC_BLUESHIFT_disabled")]
-        public bool verticalAccelerationThrottled = false;
+        [KSPField(isPersistant = true, guiName = "#LOC_BLUESHIFT_flexGravOutput", guiUnits = "%", guiActive = true)]
+        [UI_FloatRange(stepIncrement = 1f, minValue = 0f, maxValue = 100f)]
+        public float flexGravManualOutput = 100f;
+
+        /// <summary>
+        /// Flag to indicate whether or not to use the main throttle to control generator output.
+        /// </summary>
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_flexGravOutputControl")]
+        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_flexGravOutputThrottle", disabledText = "#LOC_BLUESHIFT_flexGravOutputManual")]
+        public bool throttleControlEnabled = false;
+
+        /// <summary>
+        /// Flag to indicate whether or not to forward or reverse acceleration
+        /// </summary>
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_flexGravVector")]
+        [UI_Toggle(enabledText = "#LOC_BLUESHIFT_flexGravVectorFwd", disabledText = "#LOC_BLUESHIFT_flexGravVectorRev")]
+        public bool useForwardVector = true;
 
         /// <summary>
         /// Amount of increase in Electric Charge that it costs to run the generator.
@@ -72,6 +97,11 @@ namespace Blueshift
         /// </summary>
         [KSPField]
         public float ecMassPercentIncrease = 0.05f;
+
+        // Translation keys to increase or decrease the lift angle
+        [KSPAxisField(axisGroup = KSPAxisGroup.TranslateY, axisMode = KSPAxisMode.Absolute, guiActive = false, guiActiveEditor = false, guiName = "#LOC_BLUESHIFT_flexGravUpDown", ignoreIncrementByZero = true, incrementalSpeed = 1f, isPersistant = true, maxValue = 1f, minValue = -1f)]
+        [UI_FloatRange(affectSymCounterparts = UI_Scene.All, maxValue = 1f, minValue = -1f, stepIncrement = 1f)]
+        public float translateUpDn;
         #endregion
 
         #region Housekeeping
@@ -98,8 +128,21 @@ namespace Blueshift
         [KSPAction("#LOC_BLUESHIFT_flexGravFwdActn")]
         public void SetForwardAccelerationAction(KSPActionParam param)
         {
-            verticalAccelerationPercent = 0;
+            verticalLiftAngle = 0;
+            useForwardVector = true;
             ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravFwdActn"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+        }
+
+        /// <summary>
+        /// Sets acceleration fully reverse.
+        /// </summary>
+        /// <param name="param"></param>
+        [KSPAction("#LOC_BLUESHIFT_flexGravRevActn")]
+        public void SetReversedAccelerationAction(KSPActionParam param)
+        {
+            verticalLiftAngle = 0;
+            useForwardVector = false;
+            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravRevActn"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
         }
 
         /// <summary>
@@ -109,42 +152,69 @@ namespace Blueshift
         [KSPAction("#LOC_BLUESHIFT_flexGravVertActn")]
         public void SetVerticalAccelerationAction(KSPActionParam param)
         {
-            verticalAccelerationPercent = 100;
+            verticalLiftAngle = 90;
             ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravVertActn"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
         }
 
         /// <summary>
-        /// Toggles vertical acceleration throttle.
+        /// Toggles lift angle.
         /// </summary>
         /// <param name="param"></param>
-        [KSPAction("#LOC_BLUESHIFT_flexGravVertThrotToggle")]
+        [KSPAction("#LOC_BLUESHIFT_flexGravToggleLiftAngle")]
         public void ToggleVerticalAccelerationThrottleAction(KSPActionParam param)
         {
-            verticalAccelerationThrottled = !verticalAccelerationThrottled;
-
-            string message = Localizer.Format("#LOC_BLUESHIFT_flexGravVertThrottle") + " - " ;
-            if (verticalAccelerationThrottled)
-                message += Localizer.Format("#LOC_BLUESHIFT_enabled");
+            if (verticalLiftAngle < 1E-09)
+            {
+                SetVerticalAccelerationAction(param);
+            }
+            else if (useForwardVector)
+            {
+                SetForwardAccelerationAction(param);
+            }
             else
-                message += Localizer.Format("#LOC_BLUESHIFT_disabled");
-
-            ScreenMessages.PostScreenMessage(message, 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+            {
+                SetReversedAccelerationAction(param);
+            }
         }
 
         /// <summary>
-        /// Toggles horizontal acceleration throttle.
+        /// Toggles lift angle.
         /// </summary>
         /// <param name="param"></param>
-        [KSPAction("#LOC_BLUESHIFT_flexGravHorzThrotToggle")]
-        public void ToggleHorizontalAccelerationThrottleAction(KSPActionParam param)
+        [KSPAction("#LOC_BLUESHIFT_flexGravVectorToggle")]
+        public void ToggleVerticalAccelerationVectorAction(KSPActionParam param)
         {
-            horizontalAccelerationThrottled = !horizontalAccelerationThrottled;
+            useForwardVector = !useForwardVector;
 
-            string message = Localizer.Format("#LOC_BLUESHIFT_flexGravHorzThrotToggle") + " - ";
-            if (horizontalAccelerationThrottled)
-                message += Localizer.Format("#LOC_BLUESHIFT_enabled");
+            if (useForwardVector)
+            {
+                SetForwardAccelerationAction(param);
+            }
             else
-                message += Localizer.Format("#LOC_BLUESHIFT_disabled");
+            {
+                SetReversedAccelerationAction(param);
+            }
+        }
+
+        /// <summary>
+        /// Toggles throttle control.
+        /// </summary>
+        /// <param name="param"></param>
+        [KSPAction("#LOC_BLUESHIFT_flexGravToggleThrottleCtrl")]
+        public void ToggleThrottleControlAction(KSPActionParam param)
+        {
+            throttleControlEnabled = !throttleControlEnabled;
+            Fields["flexGravManualOutput"].guiActive = !throttleControlEnabled;
+
+            string message = Localizer.Format("#LOC_BLUESHIFT_flexGravThrottleCtrl") + " - " ;
+            if (throttleControlEnabled)
+            {
+                message += Localizer.Format("#LOC_BLUESHIFT_flexGravOutputThrottle");
+            }
+            else
+            {
+                message += Localizer.Format("#LOC_BLUESHIFT_flexGravOutputManual");
+            }
 
             ScreenMessages.PostScreenMessage(message, 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
         }
@@ -158,18 +228,28 @@ namespace Blueshift
             ecMassPercentIncrease = Mathf.Clamp(ecMassPercentIncrease, 0, 1);
             maxGravityNegatedFactor = Mathf.Clamp(maxGravityNegatedPercent, 0, 100f);
 
+            Fields["flexGravManualOutput"].guiActive = !throttleControlEnabled;
+            Fields["flexGravOutput"].guiActive = throttleControlEnabled && IsActivated;
             if (!string.IsNullOrEmpty(groupName))
             {
+                Fields["flexGravOutput"].group.name = groupName;
+                Fields["flexGravOutput"].group.displayName = groupName;
+                Fields["gravityCoupling"].group.name = groupName;
+                Fields["gravityCoupling"].group.displayName = groupName;
+                Fields["flexGravAcceleration"].group.name = groupName;
+                Fields["flexGravAcceleration"].group.displayName = groupName;                
                 Fields["verticalAcceleration"].group.name = groupName;
                 Fields["verticalAcceleration"].group.displayName = groupName;
                 Fields["horizontalAcceleration"].group.name = groupName;
                 Fields["horizontalAcceleration"].group.displayName = groupName;
-                Fields["verticalAccelerationPercent"].group.name = groupName;
-                Fields["verticalAccelerationPercent"].group.displayName = groupName;
-                Fields["verticalAccelerationThrottled"].group.name = groupName;
-                Fields["verticalAccelerationThrottled"].group.displayName = groupName;
-                Fields["horizontalAccelerationThrottled"].group.name = groupName;
-                Fields["horizontalAccelerationThrottled"].group.displayName = groupName;
+                Fields["verticalLiftAngle"].group.name = groupName;
+                Fields["verticalLiftAngle"].group.displayName = groupName;              
+                Fields["flexGravManualOutput"].group.name = groupName;
+                Fields["flexGravManualOutput"].group.displayName = groupName;                
+                Fields["throttleControlEnabled"].group.name = groupName;
+                Fields["throttleControlEnabled"].group.displayName = groupName;
+                Fields["useForwardVector"].group.name = groupName;
+                Fields["useForwardVector"].group.displayName = groupName;
             }
 
             if (HighLogic.LoadedSceneIsFlight)
@@ -202,11 +282,16 @@ namespace Blueshift
             updateAccelerations();
 
             // Update GUI based on activation and resource states.
-            Fields["verticalAcceleration"].guiActive = IsActivated && !isMissingResources;
-            Fields["horizontalAcceleration"].guiActive = IsActivated && !isMissingResources;
+            Fields["flexGravManualOutput"].guiActive = !throttleControlEnabled;
+            Fields["flexGravOutput"].guiActive = IsActivated && throttleControlEnabled && !isMissingResources && statusPercent > 1E-09;
+            Fields["gravityCoupling"].guiActive = IsActivated && !isMissingResources && statusPercent > 1E-09;
+            Fields["useForwardVector"].guiActive = IsActivated && !isMissingResources && statusPercent > 1E-09;
+            Fields["flexGravAcceleration"].guiActive = IsActivated && !isMissingResources && statusPercent > 1E-09;
+            Fields["verticalAcceleration"].guiActive = IsActivated && !isMissingResources && statusPercent > 1E-09;
+            Fields["horizontalAcceleration"].guiActive = IsActivated && !isMissingResources && statusPercent > 1E-09;
 
             // Check activation state
-            if (!IsActivated || isMissingResources)
+            if (!IsActivated || isMissingResources || statusPercent <= 1E-0)
             {
                 return;
             }
@@ -230,12 +315,15 @@ namespace Blueshift
 
             // Add lift acceleration
             Vector3d accelerationVector = (part.vessel.GetWorldPos3D() - vessel.mainBody.position).normalized * combinedVerticalAcceleration;
-            //Vector3d accelerationVector = part.vessel.graviticAcceleration.normalized * -combinedVerticalAcceleration;
-            ApplyAccelerationVector(accelerationVector);
+            if (statusPercent > 0) // statusPercent <= 0 means the converter is stuck
+            {
+                //Vector3d accelerationVector = part.vessel.graviticAcceleration.normalized * -combinedVerticalAcceleration;
+                ApplyAccelerationVector(accelerationVector);
 
-            // Add horizontal acceleration
-            accelerationVector = part.vessel.GetReferenceTransformPart().transform.up.normalized * (float)combinedHorizontalAcceleration;
-            ApplyAccelerationVector(accelerationVector);
+                // Add horizontal acceleration
+                accelerationVector = part.vessel.GetReferenceTransformPart().transform.up.normalized * (float)combinedHorizontalAcceleration;
+                ApplyAccelerationVector(accelerationVector);
+            }
         }
 
         protected override ConversionRecipe PrepareRecipe(double deltatime)
@@ -248,6 +336,8 @@ namespace Blueshift
 
             // Compute modifiers based on vessel mass.
             float throttle = vessel.ctrlState.mainThrottle;
+            if (!throttleControlEnabled)
+                throttle = flexGravManualOutput / 100f;
             float ratioMultiplier = vessel.GetTotalMass();
             List<ResourceRatio> recipeInputs = recipe.Inputs;
             int count = recipeInputs.Count;
@@ -264,12 +354,7 @@ namespace Blueshift
                 }
 
                 resource = recipeInputs[index];
-                resource.Ratio *= ratioMultiplier;
-
-                // Account for throttle toggles.
-                if (horizontalAccelerationThrottled || verticalAccelerationThrottled)
-                    resource.Ratio *= throttle;
-
+                resource.Ratio *= ratioMultiplier * throttle;
                 recipeInputs[index] = resource;
             }
 
@@ -339,28 +424,64 @@ namespace Blueshift
 
         private void updateAccelerations()
         {
+            if (HighLogic.LoadedSceneIsFlight && isMissingResources)
+            {
+                verticalAcceleration = 0;
+                horizontalAcceleration = 0;
+            }
+
             double localGravity = standardGee;
             float throttle = 1.0f;
             if (HighLogic.LoadedSceneIsFlight)
             {
                 localGravity = FlightGlobals.getGeeForceAtPosition(vessel.transform.position).magnitude;
                 throttle = vessel.ctrlState.mainThrottle;
+                if (!throttleControlEnabled)
+                    throttle = flexGravManualOutput / 100f;
+
+                if (FlightGlobals.ActiveVessel == part.vessel && translateUpDn != 0)
+                {
+                    if (translateUpDn > 0)
+                        verticalLiftAngle += 1;
+                    else
+                        verticalLiftAngle -= 1;
+
+                    verticalLiftAngle = Mathf.Clamp(verticalLiftAngle, 0, 90);
+
+                    if (verticalLiftAngle >= 90)
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravVertActn"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+                    else if (verticalLiftAngle <= 0 && useForwardVector)
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravFwdActn"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+                    else if (verticalLiftAngle <= 0 && !useForwardVector)
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravRevActn"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+                    else if (verticalLiftAngle >= 58 && verticalLiftAngle <= 62)
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravLift60"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+                    else if (verticalLiftAngle >= 43 && verticalLiftAngle <= 47)
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravLift45"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+                    else if (verticalLiftAngle >= 28 && verticalLiftAngle <= 32)
+                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_flexGravLift30"), 3.0f, ScreenMessageStyle.UPPER_LEFT, Color.white);
+                }
             }
 
-            float verticalAccelerationFactor = verticalAccelerationPercent / 100;
+            float verticalAccelerationFactor = verticalLiftAngle / 90;
             float horizontalAcceleractionFactor = 1 - verticalAccelerationFactor;
             double vectorMagnitude = maxGForceCancellation >= localGravity ? averageMaxGravityNegatedFactor : (localGravity - maxGForceCancellation) / localGravity;
             double liftVectorMagnitude = vectorMagnitude * verticalAccelerationFactor;
             double horizontalVectorMagnitude = vectorMagnitude * horizontalAcceleractionFactor;
 
-            // Account for throttle toggles.
-            if (horizontalAccelerationThrottled)
-                horizontalVectorMagnitude *= throttle;
+            // Horizontal vector direction
+            if (useForwardVector == false)
+                horizontalVectorMagnitude *= -1;
 
-            if (verticalAccelerationThrottled)
-                liftVectorMagnitude *= throttle;
+            // Account for throttle toggles.
+            horizontalVectorMagnitude *= throttle;
+            liftVectorMagnitude *= throttle;
 
             // Update the gravity displays
+            if (HighLogic.LoadedSceneIsFlight)
+                gravityCoupling = Mathf.Clamp((float)(localGravity / (vessel.mainBody.GeeASL * standardGee) * 100f), 0, 100);
+            flexGravOutput = throttle * 100;
+            flexGravAcceleration = vectorMagnitude * localGravity * throttle;
             verticalAcceleration = liftVectorMagnitude * localGravity;
             horizontalAcceleration = horizontalVectorMagnitude * localGravity;
         }
@@ -376,7 +497,7 @@ namespace Blueshift
             calculateAverageMaxGravityNegated();
         }
 
-        private void ApplyAccelerationVector(Vector3d accelerationVector)
+        protected virtual void ApplyAccelerationVector(Vector3d accelerationVector)
         {
             int partCount = vessel.parts.Count;
             Part vesselPart;
