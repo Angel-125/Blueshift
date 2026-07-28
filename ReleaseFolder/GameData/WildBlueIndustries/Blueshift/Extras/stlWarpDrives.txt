@@ -43,7 +43,7 @@ WBISTLWARP_DUMMY
 }
 
 // Mk2 and Size 1 engines are low-tier, only able to reach 0.25c.
-@PART[wbiS1WarpCore]:NEEDS[WBISize1WarpTech]
+@PART[wbiS1WarpCore]
 {
 	@MODULE[WBIWarpEngine]
 	{
