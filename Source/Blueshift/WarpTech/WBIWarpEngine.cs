@@ -496,6 +496,12 @@ namespace Blueshift
         PartResourceDefinition staticChargeDef = null;
         string targetDistanceUnits = string.Empty;
         int vesselPartCount = 0;
+        static int activeEngineRevision = 0;
+        int cachedActiveEngineRevision = -1;
+        int cachedActiveEnginePartCount = -1;
+        const float crewSkillCacheDuration = 1.0f;
+        float cachedCrewSkillFactor = 1.0f;
+        float nextCrewSkillUpdateTime = 0f;
         bool updateBowshockTransform = false;
         WFModuleWaterfallFX waterfallFXModule = null;
 
@@ -630,6 +636,7 @@ namespace Blueshift
                 GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
             }
 
+            activeEngineRevision++;
             disableGeneratorBypass();
         }
 
@@ -892,6 +899,8 @@ namespace Blueshift
             if (!staged)
                 part.force_activate();
 
+            activeEngineRevision++;
+
             Fields["warpSpeedDisplay"].guiActive = true;
             Fields["maxWarpSpeedDisplay"].guiActive = true;
             Fields["preflightCheck"].guiActive = true;
@@ -930,6 +939,7 @@ namespace Blueshift
             base.Shutdown();
             if (HighLogic.LoadedSceneIsEditor)
                 return;
+            activeEngineRevision++;
             hasExceededLightSpeed = false;
             spatialLocation = WBISpatialLocations.Unknown;
 
@@ -1591,6 +1601,12 @@ namespace Blueshift
 
         private float getMiracleWorkerFactor()
         {
+            float currentTime = Time.realtimeSinceStartup;
+            if (currentTime < nextCrewSkillUpdateTime)
+                return cachedCrewSkillFactor;
+
+            nextCrewSkillUpdateTime = currentTime + crewSkillCacheDuration;
+
             // Account for miracle workers
             int highestRank = 0;
             ProtoCrewMember astronaut;
@@ -1606,14 +1622,15 @@ namespace Blueshift
 
             highestRank = Math.Min(highestRank, 6);
             float skillMultiplier = 1f;
+            crewEfficiencyBonus = 0;
             if (highestRank >= warpSpeedBoostRank)
             {
                 crewEfficiencyBonus = warpSpeedSkillMultiplier * highestRank * 100f;
                 skillMultiplier = 1.0f + (warpSpeedSkillMultiplier * highestRank);
             }
 
-
-            return skillMultiplier;
+            cachedCrewSkillFactor = skillMultiplier;
+            return cachedCrewSkillFactor;
         }
 
         /// <summary>
@@ -1821,26 +1838,33 @@ namespace Blueshift
         /// <returns></returns>
         protected bool shouldApplyWarp()
         {
-            // Only one warp engine should handle warp speed. The rest just provide boost effects.
-            List<WBIWarpEngine> engines = this.part.vessel.FindPartModulesImplementing<WBIWarpEngine>();
-            WBIWarpEngine engine, prevEngine;
-            int count = engines.Count;
-
             // Assume that we don't apply translation.
             applyWarpTranslation = false;
 
-            // Find all the active engines.
-            warpEngines.Clear();
-            for (int index = 0; index < count; index++)
+            int currentPartCount = part.vessel.parts.Count;
+            if (cachedActiveEngineRevision != activeEngineRevision ||
+                cachedActiveEnginePartCount != currentPartCount ||
+                warpEngines == null ||
+                (EngineIgnited && !warpEngines.Contains(this)))
             {
-                engine = engines[index];
+                // Only rebuild the vessel-wide engine list when engine activation or vessel composition changes.
+                List<WBIWarpEngine> engines = this.part.vessel.FindPartModulesImplementing<WBIWarpEngine>();
+                warpEngines.Clear();
+                int count = engines.Count;
+                for (int index = 0; index < count; index++)
+                {
+                    WBIWarpEngine engine = engines[index];
 
-                if (engine.EngineIgnited)
-                    warpEngines.Add(engine);
+                    if (engine.EngineIgnited)
+                        warpEngines.Add(engine);
+                }
+
+                cachedActiveEngineRevision = activeEngineRevision;
+                cachedActiveEnginePartCount = currentPartCount;
             }
 
             // Now determine if we are the primary active warp engine that should apply warp translations and drive the ship.
-            applyWarpTranslation = warpEngines[0] == this;
+            applyWarpTranslation = warpEngines.Count > 0 && warpEngines[0] == this;
 /*
             count = warpEngines.Count;
             for (int index = 0; index < count; index++)

@@ -745,9 +745,10 @@ namespace Blueshift
             if (!IsInSpace(vessel))
                 return WBISpatialLocations.Unknown;
 
-            // If the mainBody is on our solarSOIs list then check altitude. If altitude > soi then we're interstellar. Otherwise, we're interplanetary.
+            // If the mainBody is on our solarSOIs list then compare center-relative distances.
+            // If the vessel is beyond the artificial solar SOI then we're interstellar. Otherwise, we're interplanetary.
             if (solarSOIs.ContainsKey(vessel.mainBody))
-                return vessel.altitude > solarSOIs[vessel.mainBody] ? WBISpatialLocations.Interstellar : WBISpatialLocations.Interplanetary;
+                return getVesselDistanceFromMainBody(vessel) > solarSOIs[vessel.mainBody] ? WBISpatialLocations.Interstellar : WBISpatialLocations.Interplanetary;
 
             // If the mainBody is on the blacklist then we're interstellar. Otherwise we're planetary.
             return isOnBlackList(vessel.mainBody) ? WBISpatialLocations.Interstellar : WBISpatialLocations.Planetary;
@@ -760,6 +761,9 @@ namespace Blueshift
         /// <returns>true if the body is a star, false if not.</returns>
         public bool IsAStar(CelestialBody body)
         {
+            if (body == null)
+                return false;
+
             if (body.isStar)
             {
                 return true;
@@ -793,9 +797,9 @@ namespace Blueshift
             if (!IsInSpace(vessel))
                 return false;
 
-            // If the mainBody is on our soi list then check altitude.
+            // If the mainBody is on our soi list then compare center-relative distances.
             if (solarSOIs.ContainsKey(vessel.mainBody))
-                return vessel.altitude > solarSOIs[vessel.mainBody];
+                return getVesselDistanceFromMainBody(vessel) > solarSOIs[vessel.mainBody];
 
             // If we're orbiting a blacklisted body then we're in interstellar space. Otherwise we're orbiting a planet.
             return isOnBlackList(vessel.mainBody);
@@ -851,7 +855,7 @@ namespace Blueshift
                 {
                     lastPlanets.Add(body);
                     lastPlanetByStar.Add(stars[index], body);
-                    Debug.Log("[Blueshfit] - Last planet of the " + stars[index] + " is " + body.bodyName);
+                    Debug.Log("[Blueshift] - Outermost planetary branch of the " + stars[index].bodyName + " system is " + body.bodyName);
                 }
             }
 
@@ -908,26 +912,8 @@ namespace Blueshift
             if (!IsAStar(star))
                 return null;
 
-            List<CelestialBody> orbitingBodies = star.orbitingBodies;
-            CelestialBody body, furthestBody = null;
-            int count = orbitingBodies.Count;
-            double furthestDistance = 0;
-            bool isAStar = false;
-            bool blacklisted = false;
-
-            // First find the last planet around the star.
-            for (int index = 0; index < count; index++)
-            {
-                body = orbitingBodies[index];
-
-                // If the celestial body is a planet then check to see if it is the furthest.
-                isAStar = IsAStar(body);
-                blacklisted = isOnBlackList(body);
-                if (!isAStar && !blacklisted && body.orbit.semiMajorAxis > furthestDistance)
-                    furthestBody = body;
-            }
-
-            // Ok, we can use the calculated furthest body if we found one and it's not on the blacklist.
+            CelestialBody furthestBody;
+            getPlanetarySystemExtent(star, out furthestBody);
             if (furthestBody != null)
                 Debug.Log("[Blueshift] Last planet in the " + star.name + " system is: " + furthestBody.name);
 
@@ -1257,6 +1243,9 @@ namespace Blueshift
 
         private bool isOnBlackList(CelestialBody body)
         {
+            if (body == null)
+                return false;
+
             if (celestialBlacklists == null || celestialBlacklists.Length == 0)
                 return false;
 
@@ -1410,7 +1399,11 @@ namespace Blueshift
                     node = nodes[index];
                     if (node.HasValue(kName) && node.HasValue(kStarName))
                     {
-                        lastPlanetOverrides.Add(node.GetValue(kStarName), node.GetValue(kName));
+                        string starName = node.GetValue(kStarName);
+                        string bodyName = node.GetValue(kName);
+                        if (lastPlanetOverrides.ContainsKey(starName))
+                            Debug.LogWarning("[Blueshift] - Replacing duplicate LAST_PLANET override for " + starName + " with " + bodyName);
+                        lastPlanetOverrides[starName] = bodyName;
                     }
                 }
             }
@@ -1418,30 +1411,205 @@ namespace Blueshift
 
         private void calculateSolarSOIs()
         {
-            if (lastPlanets.Count == 0 || stars.Count == 0)
-                GetEveryLastPlanet();
+            if (stars.Count == 0)
+                GetStars();
 
             CelestialBody solarBody;
-            CelestialBody lastPlanet;
+            CelestialBody boundaryBody;
+            double solarSOI;
             int count = stars.Count;
+            solarSOIs.Clear();
 
             for (int index = 0; index < count; index++)
             {
                 solarBody = stars[index];
+                boundaryBody = null;
+                solarSOI = 0;
 
-                // If we were able to determine the last planet for the star then we can use the last planet's SMA to determine the solar SOI.
+                // A LAST_PLANET override remains available for unusual system hierarchies. Calculate its
+                // full apoapsis path back to the star so moved planets and nested barycenters work correctly.
                 if (lastPlanetByStar.ContainsKey(solarBody))
                 {
-                    lastPlanet = lastPlanetByStar[solarBody];
-                    solarSOIs.Add(solarBody, lastPlanet.orbit.semiMajorAxis * soiMultiplier);
+                    boundaryBody = lastPlanetByStar[solarBody];
+                    solarSOI = getBodyExtentFromStar(solarBody, boundaryBody);
                 }
 
-                // Either we could not determine the star's last planet, or the star has no planets. In this case, we create an arbitrary SOI based on soiNoPlanetsMultiplier.
-                else
+                // Automatically find the maximum reach of every local planetary branch. Branches containing
+                // another star are external star systems represented as children of this star and are ignored.
+                if (solarSOI <= 0)
+                    solarSOI = getPlanetarySystemExtent(solarBody, out boundaryBody);
+
+                // If the star has no usable planetary branches, create an arbitrary SOI based on its radius.
+                if (solarSOI <= 0)
                 {
-                    solarSOIs.Add(solarBody, solarBody.Radius * soiNoPlanetsMultiplier * soiMultiplier);
+                    solarSOI = solarBody.Radius * soiNoPlanetsMultiplier;
+                    boundaryBody = null;
+                }
+
+                solarSOI *= soiMultiplier;
+                solarSOIs[solarBody] = solarSOI;
+
+                Debug.Log("[Blueshift] - Artificial SOI for " + solarBody.bodyName + ": " +
+                    solarSOI.ToString("N0") + " m; outermost planetary body: " +
+                    (boundaryBody != null ? boundaryBody.bodyName : "none"));
+            }
+        }
+
+        /// <summary>
+        /// Calculates the maximum center-relative reach of all local planetary branches around a star.
+        /// A branch containing another star represents an external star system and is excluded.
+        /// </summary>
+        private double getPlanetarySystemExtent(CelestialBody star, out CelestialBody outermostBody)
+        {
+            outermostBody = null;
+            if (star == null || star.orbitingBodies == null)
+                return 0;
+
+            double maximumExtent = 0;
+            int count = star.orbitingBodies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                CelestialBody branchRoot = star.orbitingBodies[index];
+                if (branchContainsStar(branchRoot, new HashSet<CelestialBody>()))
+                    continue;
+
+                CelestialBody branchOutermostBody;
+                double branchExtent = getPlanetaryBranchExtent(branchRoot, 0, new HashSet<CelestialBody>(), out branchOutermostBody);
+                if (branchExtent > maximumExtent)
+                {
+                    maximumExtent = branchExtent;
+                    outermostBody = branchOutermostBody;
                 }
             }
+
+            return maximumExtent;
+        }
+
+        /// <summary>
+        /// Calculates the maximum possible reach of a planetary branch by summing apoapsis radii
+        /// along its hierarchy and adding each body's sphere of influence.
+        /// </summary>
+        private double getPlanetaryBranchExtent(CelestialBody body, double parentDistance, HashSet<CelestialBody> visited, out CelestialBody outermostBody)
+        {
+            outermostBody = null;
+            if (body == null || visited.Contains(body))
+                return 0;
+
+            visited.Add(body);
+            double bodyDistance = parentDistance + getApoapsisRadius(body);
+            double maximumExtent = 0;
+
+            // Blacklisted bodies can be hierarchy proxies such as barycenters. Do not use the
+            // proxy itself as a boundary, but continue through it to find its planetary children.
+            if (!isOnBlackList(body))
+            {
+                maximumExtent = bodyDistance + getBodyInfluenceRadius(body);
+                outermostBody = body;
+            }
+
+            if (body.orbitingBodies == null)
+                return maximumExtent;
+
+            int count = body.orbitingBodies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                CelestialBody child = body.orbitingBodies[index];
+                CelestialBody childOutermostBody;
+                double childExtent = getPlanetaryBranchExtent(child, bodyDistance, visited, out childOutermostBody);
+                if (childExtent > maximumExtent)
+                {
+                    maximumExtent = childExtent;
+                    outermostBody = childOutermostBody;
+                }
+            }
+
+            return maximumExtent;
+        }
+
+        /// <summary>
+        /// Determines whether a celestial hierarchy branch contains a star.
+        /// </summary>
+        private bool branchContainsStar(CelestialBody body, HashSet<CelestialBody> visited)
+        {
+            if (body == null || visited.Contains(body))
+                return false;
+
+            visited.Add(body);
+            if (IsAStar(body))
+                return true;
+            if (body.orbitingBodies == null)
+                return false;
+
+            int count = body.orbitingBodies.Count;
+            for (int index = 0; index < count; index++)
+            {
+                if (branchContainsStar(body.orbitingBodies[index], visited))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Calculates an explicitly selected body's maximum reach from its star through its full reference-body chain.
+        /// </summary>
+        private double getBodyExtentFromStar(CelestialBody star, CelestialBody body)
+        {
+            if (star == null || body == null)
+                return 0;
+
+            double maximumDistance = 0;
+            CelestialBody currentBody = body;
+            HashSet<CelestialBody> visited = new HashSet<CelestialBody>();
+            while (currentBody != null && currentBody != star && !visited.Contains(currentBody))
+            {
+                visited.Add(currentBody);
+                maximumDistance += getApoapsisRadius(currentBody);
+                currentBody = currentBody.referenceBody;
+            }
+
+            if (currentBody != star)
+            {
+                Debug.LogWarning("[Blueshift] - LAST_PLANET " + body.bodyName + " does not orbit " + star.bodyName);
+                return 0;
+            }
+
+            return maximumDistance + getBodyInfluenceRadius(body);
+        }
+
+        private double getApoapsisRadius(CelestialBody body)
+        {
+            if (body == null || body.orbit == null)
+                return 0;
+
+            double apoapsisRadius = body.orbit.ApR;
+            if (double.IsNaN(apoapsisRadius) || double.IsInfinity(apoapsisRadius) || apoapsisRadius <= 0)
+                apoapsisRadius = Math.Abs(body.orbit.semiMajorAxis) * (1.0 + Math.Max(0, body.orbit.eccentricity));
+
+            return double.IsNaN(apoapsisRadius) || double.IsInfinity(apoapsisRadius) || apoapsisRadius < 0 ? 0 : apoapsisRadius;
+        }
+
+        private double getBodyInfluenceRadius(CelestialBody body)
+        {
+            if (body == null)
+                return 0;
+
+            double influenceRadius = body.sphereOfInfluence;
+            if (double.IsNaN(influenceRadius) || double.IsInfinity(influenceRadius) || influenceRadius <= 0)
+                influenceRadius = body.Radius;
+
+            return Math.Max(0, influenceRadius);
+        }
+
+        private double getVesselDistanceFromMainBody(Vessel vessel)
+        {
+            if (vessel == null || vessel.mainBody == null)
+                return 0;
+
+            if (vessel.orbit != null && !double.IsNaN(vessel.orbit.radius) && !double.IsInfinity(vessel.orbit.radius) && vessel.orbit.radius > 0)
+                return vessel.orbit.radius;
+
+            return Math.Max(0, vessel.altitude + vessel.mainBody.Radius);
         }
         #endregion
     }

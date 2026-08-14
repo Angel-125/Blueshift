@@ -159,7 +159,7 @@ namespace Blueshift
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
         }
 
-        public void Destroy()
+        public void OnDestroy()
         {
             GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
         }

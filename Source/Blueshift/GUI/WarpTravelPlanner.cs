@@ -35,10 +35,14 @@ namespace Blueshift
         private double maxWarpFactor = 0;
         private double rangeLightYears = 0;
         private double distanceTraveledMeters = 0;
-        private List<CelestialBody> stars;
+        private List<CelestialBody> stars = new List<CelestialBody>();
         Dictionary<string, double> balancedResourceAmounts = null;
         Dictionary<string, double> currentResourceAmounts = null;
         WBISpatialLocations spatialLocation = WBISpatialLocations.Unknown;
+        private string lastLoggedError = "";
+        private const float statsUpdateInterval = 0.25f;
+        private float nextStatsUpdateTime = 0f;
+        private bool statsAreDirty = true;
         #endregion
 
         public WarpTravelPlanner() :
@@ -65,11 +69,15 @@ namespace Blueshift
 
                 cacheLocalizedStrings();
 
-                stars = BlueshiftScenario.shared.GetStars();
+                if (BlueshiftScenario.shared != null)
+                    stars = BlueshiftScenario.shared.GetStars() ?? new List<CelestialBody>();
+                else
+                    stars = new List<CelestialBody>();
+
                 if (BlueshiftScenario.debugMode)
                     Debug.Log("[Blueshfit] - Stars detected: " + stars.Count);
 
-                updateStats();
+                updateStatsIfNeeded(true);
             }
             else
             {
@@ -82,11 +90,12 @@ namespace Blueshift
 
         private void onEditorShipModified(ShipConstruct ship)
         {
+            statsAreDirty = true;
         }
 
         protected override void DrawWindowContents(int windowId)
         {
-            updateStats();
+            updateStatsIfNeeded();
 
             // Warp speed info
             scrollPosWarpSpeed = GUILayout.BeginScrollView(scrollPosWarpSpeed, warpSpeedInfoHeight);
@@ -109,7 +118,7 @@ namespace Blueshift
             }
 
             // Destinations
-            if (stars.Count > 1)
+            if (stars != null && stars.Count > 1)
             {
                 GUILayout.Label(kDestinationsTitle);
                 scrollPosDestinations = GUILayout.BeginScrollView(scrollPosDestinations);
@@ -138,6 +147,13 @@ namespace Blueshift
 
         private void drawDestinations()
         {
+            if (FlightGlobals.Bodies == null || BlueshiftScenario.shared == null)
+                return;
+
+            Vessel activeVessel = HighLogic.LoadedSceneIsFlight ? FlightGlobals.ActiveVessel : null;
+            if (HighLogic.LoadedSceneIsFlight && activeVessel == null)
+                return;
+
             //Find homeworld
             int count = FlightGlobals.Bodies.Count;
             CelestialBody body = null;
@@ -168,14 +184,17 @@ namespace Blueshift
             string textColor = "white";
             if (HighLogic.LoadedSceneIsFlight)
             {
-                if (FlightGlobals.ActiveVessel.targetObject != null)
+                if (activeVessel.targetObject != null)
                 {
-                    Vessel activeVessel = FlightGlobals.ActiveVessel;
                     ITargetable targetObject = activeVessel.targetObject;
+                    Transform targetTransform = targetObject.GetTransform();
+                    if (targetTransform == null)
+                        return;
+
                     string units;
                     string targetName;
-                    distanceToTarget = BlueshiftScenario.shared.GetDistanceToTarget(FlightGlobals.ActiveVessel, out units, out targetName);
-                    distanceMeters = Math.Abs((activeVessel.GetWorldPos3D() - (Vector3d)targetObject.GetTransform().position).magnitude);
+                    distanceToTarget = BlueshiftScenario.shared.GetDistanceToTarget(activeVessel, out units, out targetName);
+                    distanceMeters = Math.Abs((activeVessel.GetWorldPos3D() - (Vector3d)targetTransform.position).magnitude);
                     distanceLightYears = distanceMeters / BlueshiftScenario.shared.kLightYear;
 
                     distanceToTargetMeters = distanceMeters;
@@ -194,9 +213,13 @@ namespace Blueshift
                 }
 
                 // Calculate distance to the home star
-                if (spatialLocation == WBISpatialLocations.Interstellar || BlueshiftScenario.shared.GetParentStar(FlightGlobals.ActiveVessel.mainBody) != homeStar)
+                if (spatialLocation == WBISpatialLocations.Interstellar || BlueshiftScenario.shared.GetParentStar(activeVessel.mainBody) != homeStar)
                 {
-                    distanceMeters = Math.Abs((FlightGlobals.ActiveVessel.GetWorldPos3D() - (Vector3d)homeStar.GetTransform().position).magnitude);
+                    Transform homeStarTransform = homeStar.GetTransform();
+                    if (homeStarTransform == null)
+                        return;
+
+                    distanceMeters = Math.Abs((activeVessel.GetWorldPos3D() - (Vector3d)homeStarTransform.position).magnitude);
                     distanceLightYears = distanceMeters / BlueshiftScenario.shared.kLightYear;
 
                     canReachStar = rangeLightYears >= distanceLightYears;
@@ -204,7 +227,8 @@ namespace Blueshift
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(canReachStar ? greenCheckMark : redXIcon, iconDimensions);
-                    GUILayout.Label("<color=" + textColor + ">" + homeStar.displayName.Replace("^N", "") + "</color>");
+                    string homeStarName = string.IsNullOrEmpty(homeStar.displayName) ? homeStar.bodyName : homeStar.displayName.Replace("^N", "");
+                    GUILayout.Label("<color=" + textColor + ">" + homeStarName + "</color>");
                     GUILayout.FlexibleSpace();
                     GUILayout.Label("<color=" + textColor + ">" + distanceLightYears.ToString("N5") + " ly</color>");
                     GUILayout.EndHorizontal();
@@ -215,13 +239,19 @@ namespace Blueshift
             count = stars.Count;
             for (int index = 0; index < count; index++)
             {
-                if (stars[index] == homeStar)
+                CelestialBody star = stars[index];
+                if (star == null || star == homeStar)
+                    continue;
+
+                Transform starTransform = star.GetTransform();
+                Transform homeStarTransform = homeStar.GetTransform();
+                if (starTransform == null || homeStarTransform == null)
                     continue;
 
                 if (HighLogic.LoadedSceneIsEditor)
-                    distanceMeters = Math.Abs(((Vector3d)stars[index].GetTransform().position - (Vector3d)homeStar.GetTransform().position).magnitude);
+                    distanceMeters = Math.Abs(((Vector3d)starTransform.position - (Vector3d)homeStarTransform.position).magnitude);
                 else
-                    distanceMeters = Math.Abs((FlightGlobals.ActiveVessel.GetWorldPos3D() - (Vector3d)stars[index].GetTransform().position).magnitude);
+                    distanceMeters = Math.Abs((activeVessel.GetWorldPos3D() - (Vector3d)starTransform.position).magnitude);
                 distanceLightYears = distanceMeters / BlueshiftScenario.shared.kLightYear;
 
                 canReachStar = rangeLightYears >= distanceLightYears;
@@ -229,7 +259,8 @@ namespace Blueshift
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(canReachStar ? greenCheckMark : redXIcon, iconDimensions);
-                GUILayout.Label("<color=" + textColor + ">" + stars[index].displayName.Replace("^N", "") + "</color>");
+                string displayName = string.IsNullOrEmpty(star.displayName) ? star.bodyName : star.displayName.Replace("^N", "");
+                GUILayout.Label("<color=" + textColor + ">" + displayName + "</color>");
                 GUILayout.FlexibleSpace();
                 GUILayout.Label("<color=" + textColor + ">" + distanceLightYears.ToString("N5") + " ly</color>");
                 GUILayout.EndHorizontal();
@@ -239,7 +270,6 @@ namespace Blueshift
         private void drawResourceBalancing()
         {
             string[] resourceNameKeys = balancedResourceAmounts.Keys.ToArray();
-            PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
             PartResourceDefinition resourceDef;
 
             GUILayout.Label(kResourceBalancingTitle);
@@ -249,9 +279,9 @@ namespace Blueshift
 
             for (int index = 0; index < resourceNameKeys.Length; index++)
             {
-                resourceDef = definitions[resourceNameKeys[index]];
+                resourceDef = PartResourceLibrary.Instance.GetDefinition(resourceNameKeys[index]);
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("<color=white>" + resourceDef.displayName + "</color>");
+                GUILayout.Label("<color=white>" + (resourceDef != null ? resourceDef.displayName : resourceNameKeys[index]) + "</color>");
                 GUILayout.FlexibleSpace();
                 GUILayout.Label("<color=white>" + balancedResourceAmounts[resourceNameKeys[index]].ToString("N2") + "</color>");
                 GUILayout.EndHorizontal();
@@ -261,9 +291,9 @@ namespace Blueshift
             resourceNameKeys = currentResourceAmounts.Keys.ToArray();
             for (int index = 0; index < resourceNameKeys.Length; index++)
             {
-                resourceDef = definitions[resourceNameKeys[index]];
+                resourceDef = PartResourceLibrary.Instance.GetDefinition(resourceNameKeys[index]);
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("<color=white>" + resourceDef.displayName + "</color>");
+                GUILayout.Label("<color=white>" + (resourceDef != null ? resourceDef.displayName : resourceNameKeys[index]) + "</color>");
                 GUILayout.FlexibleSpace();
                 GUILayout.Label("<color=white>" + currentResourceAmounts[resourceNameKeys[index]].ToString("N2") + "</color>");
                 GUILayout.EndHorizontal();
@@ -283,14 +313,24 @@ namespace Blueshift
             if (HighLogic.LoadedSceneIsFlight == false && HighLogic.LoadedSceneIsEditor == false)
                 return;
 
+            ShipConstruct editorShip = HighLogic.LoadedSceneIsEditor && EditorLogic.fetch != null ? EditorLogic.fetch.ship : null;
+            Vessel activeVessel = HighLogic.LoadedSceneIsFlight ? FlightGlobals.ActiveVessel : null;
+            if ((HighLogic.LoadedSceneIsEditor && editorShip == null) ||
+                (HighLogic.LoadedSceneIsFlight && activeVessel == null))
+            {
+                burnTime = 0;
+                status = "No active vessel is available.";
+                return;
+            }
+
             // Burn Time
-            burnTime = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.ComputeBurnTime(EditorLogic.fetch.ship, out status) : BlueshiftUtilities.ComputeBurnTime(FlightGlobals.ActiveVessel, out status);
+            burnTime = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.ComputeBurnTime(editorShip, out status) : BlueshiftUtilities.ComputeBurnTime(activeVessel, out status);
 
             if (!string.IsNullOrEmpty(status))
                 return;
 
             // Max warp factor
-            List<WBIWarpEngine> warpEngines = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.getWarpEngines(EditorLogic.fetch.ship) : BlueshiftUtilities.getWarpEngines(FlightGlobals.ActiveVessel);
+            List<WBIWarpEngine> warpEngines = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.getWarpEngines(editorShip) : BlueshiftUtilities.getWarpEngines(activeVessel);
             int count = warpEngines.Count;
             if (count <= 0)
             {
@@ -299,20 +339,68 @@ namespace Blueshift
             }
 
             WBIWarpEngine engine = warpEngines[0];
+            if (engine == null)
+            {
+                status = Localizer.Format("#LOC_BLUESHIFT_noEnginesFound");
+                return;
+            }
+
             spatialLocation = engine.spatialLocation;
             maxWarpFactor = engine.maxWarpSpeed;
             if (HighLogic.LoadedSceneIsFlight)
                 maxWarpFactor = engine.CalculateBestSpeedSimulated();
 
             // Warp Range
+            if (BlueshiftScenario.shared == null)
+            {
+                status = "Blueshift scenario data is not available.";
+                return;
+            }
             rangeLightYears = BlueshiftUtilities.CalculateRange(burnTime, maxWarpFactor, out distanceTraveledMeters);
 
             // Flight Time
 
             // Balanced resources
-            balancedResourceAmounts = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.GetBalancedResources(EditorLogic.fetch.ship) : BlueshiftUtilities.GetBalancedResources(FlightGlobals.ActiveVessel);
+            balancedResourceAmounts = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.GetBalancedResources(editorShip) : BlueshiftUtilities.GetBalancedResources(activeVessel);
             if (balancedResourceAmounts != null)
-                currentResourceAmounts = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.GetResourceAmounts(EditorLogic.fetch.ship, balancedResourceAmounts.Keys.ToArray()) : BlueshiftUtilities.GetResourceAmounts(FlightGlobals.ActiveVessel, balancedResourceAmounts.Keys.ToArray());
+                currentResourceAmounts = HighLogic.LoadedSceneIsEditor ? BlueshiftUtilities.GetResourceAmounts(editorShip, balancedResourceAmounts.Keys.ToArray()) : BlueshiftUtilities.GetResourceAmounts(activeVessel, balancedResourceAmounts.Keys.ToArray());
+        }
+
+        private void updateStatsSafely()
+        {
+            try
+            {
+                updateStats();
+                lastLoggedError = "";
+            }
+            catch (Exception ex)
+            {
+                burnTime = 0;
+                maxWarpFactor = 0;
+                rangeLightYears = 0;
+                timeToTarget = 0;
+                balancedResourceAmounts = null;
+                currentResourceAmounts = null;
+                status = "The warp travel planner could not update: " + ex.GetType().Name;
+
+                string error = ex.ToString();
+                if (lastLoggedError != error)
+                {
+                    lastLoggedError = error;
+                    Debug.LogError("[Blueshift] - WarpTravelPlanner failed to update.\n" + error);
+                }
+            }
+        }
+
+        private void updateStatsIfNeeded(bool forceUpdate = false)
+        {
+            float currentTime = Time.realtimeSinceStartup;
+            if (!forceUpdate && !statsAreDirty && currentTime < nextStatsUpdateTime)
+                return;
+
+            statsAreDirty = false;
+            nextStatsUpdateTime = currentTime + statsUpdateInterval;
+            updateStatsSafely();
         }
 
         private void cacheLocalizedStrings()

@@ -241,7 +241,7 @@ namespace Blueshift.Utility
                 lastUpdateTime = Planetarium.GetUniversalTime();
         }
 
-        public void Destroy()
+        public void OnDestroy()
         {
             WBIWarpEngine.onWarpEffectsUpdated.Remove(onWarpEffectsUpdated);
             WBIWarpEngine.onWarpEngineStart.Remove(onWarpEngineStart);

@@ -9,29 +9,15 @@ GameData
 		Blueshift
 	FireflyAPI
 
-Changes- Blueshift
+---CHANGES---
 
-- Updated the Unified Tech Tree between Blueshift and Kerbal Flying Saucers:
-Node					Cost
-Saucer Technologies                  2,250
-├─ Lenticular Vehicles               4,000
-│  └─ Mothership Technologies       10,000
-│     └─ Advanced Mothership Tech   15,000
-└─ Gravity Wave Applications         4,000
-   ├─ Warp Field Theory             10,000
-   │  ├─ Advanced Warp Tech         15,000
-   │  └─ Miniaturized Warp Tech     15,000
-   └─ Jump Technologies             10,000
-      ├─ Advanced Jump Tech         15,000
-      └─ Miniature Jump Tech        15,000
+- Improved spatial-location detection for warp vessels. Star-system boundaries are now calculated from the maximum reach of local planetary branches using apoapsis and sphere of influence.
+- Added support for nested planetary systems and barycenters while excluding hierarchy branches that contain other stars.
+- Fixed vessels in the outer Kerbol system and modded planetary systems being incorrectly classified as in interstellar space.
+- Spatial-boundary checks now compare center-relative orbital distances consistently.
+- Removed the bundled LAST_PLANET overrides. Blueshift now detects outer planetary boundaries automatically; an optional override example remains in settings.cfg for unusual system hierarchies.
 
-
-- Added new Miniaturized Warp Tech node.
-- Size 1 warp tech parts are now considered official. The S-1 Warp Core and S-1 Gravimetric Generator are located in Miniaturized Warp Tech, while the S-0 warp coils, bussard collector, plasma vent, and endcap are in Gravity Wave Applications.
-
-Changes- WildBlueCore
-
-- Added new Mk18 Ram Air Parachute- a steerable chute for vehicles!
+--END CHANGES--
 
 ---LICENSE---
 

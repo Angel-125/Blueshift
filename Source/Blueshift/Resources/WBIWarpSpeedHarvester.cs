@@ -53,6 +53,9 @@ namespace Blueshift
         float engineThrottle = 0f;
         bool isActivated = false;
         WBIWarpEngine warpEngine;
+        const float crewEfficiencyCacheDuration = 1.0f;
+        float cachedCrewEfficiency = 1.0f;
+        float nextCrewEfficiencyUpdateTime = 0f;
         #endregion
 
         #region Overrides
@@ -60,7 +63,7 @@ namespace Blueshift
         {
             if (!HighLogic.LoadedSceneIsFlight || !isActivated || warpEngine == null || warpEngine.spatialLocation == WBISpatialLocations.Planetary || warpEngine.spatialLocation == WBISpatialLocations.Unknown || engineThrottle <= 0)
             {
-                if (!isActivated || warpEngine != null && warpEngine.spatialLocation == WBISpatialLocations.Unknown || !warpEngine.EngineIgnited || !warpEngine.isOperational)
+                if (!isActivated || warpEngine == null || warpEngine.spatialLocation == WBISpatialLocations.Unknown || !warpEngine.EngineIgnited || !warpEngine.isOperational)
                     status = Localizer.Format("#LOC_BLUESHIFT_statusOff");
                 else if (warpEngine != null && warpEngine.spatialLocation == WBISpatialLocations.Planetary)
                     status = Localizer.Format("#LOC_BLUESHIFT_statusInvalidLocation");
@@ -113,22 +116,13 @@ namespace Blueshift
             double demand = 0f;
             int count = distributions.Count;
             ResourceDistribution distribution = null;
+            float crewEfficiency = getCrewEfficiency();
             for (int index = 0; index < count; index++)
             {
                 distribution = distributions[index];
 
                 // Calculate abundance.
                 abundance = UnityEngine.Random.Range((float)distribution.minAbundance, (float)distribution.maxAbundance);
-
-                // Account for miracle workers
-                float crewEfficiency = 1.0f;
-                if (useSpecialistBonus)
-                {
-                    ProtoCrewMember astronaut;
-                    int highestRank = BlueshiftScenario.shared.GetHighestRank(part.vessel, experienceEffect, out astronaut);
-                    if (highestRank > 0)
-                        crewEfficiency = specialistBonusBase + 1.0f * highestRank * specialistEfficiencyFactor;
-                }
 
                 // Calculate demand
                 demand = abundance * crewEfficiency * warpEngine.warpSpeed * TimeWarp.fixedDeltaTime;
@@ -153,7 +147,7 @@ namespace Blueshift
             loadDistributions();
         }
 
-        public void Destroy()
+        public void OnDestroy()
         {
             WBIWarpEngine.onWarpEffectsUpdated.Remove(onWarpEffectsUpdated);
             WBIWarpEngine.onWarpEngineStart.Remove(onWarpEngineStart);
@@ -214,6 +208,26 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        float getCrewEfficiency()
+        {
+            if (!useSpecialistBonus)
+                return 1.0f;
+
+            float currentTime = Time.realtimeSinceStartup;
+            if (currentTime < nextCrewEfficiencyUpdateTime)
+                return cachedCrewEfficiency;
+
+            nextCrewEfficiencyUpdateTime = currentTime + crewEfficiencyCacheDuration;
+            cachedCrewEfficiency = 1.0f;
+
+            ProtoCrewMember astronaut;
+            int highestRank = BlueshiftScenario.shared.GetHighestRank(part.vessel, experienceEffect, out astronaut);
+            if (highestRank > 0)
+                cachedCrewEfficiency = specialistBonusBase + highestRank * specialistEfficiencyFactor;
+
+            return cachedCrewEfficiency;
+        }
+
         void loadDistributions()
         {
             resourceDistributions = new Dictionary<string, List<ResourceDistribution>>();
