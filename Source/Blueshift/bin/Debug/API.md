@@ -842,6 +842,18 @@ Find the parent star of the celestial body.
 > #### Return value
 > A CelestialBody that is the query parameter's star, or null.
 
+### getPlanetarySystemExtent(CelestialBody,CelestialBody@)
+Calculates the maximum center-relative reach of all local planetary branches around a star. A branch containing another star represents an external star system and is excluded.
+
+### getPlanetaryBranchExtent(CelestialBody,System.Double,System.Collections.Generic.HashSet{CelestialBody},CelestialBody@)
+Calculates the maximum possible reach of a planetary branch by summing apoapsis radii along its hierarchy and adding each body's sphere of influence.
+
+### branchContainsStar(CelestialBody,System.Collections.Generic.HashSet{CelestialBody})
+Determines whether a celestial hierarchy branch contains a star.
+
+### getBodyExtentFromStar(CelestialBody,CelestialBody)
+Calculates an explicitly selected body's maximum reach from its star through its full reference-body chain.
+
 # WBIModuleHarvesterFX
             
 This resource harvester adds the ability to drive Effects, animated textures, and Waterfall.

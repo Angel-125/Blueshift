@@ -79,14 +79,14 @@ namespace Blueshift
         /// <summary>
         /// The activation switch. When not running, the animations won't be animated.
         /// </summary>
-        [KSPField(isPersistant = true, guiName = "Animation")]
+        [KSPField(guiName = "Animation")]
         [UI_Toggle(enabledText = "On", disabledText = "Off")]
         public bool isActivated = false;
 
         /// <summary>
         /// A throttle control to vary the animation speed between minFramesPerSecond and maxFramesPerSecond
         /// </summary>
-        [KSPField(isPersistant = true, guiName = "Animation Throttle")]
+        [KSPField(guiName = "Animation Throttle")]
         [UI_FloatRange(stepIncrement = 0.01f, maxValue = 1f, minValue = 0f)]
         public float animationThrottle = 1.0f;
 
@@ -105,8 +105,12 @@ namespace Blueshift
         private int diffuseTextureIndex = 0;
         private double imageSwitchTime = 0;
         private float emissiveFadeLevel = 0;
+        private float lastEmissiveFadeLevel = -1f;
         private float framesPerSecond = 1f;
-        private List<Renderer> rendererMaterials = null;
+        private List<Renderer> renderers = null;
+        private List<Material> rendererMaterials = null;
+        private Texture2D[] emissiveTextures = null;
+        private Texture2D[] diffuseTextures = null;
         #endregion
 
         #region Overrides
@@ -119,6 +123,13 @@ namespace Blueshift
             // Get list of textures
             emissiveURLs = getTextures("animatedEmissiveTexture");
             diffuseURLs = getTextures("animatedDiffuseTexture");
+            emissiveTextures = getTextureAssets(emissiveURLs);
+            diffuseTextures = getTextureAssets(diffuseURLs);
+
+            // Animation state is controlled by the owning engine, coil, or generator.
+            // Never restore a stale running state when a craft is loaded in the editor.
+            if (HighLogic.LoadedSceneIsEditor)
+                isActivated = false;
 
             // Setup rendererMaterial
             setupRenderMaterials();
@@ -127,25 +138,26 @@ namespace Blueshift
 
             // Setup emissive visibility
             int count = rendererMaterials.Count;
-            Renderer renderer = null;
+            Material material = null;
             for (int index = 0; index < count; index++)
             {
-                renderer = rendererMaterials[index];
+                material = rendererMaterials[index];
                 if (isActivated)
                 {
                     emissiveFadeLevel = 1f;
-                    renderer.material.SetColor("_EmissiveColor", new Color(1, 1, 1, 1));
+                    material.SetColor("_EmissiveColor", Color.white);
                 }
                 else
                 {
                     emissiveFadeLevel = 0f;
-                    renderer.material.SetColor("_EmissiveColor", new Color(0, 0, 0, 0));
+                    material.SetColor("_EmissiveColor", Color.clear);
                 }
             }
+            lastEmissiveFadeLevel = emissiveFadeLevel;
 
             // Calculate imageSwitchTime
             framesPerSecond = calculateFramesPerSecond();
-            imageSwitchTime = Planetarium.GetUniversalTime() + 1 / framesPerSecond;
+            imageSwitchTime = Time.realtimeSinceStartup + 1 / framesPerSecond;
 
             // Show debug GUI
             debugMode = BlueshiftScenario.debugMode;
@@ -169,19 +181,24 @@ namespace Blueshift
             if (!HighLogic.LoadedSceneIsEditor && !HighLogic.LoadedSceneIsFlight)
                 return;
 
+            // Packed vessels cannot benefit from animated part textures. Skipping them also
+            // keeps visual work independent of the selected on-rails timewarp rate.
+            if (HighLogic.LoadedSceneIsFlight && (part.vessel == null || part.vessel.packed))
+                return;
+
             // Calcuate frames per second
             framesPerSecond = calculateFramesPerSecond();
 
             // Fade in/out the emissive depending on whether or not we're activated
             if (emissiveFadeLevel < 0.95f && isActivated && ((fadesAtMinThrottle && animationThrottle > 0) || !fadesAtMinThrottle))
             {
-                emissiveFadeLevel = Mathf.Lerp(emissiveFadeLevel, 1f, (1 / emissiveFadeTime) * TimeWarp.fixedDeltaTime);
+                emissiveFadeLevel = Mathf.Lerp(emissiveFadeLevel, 1f, (1 / emissiveFadeTime) * Time.unscaledDeltaTime);
                 if (emissiveFadeLevel >= 0.9f)
                     emissiveFadeLevel = 1.0f;
             }
             else if (emissiveFadeLevel >= 0.1f && (!isActivated || (fadesAtMinThrottle && animationThrottle <= 0)))
             {
-                emissiveFadeLevel = Mathf.Lerp(emissiveFadeLevel, 0f, (1 / emissiveFadeTime) * TimeWarp.fixedDeltaTime);
+                emissiveFadeLevel = Mathf.Lerp(emissiveFadeLevel, 0f, (1 / emissiveFadeTime) * Time.unscaledDeltaTime);
                 if (emissiveFadeLevel <= 0.1f)
                     emissiveFadeLevel = 0f;
             }
@@ -193,46 +210,56 @@ namespace Blueshift
             }
 
             // Calculate next switch time
-            double currentTime = Planetarium.GetUniversalTime();
+            double currentTime = Time.realtimeSinceStartup;
             bool updateAnimatedTextures = false;
             if (currentTime >= imageSwitchTime)
             {
                 updateAnimatedTextures = true;
 
                 // Calculate next switch time
-                imageSwitchTime = Planetarium.GetUniversalTime() + (1 / framesPerSecond);
+                imageSwitchTime = currentTime + (1 / framesPerSecond);
+            }
+
+            Texture2D diffuseTexture = null;
+            Texture2D emissiveTexture = null;
+            if (updateAnimatedTextures && diffuseTextures != null && diffuseTextures.Length > 2)
+            {
+                diffuseTextureIndex = (diffuseTextureIndex + 1) % diffuseTextures.Length;
+                diffuseTexture = diffuseTextures[diffuseTextureIndex];
+            }
+            if (updateAnimatedTextures && emissiveTextures != null && emissiveTextures.Length > 2)
+            {
+                emissiveTextureIndex = (emissiveTextureIndex + 1) % emissiveTextures.Length;
+                emissiveTexture = emissiveTextures[emissiveTextureIndex];
             }
 
             // Update emissions and animated textures
-            int count = rendererMaterials.Count;
+            int count = renderers.Count;
             Renderer renderer = null;
+            Material material = null;
+            bool updateEmission = !Mathf.Approximately(lastEmissiveFadeLevel, emissiveFadeLevel);
             for (int index = 0; index < count; index++)
             {
-                renderer = rendererMaterials[index];
+                renderer = renderers[index];
                 if (!renderer.enabled || !renderer.isVisible)
                     continue;
+                material = rendererMaterials[index];
 
                 // Set emission
-                renderer.material.SetColor("_EmissiveColor", new Color(emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel));
+                if (updateEmission)
+                    material.SetColor("_EmissiveColor", new Color(emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel, emissiveFadeLevel));
 
                 // Switch images if it's time to do so.
                 if (updateAnimatedTextures)
                 {
-                    // Update diffuse if needed
-                    if (diffuseURLs != null && diffuseURLs.Length > 2)
-                    {
-                        diffuseTextureIndex = (diffuseTextureIndex + 1) % diffuseURLs.Length;
-                        renderer.material.SetTexture("_MainTex", GameDatabase.Instance.GetTexture(diffuseURLs[diffuseTextureIndex], false));
-                    }
-
-                    // Update emisssive if needed
-                    if (emissiveURLs != null && emissiveURLs.Length > 2)
-                    {
-                        emissiveTextureIndex = (emissiveTextureIndex + 1) % emissiveURLs.Length;
-                        renderer.material.SetTexture("_Emissive", GameDatabase.Instance.GetTexture(emissiveURLs[emissiveTextureIndex], false));
-                    }
+                    if (diffuseTexture != null)
+                        material.SetTexture("_MainTex", diffuseTexture);
+                    if (emissiveTexture != null)
+                        material.SetTexture("_Emissive", emissiveTexture);
                 }
             }
+            if (updateEmission)
+                lastEmissiveFadeLevel = emissiveFadeLevel;
         }
         #endregion
 
@@ -264,7 +291,8 @@ namespace Blueshift
             }
 
             // Now add the renderers
-            rendererMaterials = new List<Renderer>();
+            renderers = new List<Renderer>();
+            rendererMaterials = new List<Material>();
             Renderer renderer = null;
             int count = transforms.Count;
             for (int index = 0; index < count; index++)
@@ -272,7 +300,8 @@ namespace Blueshift
                 renderer = transforms[index].GetComponent<Renderer>();
                 if (renderer != null)
                 {
-                    rendererMaterials.Add(renderer);
+                    renderers.Add(renderer);
+                    rendererMaterials.Add(renderer.material);
                 }
             }
             Debug.Log("[WBIAnimatedTexture] - rendererMaterials added: " + rendererMaterials.Count);
@@ -341,6 +370,17 @@ namespace Blueshift
         protected float calculateFramesPerSecond()
         {
             return minFramesPerSecond + ((maxFramesPerSecond - minFramesPerSecond) * animationThrottle);
+        }
+
+        private Texture2D[] getTextureAssets(string[] textureURLs)
+        {
+            if (textureURLs == null || textureURLs.Length == 0)
+                return null;
+
+            Texture2D[] textures = new Texture2D[textureURLs.Length];
+            for (int index = 0; index < textureURLs.Length; index++)
+                textures[index] = GameDatabase.Instance.GetTexture(textureURLs[index], false);
+            return textures;
         }
 
         private void onGameSettingsApplied()

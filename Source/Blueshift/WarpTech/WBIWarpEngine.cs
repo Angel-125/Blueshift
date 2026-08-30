@@ -500,8 +500,17 @@ namespace Blueshift
         int cachedActiveEngineRevision = -1;
         int cachedActiveEnginePartCount = -1;
         const float crewSkillCacheDuration = 1.0f;
+        const float inactiveUIUpdateDuration = 0.25f;
+        const float editorShipUpdateDelay = 0.1f;
         float cachedCrewSkillFactor = 1.0f;
         float nextCrewSkillUpdateTime = 0f;
+        float nextInactiveUIUpdateTime = 0f;
+        float editorShipUpdateTime = 0f;
+        bool editorShipUpdatePending = false;
+        bool editorCallbacksRegistered = false;
+        bool flightCallbacksRegistered = false;
+        ShipConstruct pendingEditorShip = null;
+        Callback<BaseField, object> superchargerFieldChangedCallback = null;
         bool updateBowshockTransform = false;
         WFModuleWaterfallFX waterfallFXModule = null;
 
@@ -625,15 +634,24 @@ namespace Blueshift
         #region Overrides
         public void OnDestroy()
         {
-            if (HighLogic.LoadedSceneIsEditor)
+            if (editorCallbacksRegistered)
             {
                 GameEvents.onEditorShipModified.Remove(onEditorShipModified);
                 GameEvents.onEditorShipCrewModified.Remove(onEditorShipCrewModified);
+                if (superchargerFieldChangedCallback != null && Fields["thrustPercentage"].uiControlEditor != null)
+                {
+                    Fields["thrustPercentage"].uiControlEditor.onFieldChanged -= superchargerFieldChangedCallback;
+                    Fields["thrustPercentage"].uiControlEditor.onSymmetryFieldChanged -= superchargerFieldChangedCallback;
+                    superchargerFieldChangedCallback = null;
+                }
+                editorCallbacksRegistered = false;
             }
-            else if (HighLogic.LoadedSceneIsFlight)
+
+            if (flightCallbacksRegistered)
             {
                 GameEvents.onVesselSOIChanged.Remove(onVesselSOIChanged);
                 GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
+                flightCallbacksRegistered = false;
             }
 
             activeEngineRevision++;
@@ -738,6 +756,13 @@ namespace Blueshift
         {
             base.OnUpdate();
 
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                processPendingEditorShipUpdate();
+                updateWarpSpedometer();
+                return;
+            }
+
             // Update warp spedometer
             updateWarpSpedometer();
 
@@ -745,13 +770,24 @@ namespace Blueshift
                 return;
             getCoilsAndGenerators();
 
+            // A shut-down engine only needs to refresh PAW/status data a few times per
+            // second. Keep this cadence tied to real time so on-rails warp cannot amplify it.
+            bool engineIsInactive = !isOperational && !EngineIgnited;
+            if (engineIsInactive)
+            {
+                float currentTime = Time.realtimeSinceStartup;
+                if (currentTime < nextInactiveUIUpdateTime)
+                    return;
+                nextInactiveUIUpdateTime = currentTime + inactiveUIUpdateDuration;
+            }
+
             // Vessel course - just the selected target.
             updateVesselCourseUI();
 
             // Update preflight status
             updateFTLPreflightStatus();
 
-            if (!isOperational && !EngineIgnited)
+            if (engineIsInactive)
             {
                 spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
                 return;
@@ -836,11 +872,13 @@ namespace Blueshift
             {
                 GameEvents.onEditorShipModified.Add(onEditorShipModified);
                 GameEvents.onEditorShipCrewModified.Add(onEditorShipCrewModified);
+                editorCallbacksRegistered = true;
                 if (EditorLogic.fetch != null && EditorLogic.fetch.ship != null)
                     onEditorShipModified(EditorLogic.fetch.ship);
 
-                Fields["thrustPercentage"].uiControlEditor.onFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
-                Fields["thrustPercentage"].uiControlEditor.onSymmetryFieldChanged += new Callback<BaseField, object>(onSuperchargerFieldChanged);
+                superchargerFieldChangedCallback = new Callback<BaseField, object>(onSuperchargerFieldChanged);
+                Fields["thrustPercentage"].uiControlEditor.onFieldChanged += superchargerFieldChangedCallback;
+                Fields["thrustPercentage"].uiControlEditor.onSymmetryFieldChanged += superchargerFieldChangedCallback;
             }
 
             // In flight events
@@ -848,6 +886,7 @@ namespace Blueshift
             {
                 GameEvents.onVesselSOIChanged.Add(onVesselSOIChanged);
                 GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+                flightCallbacksRegistered = true;
             }
 
             // Other
@@ -1346,27 +1385,44 @@ namespace Blueshift
         private void onSuperchargerFieldChanged(BaseField baseField, object obj)
         {
             vesselPartCount = -1;
-            onEditorShipModified(EditorLogic.fetch.ship);
+            if (EditorLogic.fetch != null)
+                onEditorShipModified(EditorLogic.fetch.ship);
         }
 
 
         void onEditorShipCrewModified(VesselCrewManifest crewManifest)
         {
-            return;
-            ShipConstruct ship = EditorLogic.fetch.ship;
-            if (ship != null)
-            {
-                getTotalWarpCapacity();
-                calculateBestWarpSpeed();
-                updateFTLPreflightStatus();
-                updateWarpSpedometer();
-
-                //Dirty the GUI
-                MonoUtilities.RefreshContextWindows(this.part);
-            }
+            if (EditorLogic.fetch != null)
+                onEditorShipModified(EditorLogic.fetch.ship);
         }
 
         void onEditorShipModified(ShipConstruct ship)
+        {
+            if (ship == null)
+                return;
+
+            // Editor loading and symmetry changes can fire this event repeatedly in one
+            // burst. Collapse that burst into one vessel scan on the settled craft.
+            pendingEditorShip = ship;
+            editorShipUpdatePending = true;
+            editorShipUpdateTime = Time.realtimeSinceStartup + editorShipUpdateDelay;
+        }
+
+        void processPendingEditorShipUpdate()
+        {
+            if (!editorShipUpdatePending || Time.realtimeSinceStartup < editorShipUpdateTime)
+                return;
+
+            ShipConstruct ship = pendingEditorShip;
+            pendingEditorShip = null;
+            editorShipUpdatePending = false;
+            if (ship == null || ship.parts == null)
+                return;
+
+            recalculateEditorShip(ship);
+        }
+
+        void recalculateEditorShip(ShipConstruct ship)
         {
             int count = ship.parts.Count;
             vesselPartCount = count;

@@ -1527,6 +1527,28 @@
             <param name="body">The celestial body to check.</param>
             <returns>A CelestialBody that is the query parameter's star, or null.</returns>
         </member>
+        <member name="M:Blueshift.BlueshiftScenario.getPlanetarySystemExtent(CelestialBody,CelestialBody@)">
+            <summary>
+            Calculates the maximum center-relative reach of all local planetary branches around a star.
+            A branch containing another star represents an external star system and is excluded.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.getPlanetaryBranchExtent(CelestialBody,System.Double,System.Collections.Generic.HashSet{CelestialBody},CelestialBody@)">
+            <summary>
+            Calculates the maximum possible reach of a planetary branch by summing apoapsis radii
+            along its hierarchy and adding each body's sphere of influence.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.branchContainsStar(CelestialBody,System.Collections.Generic.HashSet{CelestialBody})">
+            <summary>
+            Determines whether a celestial hierarchy branch contains a star.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.getBodyExtentFromStar(CelestialBody,CelestialBody)">
+            <summary>
+            Calculates an explicitly selected body's maximum reach from its star through its full reference-body chain.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIModuleHarvesterFX">
             <summary>
             This resource harvester adds the ability to drive Effects, animated textures, and Waterfall.

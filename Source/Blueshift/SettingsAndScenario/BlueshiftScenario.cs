@@ -191,6 +191,7 @@ namespace Blueshift
         private List<WBISpaceAnomaly> anomalyTemplates;
         private double anomalyCheckSeconds = 600;
         private double anomalyTimer = 0;
+        private bool anomalyCheckInProgress = false;
         private double anomalyCleanerSeconds = 60;
         private double anomalyCleanerTimer = 0;
         private List<CelestialBody> lastPlanets;
@@ -207,18 +208,26 @@ namespace Blueshift
         #region Overrides
         public void FixedUpdate()
         {
-            double currentTime = Planetarium.GetUniversalTime();
+            if (!spawnSpaceAnomalies || anomalyCheckInProgress)
+                return;
+
+            // Anomaly maintenance is housekeeping, not vessel simulation. Scheduling it
+            // against real time prevents high on-rails warp from running it many times per
+            // real-world second and producing excessive garbage.
+            double currentTime = Time.realtimeSinceStartup;
             if (anomalyTimer == 0 || firstTimeStart)
             {
                 firstTimeStart = false;
                 anomalyTimer = currentTime + anomalyCheckSeconds;
+                anomalyCheckInProgress = true;
                 StartCoroutine(handleAnomalyChecks());
             }
 
             // Check for anomaly spawns
-            if (spawnSpaceAnomalies && currentTime > anomalyTimer)
+            else if (currentTime > anomalyTimer)
             {
                 anomalyTimer = currentTime + anomalyCheckSeconds;
+                anomalyCheckInProgress = true;
                 StartCoroutine(handleAnomalyChecks());
             }
         }
@@ -230,6 +239,8 @@ namespace Blueshift
 
             removeExpiredAnomalies();
             yield return new WaitForFixedUpdate();
+
+            anomalyCheckInProgress = false;
         }
 
         public override void OnAwake()
@@ -1273,13 +1284,13 @@ namespace Blueshift
             {
                 removeSpaceAnomalies();
             }
-            else if (!spawnJumpgates)
-            {
-                removeJumpgates();
-            }
             else
             {
+                if (!spawnJumpgates)
+                    removeJumpgates();
+
                 anomalyTimer = 0;
+                firstTimeStart = true;
             }
         }
 
