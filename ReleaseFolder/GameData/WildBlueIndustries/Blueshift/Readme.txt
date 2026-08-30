@@ -11,11 +11,8 @@ GameData
 
 ---CHANGES---
 
-- Improved spatial-location detection for warp vessels. Star-system boundaries are now calculated from the maximum reach of local planetary branches using apoapsis and sphere of influence.
-- Added support for nested planetary systems and barycenters while excluding hierarchy branches that contain other stars.
-- Fixed vessels in the outer Kerbol system and modded planetary systems being incorrectly classified as in interstellar space.
-- Spatial-boundary checks now compare center-relative orbital distances consistently.
-- Removed the bundled LAST_PLANET overrides. Blueshift now detects outer planetary boundaries automatically; an optional override example remains in settings.cfg for unusual system hierarchies.
+- Adjusted performance in some areas that might be contributing to lag experienced during high timewarp.
+- Added Blueshift Settings to toggle the warp field and warp field tube effects on/off.
 
 --END CHANGES--
 

@@ -31,6 +31,9 @@ namespace Blueshift
 
         [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsWarpDraggingDesc", toolTip = "#LOC_BLUESHIFT_settingsWarpDraggingTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
         public bool enableWarpDragging = false;
+
+        [GameParameters.CustomParameterUI("#LOC_BLUESHIFT_settingsWarpFieldEffectsDesc", toolTip = "#LOC_BLUESHIFT_settingsWarpFieldEffectsTip", autoPersistance = true, gameMode = GameParameters.GameMode.ANY)]
+        public bool enableWarpFieldEffects = true;
         #region CustomParameterNode
 
         public override string DisplaySection
@@ -154,6 +157,15 @@ namespace Blueshift
             {
                 BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
                 return settings.enableWarpDragging;
+            }
+        }
+
+        public static bool WarpFieldEffectsEnabled
+        {
+            get
+            {
+                BlueshiftSettings settings = HighLogic.CurrentGame.Parameters.CustomParams<BlueshiftSettings>();
+                return settings.enableWarpFieldEffects;
             }
         }
     }

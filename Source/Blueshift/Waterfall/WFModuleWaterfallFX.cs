@@ -19,9 +19,12 @@ namespace Blueshift
     {
         static Type typeModuleWaterfallFX;
         static Type typeWaterfallController;
+        static Type typeWaterfallEffect;
         static MethodInfo miSetOverride;
         static MethodInfo miSetControllerValue;
         static MethodInfo miFindController;
+        static MethodInfo miFindEffect;
+        static MethodInfo miSetEffectEnabled;
 
         public PartModule partModule;
 
@@ -30,9 +33,13 @@ namespace Blueshift
             typeModuleWaterfallFX = assembly.GetTypes().First(t => t.Name.Equals("ModuleWaterfallFX"));
             miSetControllerValue = typeModuleWaterfallFX.GetMethod("SetControllerValue", new[] { typeof(string), typeof(float) });
             miFindController = typeModuleWaterfallFX.GetMethod("FindController", new[] { typeof(string) });
+            miFindEffect = typeModuleWaterfallFX.GetMethod("FindEffect", new[] { typeof(string) });
 
             typeWaterfallController = assembly.GetTypes().First(t => t.Name.Equals("WaterfallController"));
             miSetOverride = typeWaterfallController.GetMethod("SetOverride", new[] { typeof(bool) });
+
+            typeWaterfallEffect = assembly.GetTypes().First(t => t.Name.Equals("WaterfallEffect"));
+            miSetEffectEnabled = typeWaterfallEffect.GetMethod("SetEnabled", new[] { typeof(bool) });
         }
 
         /// <summary>
@@ -99,6 +106,25 @@ namespace Blueshift
 
             //SetOverride(controllerName, true);
             miSetControllerValue.Invoke(partModule, new object[] { controllerName, value });
+        }
+
+        /// <summary>
+        /// Enables or disables the named Waterfall effect.
+        /// </summary>
+        /// <param name="effectName">Name of the effect to update.</param>
+        /// <param name="isEnabled">Whether the effect should be enabled.</param>
+        /// <returns>true if the effect was found and updated; false otherwise.</returns>
+        public bool SetEffectEnabled(string effectName, bool isEnabled)
+        {
+            if (miFindEffect == null || miSetEffectEnabled == null || string.IsNullOrEmpty(effectName))
+                return false;
+
+            object waterfallEffect = miFindEffect.Invoke(partModule, new object[] { effectName });
+            if (waterfallEffect == null)
+                return false;
+
+            miSetEffectEnabled.Invoke(waterfallEffect, new object[] { isEnabled });
+            return true;
         }
     }
 }

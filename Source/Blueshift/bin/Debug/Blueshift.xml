@@ -1248,6 +1248,14 @@
             <param name="controllerName">A string containing the name of the controller to override.</param>
             <param name="value">A float containing the override value.</param>
         </member>
+        <member name="M:Blueshift.WFModuleWaterfallFX.SetEffectEnabled(System.String,System.Boolean)">
+            <summary>
+            Enables or disables the named Waterfall effect.
+            </summary>
+            <param name="effectName">Name of the effect to update.</param>
+            <param name="isEnabled">Whether the effect should be enabled.</param>
+            <returns>true if the effect was found and updated; false otherwise.</returns>
+        </member>
         <member name="T:Blueshift.BlueshiftScenario">
             <summary>
              This class helps starships determine when they're in interstellar space.

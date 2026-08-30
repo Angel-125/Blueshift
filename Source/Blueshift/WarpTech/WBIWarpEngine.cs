@@ -96,6 +96,8 @@ namespace Blueshift
         float kMessageDuration = 3f;
         string kInterstellarEfficiencyModifier = "kInterstellarEfficiencyModifier";
         double kFrameSkipTime = 0.1f;
+        const string kWaterfallWarpFieldEffect = "warpField";
+        const string kWaterfallWarpFieldTubeEffect = "warpFieldTube";
         #endregion
 
         #region GameEvents
@@ -512,6 +514,7 @@ namespace Blueshift
         ShipConstruct pendingEditorShip = null;
         Callback<BaseField, object> superchargerFieldChangedCallback = null;
         bool updateBowshockTransform = false;
+        bool warpFieldEffectsStateDirty = true;
         WFModuleWaterfallFX waterfallFXModule = null;
 
         [KSPField(guiActive = false, guiFormat = "n3", guiUnits = "u")]
@@ -768,6 +771,7 @@ namespace Blueshift
 
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
+            updateWaterfallWarpFieldEffects();
             getCoilsAndGenerators();
 
             // A shut-down engine only needs to refresh PAW/status data a few times per
@@ -903,6 +907,7 @@ namespace Blueshift
 
             // Get Waterfall module (if any)
             waterfallFXModule = WFModuleWaterfallFX.GetWaterfallModule(this.part);
+            warpFieldEffectsStateDirty = true;
         }
 
         public override void Flameout(string message, bool statusOnly = false, bool showFX = true)
@@ -2286,9 +2291,21 @@ namespace Blueshift
         private void onGameSettingsApplied()
         {
             debugMode = BlueshiftSettings.DebugModeEnabled;
+            warpFieldEffectsStateDirty = true;
 
             //Dirty the GUI
             MonoUtilities.RefreshContextWindows(part);
+        }
+
+        private void updateWaterfallWarpFieldEffects()
+        {
+            if (!warpFieldEffectsStateDirty || waterfallFXModule == null)
+                return;
+
+            bool effectsEnabled = BlueshiftSettings.WarpFieldEffectsEnabled;
+            waterfallFXModule.SetEffectEnabled(kWaterfallWarpFieldEffect, effectsEnabled);
+            waterfallFXModule.SetEffectEnabled(kWaterfallWarpFieldTubeEffect, effectsEnabled);
+            warpFieldEffectsStateDirty = false;
         }
         #endregion
     }
