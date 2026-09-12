@@ -1,0 +1,18 @@
+name: Tag Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+      - '[0-9]*.[0-9]*.[0-9]*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    uses: Angel-125/WBIReleaseWorkflows/.github/workflows/publish-ksp-mod.yml@v1
+    with:
+      product_name: Blueshift
+      readme_path: ReleaseFolder/GameData/WildBlueIndustries/Blueshift/Readme.txt
+      bundle_wildbluecore: false

@@ -13,8 +13,9 @@ GameData
 
 - Adjusted performance in some areas that might be contributing to lag experienced during high timewarp.
 - Added Blueshift Settings to toggle the warp field and warp field tube effects on/off.
+- Part volume updates- Thanks Ooglak! :)
 
---END CHANGES--
+---END CHANGES---
 
 ---LICENSE---
 
