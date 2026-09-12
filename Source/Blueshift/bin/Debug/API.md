@@ -281,6 +281,11 @@ Retrieves the module's config node from the part config.
 > #### Return value
 > A ConfigNode for the part module.
 
+### getPartConfigNode(System.String)
+Retrieves the module's config node from the part config.
+> #### Return value
+> A ConfigNode for the part module.
+
 ### loadCurve(FloatCurve,System.String,ConfigNode)
 Loads the desired FloatCurve from the desired config node.
 > #### Parameters

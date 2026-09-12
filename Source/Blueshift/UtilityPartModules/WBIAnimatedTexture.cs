@@ -274,7 +274,7 @@ namespace Blueshift
             Debug.Log("[WBIAnimatedTexture] - transforms found: " + transforms.Count);
 
             // Get the other model transforms, if any
-            ConfigNode node = getPartConfigNode();
+            ConfigNode node = getPartConfigNode(moduleID);
             if (node.HasNode("TEXTURE_TRANSFORMS"))
             {
                 node = node.GetNode("TEXTURE_TRANSFORMS");

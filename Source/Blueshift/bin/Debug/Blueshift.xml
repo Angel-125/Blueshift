@@ -530,6 +530,12 @@
             </summary>
             <returns>A ConfigNode for the part module.</returns>
         </member>
+        <member name="M:Blueshift.WBIPartModule.getPartConfigNode(System.String)">
+            <summary>
+            Retrieves the module's config node from the part config.
+            </summary>
+            <returns>A ConfigNode for the part module.</returns>
+        </member>
         <member name="M:Blueshift.WBIPartModule.loadCurve(FloatCurve,System.String,ConfigNode)">
             <summary>
             Loads the desired FloatCurve from the desired config node.

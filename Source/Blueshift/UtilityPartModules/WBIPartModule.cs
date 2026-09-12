@@ -59,6 +59,57 @@ namespace Blueshift
         }
 
         /// <summary>
+        /// Retrieves the module's config node from the part config.
+        /// </summary>
+        /// <returns>A ConfigNode for the part module.</returns>
+        public ConfigNode getPartConfigNode(string moduleID)
+        {
+            if (!HighLogic.LoadedSceneIsEditor && !HighLogic.LoadedSceneIsFlight)
+                return null;
+            if (this.part.partInfo.partConfig == null)
+                return null;
+            ConfigNode[] nodes = this.part.partInfo.partConfig.GetNodes("MODULE");
+            ConfigNode partConfigNode = null;
+            ConfigNode node = null;
+            string moduleName;
+            string moduleIDStringValue;
+
+            //Get the switcher config node.
+            for (int index = 0; index < nodes.Length; index++)
+            {
+                node = nodes[index];
+                if (node.HasValue("name"))
+                {
+                    moduleName = node.GetValue("name");
+                    if (moduleName == this.ClassName)
+                    {
+                        // Check moduleID
+                        if (!string.IsNullOrEmpty(moduleID) && node.HasValue("moduleID"))
+                        {
+                            moduleIDStringValue = node.GetValue("moduleID");
+                            if (moduleID == moduleIDStringValue)
+                            {
+                                partConfigNode = node;
+                                break;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            partConfigNode = node;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return partConfigNode;
+        }
+
+        /// <summary>
         /// Loads the desired FloatCurve from the desired config node.
         /// </summary>
         /// <param name="curve">The FloatCurve to load</param>
