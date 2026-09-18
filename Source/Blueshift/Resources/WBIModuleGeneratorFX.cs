@@ -127,6 +127,14 @@ namespace Blueshift
         Dictionary<string, double> baseInputRatios = null;
         #endregion
 
+        /// <summary>
+        /// Indicates whether a derived module drives its own stock EFFECTS groups.
+        /// </summary>
+        protected virtual bool managesEffectsInternally
+        {
+            get { return false; }
+        }
+
         #region IModuleInfo
         public string GetModuleTitle()
         {
@@ -295,7 +303,8 @@ namespace Blueshift
             bypassRunCycle = false;
             base.StartResourceConverter();
 
-            this.part.Effect(startEffect, 1.0f);
+            if (!managesEffectsInternally)
+                this.part.Effect(startEffect, 1.0f);
 
             updateTextureModules();
         }
@@ -305,8 +314,11 @@ namespace Blueshift
             bypassRunCycle = false;
             base.StopResourceConverter();
 
-            this.part.Effect(runningEffect, 0.0f);
-            this.part.Effect(stopEffect, 1.0f);
+            if (!managesEffectsInternally)
+            {
+                this.part.Effect(runningEffect, 0.0f);
+                this.part.Effect(stopEffect, 1.0f);
+            }
 
             updateTextureModules();
 
@@ -346,7 +358,8 @@ namespace Blueshift
             }
 
             // Play running effect if needed.
-            this.part.Effect(runningEffect, animationThrottle);
+            if (!managesEffectsInternally)
+                this.part.Effect(runningEffect, animationThrottle);
 
             // Update animated textures
             updateTextureModules();

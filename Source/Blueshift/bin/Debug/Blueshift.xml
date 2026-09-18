@@ -9,6 +9,76 @@
             Counters the pull of gravity up to a maximum amount of gravitic acceleration.
             </summary>
         </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.engageEffectName">
+            <summary>
+            EFFECTS group played when the generator starts. Falls back to startEffect.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.disengageEffectName">
+            <summary>
+            EFFECTS group played when the generator stops. Falls back to stopEffect.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.flameoutEffectName">
+            <summary>
+            EFFECTS group played when the generator loses required resources.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.powerEffectName">
+            <summary>
+            EFFECTS group driven by generator output.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.runningEffectName">
+            <summary>
+            EFFECTS group played continuously while the generator is operating. Falls back to runningEffect.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.fwdThrustEffect">
+            <summary>
+            EFFECTS group driven by the forward component of gravitic acceleration.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.revThrustEffect">
+            <summary>
+            EFFECTS group driven by the reverse component of gravitic acceleration.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.vtolThrustEffect">
+            <summary>
+            EFFECTS group driven by the vertical component of gravitic acceleration.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.verticalUpEffectName">
+            <summary>
+            Optional EFFECTS group driven by positive Translate Y input.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.verticalDownEffectName">
+            <summary>
+            Optional EFFECTS group driven by negative Translate Y input.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIFlexGravGeneratorAnimated.thrustEffect">
+            <summary>
+            Legacy generic horizontal thrust EFFECTS group.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGeneratorAnimated.updateContinuousEffects(System.Single,System.Single)">
+            <summary>
+            Drives all continuous stock EFFECTS groups from the generator's current state.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGeneratorAnimated.stopContinuousEffects">
+            <summary>
+            Turns off effects that can be looped or continuously emitted.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIFlexGravGeneratorAnimated.playEffect(System.String)">
+            <summary>
+            Plays a transition effect. Transition groups are intentionally not cached so one-shot audio can replay.
+            </summary>
+        </member>
         <member name="T:Blueshift.BlueshiftUtilities">
             <summary>
             A collection of utility functions that Blueshift uses.
@@ -504,6 +574,11 @@
         <member name="F:Blueshift.WBIModuleGeneratorFX.resourceConsumptionModifier">
             <summary>
             Multiplier to adjust consumption of input resources.
+            </summary>
+        </member>
+        <member name="P:Blueshift.WBIModuleGeneratorFX.managesEffectsInternally">
+            <summary>
+            Indicates whether a derived module drives its own stock EFFECTS groups.
             </summary>
         </member>
         <member name="M:Blueshift.WBIModuleGeneratorFX.RunGeneratorCycle">

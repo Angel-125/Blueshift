@@ -59,12 +59,69 @@ namespace Blueshift
         #endregion
 
         #region Effects
+        /// <summary>
+        /// EFFECTS group played when the generator starts. Falls back to startEffect.
+        /// </summary>
         [KSPField]
-        public string powerEffectName;
+        public string engageEffectName = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group played when the generator stops. Falls back to stopEffect.
+        /// </summary>
         [KSPField]
-        public string runningEffectName;
+        public string disengageEffectName = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group played when the generator loses required resources.
+        /// </summary>
+        [KSPField]
+        public string flameoutEffectName = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group driven by generator output.
+        /// </summary>
+        [KSPField]
+        public string powerEffectName = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group played continuously while the generator is operating. Falls back to runningEffect.
+        /// </summary>
+        [KSPField]
+        public string runningEffectName = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group driven by the forward component of gravitic acceleration.
+        /// </summary>
+        [KSPField]
+        public string fwdThrustEffect = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group driven by the reverse component of gravitic acceleration.
+        /// </summary>
+        [KSPField]
+        public string revThrustEffect = string.Empty;
+
+        /// <summary>
+        /// EFFECTS group driven by the vertical component of gravitic acceleration.
+        /// </summary>
         [KSPField]
         public string vtolThrustEffect = string.Empty;
+
+        /// <summary>
+        /// Optional EFFECTS group driven by positive Translate Y input.
+        /// </summary>
+        [KSPField]
+        public string verticalUpEffectName = string.Empty;
+
+        /// <summary>
+        /// Optional EFFECTS group driven by negative Translate Y input.
+        /// </summary>
+        [KSPField]
+        public string verticalDownEffectName = string.Empty;
+
+        /// <summary>
+        /// Legacy generic horizontal thrust EFFECTS group.
+        /// </summary>
         [KSPField]
         protected string thrustEffect = string.Empty;
         #endregion
@@ -85,11 +142,17 @@ namespace Blueshift
         protected Vector3 gravSpinAxis = Vector3.zero;
         protected Animation animation = null;
         protected bool flamedOut;
+        protected Dictionary<string, float> effectLevels = new Dictionary<string, float>();
 
         Light[] lights;
         #endregion
 
         #region Overrides
+        protected override bool managesEffectsInternally
+        {
+            get { return true; }
+        }
+
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
@@ -102,12 +165,24 @@ namespace Blueshift
             setupAnimations();
             getGravRing();
             setupLights();
+
+            if (IsActivated)
+            {
+                generatorState = WBIGeneratorStates.Running;
+                currentStartStopLerp = 1.0f;
+            }
+            else
+            {
+                generatorState = WBIGeneratorStates.Shutdown;
+                currentStartStopLerp = 0.0f;
+                stopContinuousEffects();
+            }
         }
 
         public override void OnUpdate()
         {
-            base.OnUpdate();
             updateFxState();
+            base.OnUpdate();
         }
 
         public override void FixedUpdate()
@@ -119,13 +194,9 @@ namespace Blueshift
             if ((isMissingResources || statusPercent <= 1E-09) && !flamedOut && (generatorState == WBIGeneratorStates.Running || generatorState == WBIGeneratorStates.Starting))
             {
                 flamedOut = true;
-                generatorState = WBIGeneratorStates.ShuttingDown;
+                generatorState = WBIGeneratorStates.Flameout;
                 playAnimation(true);
-
-                if (!string.IsNullOrEmpty(runningEffect))
-                    this.part.Effect(runningEffect, 0.0f);
-                if (!string.IsNullOrEmpty(stopEffect))
-                    this.part.Effect(stopEffect, 1.0f);
+                playEffect(flameoutEffectName);
             }
 
             // If we're flamed out but no longer missing resources & status percent > 0, then un-flameout.
@@ -134,18 +205,20 @@ namespace Blueshift
                 flamedOut = false;
                 generatorState = WBIGeneratorStates.Starting;
                 playAnimation();
-
-                if (!string.IsNullOrEmpty(startEffect))
-                    this.part.Effect(startEffect, 1.0f);
-                if (!string.IsNullOrEmpty(runningEffect))
-                    this.part.Effect(runningEffect, 1.0f);
+                currentStartStopLerp = 0.0f;
+                setEffect(flameoutEffectName, 0.0f);
+                playEffect(getEngageEffectName());
             }
         }
 
         public override void StartResourceConverter()
         {
             base.StartResourceConverter();
+            flamedOut = false;
             generatorState = WBIGeneratorStates.Starting;
+            currentStartStopLerp = 0.0f;
+            setEffect(flameoutEffectName, 0.0f);
+            playEffect(getEngageEffectName());
             playAnimation();
         }
 
@@ -154,6 +227,9 @@ namespace Blueshift
             base.StopResourceConverter();
             generatorState = WBIGeneratorStates.ShuttingDown;
             flamedOut = false;
+            currentStartStopLerp = Mathf.Max(currentStartStopLerp, animationThrottle);
+            setEffect(flameoutEffectName, 0.0f);
+            playEffect(getDisengageEffectName());
             playAnimation(true);
         }
 
@@ -283,9 +359,17 @@ namespace Blueshift
 
         protected virtual void updateFxState()
         {
+            if (!HighLogic.LoadedSceneIsFlight || vessel == null)
+                return;
+
             float powerLevel = vessel.ctrlState.mainThrottle;
             if (!throttleControlEnabled)
                 powerLevel = flexGravManualOutput / 100f;
+            powerLevel = Mathf.Clamp01(powerLevel);
+
+            float frameDeltaTime = Time.deltaTime;
+            if (frameDeltaTime <= 0)
+                frameDeltaTime = TimeWarp.fixedDeltaTime;
 
             switch (generatorState)
             {
@@ -297,17 +381,19 @@ namespace Blueshift
                             lights[index].intensity = 0f;
                     }
                     animationThrottle = 0;
+                    stopContinuousEffects();
                     break;
 
                 case WBIGeneratorStates.Running:
-                    if (powerLevel < 0.1f)
-                        powerLevel = 0.1f;
+                    if (powerLevel < runningPowerMin)
+                        powerLevel = runningPowerMin;
                     animationThrottle = powerLevel;
+                    updateContinuousEffects(1.0f, powerLevel);
 
                     //Spin the grav ring
                     if (gravRingTransform != null)
                     {
-                        rotationPerFrame = ((spinRateRPMMax * 60.0f) * TimeWarp.fixedDeltaTime) * powerLevel;
+                        rotationPerFrame = ((spinRateRPMMax * 60.0f) * frameDeltaTime) * powerLevel;
                         if (rotationPerFrame < rotationPerFrameMin)
                             rotationPerFrame = rotationPerFrameMin;
                         gravRingTransform.Rotate(gravSpinAxis * rotationPerFrame);
@@ -315,16 +401,16 @@ namespace Blueshift
                     break;
 
                 case WBIGeneratorStates.Starting:
-                    if (powerLevel < 0.1f)
-                        powerLevel = 0.1f;
-                    animationThrottle = powerLevel;
+                    if (powerLevel < runningPowerMin)
+                        powerLevel = runningPowerMin;
 
-                    currentStartStopLerp = Mathf.Lerp(currentStartStopLerp, 1.0f, TimeWarp.fixedDeltaTime / startupTime);
-                    this.part.Effect(runningEffect, currentStartStopLerp);
+                    currentStartStopLerp = moveEffectLevel(currentStartStopLerp, 1.0f, startupTime, frameDeltaTime);
+                    animationThrottle = powerLevel * currentStartStopLerp;
+                    updateContinuousEffects(currentStartStopLerp, powerLevel);
 
                     if (gravRingTransform != null)
                     {
-                        rotationPerFrame = ((spinRateRPMMax * 60.0f) * TimeWarp.fixedDeltaTime) * powerLevel;
+                        rotationPerFrame = ((spinRateRPMMax * 60.0f) * frameDeltaTime) * powerLevel;
                         gravRingTransform.Rotate(gravSpinAxis * rotationPerFrame * currentStartStopLerp);
                     }
 
@@ -342,9 +428,10 @@ namespace Blueshift
                     break;
 
                 case WBIGeneratorStates.ShuttingDown:
-                    currentStartStopLerp = Mathf.Lerp(currentStartStopLerp, 0.0f, TimeWarp.fixedDeltaTime / shutdownTime);
-                    animationThrottle = currentStartStopLerp;
-                    this.part.Effect(runningEffect, currentStartStopLerp);
+                case WBIGeneratorStates.Flameout:
+                    currentStartStopLerp = moveEffectLevel(currentStartStopLerp, 0.0f, shutdownTime, frameDeltaTime);
+                    animationThrottle = powerLevel * currentStartStopLerp;
+                    updateContinuousEffects(currentStartStopLerp, powerLevel);
 
                     if (gravRingTransform != null)
                         gravRingTransform.Rotate(gravSpinAxis * rotationPerFrame * currentStartStopLerp);
@@ -354,6 +441,7 @@ namespace Blueshift
                         generatorState = WBIGeneratorStates.Shutdown;
                         currentStartStopLerp = 0f;
                         animationThrottle = 0f;
+                        stopContinuousEffects();
                     }
 
                     if (lights != null && lights.Length > 0)
@@ -363,6 +451,97 @@ namespace Blueshift
                     }
                     break;
             }
+        }
+
+        /// <summary>
+        /// Drives all continuous stock EFFECTS groups from the generator's current state.
+        /// </summary>
+        protected virtual void updateContinuousEffects(float spoolLevel, float powerLevel)
+        {
+            float effectPower = Mathf.Clamp01(spoolLevel * powerLevel);
+            float verticalFactor = Mathf.Clamp01(verticalLiftAngle / 90.0f);
+            float horizontalFactor = 1.0f - verticalFactor;
+            float verticalInput = Mathf.Clamp(translateUpDn, -1.0f, 1.0f);
+
+            setEffect(getRunningEffectName(), Mathf.Clamp01(spoolLevel));
+            setEffect(powerEffectName, effectPower);
+            setEffect(thrustEffect, effectPower * horizontalFactor);
+            setEffectIfDistinct(fwdThrustEffect, thrustEffect, useForwardVector ? effectPower * horizontalFactor : 0.0f);
+            setEffectIfDistinct(revThrustEffect, thrustEffect, useForwardVector ? 0.0f : effectPower * horizontalFactor);
+            setEffect(vtolThrustEffect, effectPower * verticalFactor);
+            setEffect(verticalUpEffectName, verticalInput > 0 ? effectPower * verticalInput : 0.0f);
+            setEffect(verticalDownEffectName, verticalInput < 0 ? effectPower * -verticalInput : 0.0f);
+        }
+
+        /// <summary>
+        /// Turns off effects that can be looped or continuously emitted.
+        /// </summary>
+        protected virtual void stopContinuousEffects()
+        {
+            setEffect(getRunningEffectName(), 0.0f);
+            setEffect(powerEffectName, 0.0f);
+            setEffect(thrustEffect, 0.0f);
+            setEffectIfDistinct(fwdThrustEffect, thrustEffect, 0.0f);
+            setEffectIfDistinct(revThrustEffect, thrustEffect, 0.0f);
+            setEffect(vtolThrustEffect, 0.0f);
+            setEffect(verticalUpEffectName, 0.0f);
+            setEffect(verticalDownEffectName, 0.0f);
+        }
+
+        protected virtual float moveEffectLevel(float currentLevel, float targetLevel, float duration, float deltaTime)
+        {
+            if (duration <= 0)
+                return targetLevel;
+
+            return Mathf.MoveTowards(currentLevel, targetLevel, deltaTime / duration);
+        }
+
+        protected virtual string getEngageEffectName()
+        {
+            return string.IsNullOrEmpty(engageEffectName) ? startEffect : engageEffectName;
+        }
+
+        protected virtual string getDisengageEffectName()
+        {
+            return string.IsNullOrEmpty(disengageEffectName) ? stopEffect : disengageEffectName;
+        }
+
+        protected virtual string getRunningEffectName()
+        {
+            return string.IsNullOrEmpty(runningEffectName) ? runningEffect : runningEffectName;
+        }
+
+        protected virtual void setEffect(string effectName, float powerLevel)
+        {
+            if (string.IsNullOrEmpty(effectName))
+                return;
+
+            powerLevel = Mathf.Clamp01(powerLevel);
+
+            float previousLevel;
+            if (effectLevels.TryGetValue(effectName, out previousLevel) && Mathf.Approximately(previousLevel, powerLevel))
+                return;
+
+            effectLevels[effectName] = powerLevel;
+            part.Effect(effectName, powerLevel);
+        }
+
+        protected virtual void setEffectIfDistinct(string effectName, string otherEffectName, float powerLevel)
+        {
+            if (effectName != otherEffectName)
+                setEffect(effectName, powerLevel);
+        }
+
+        /// <summary>
+        /// Plays a transition effect. Transition groups are intentionally not cached so one-shot audio can replay.
+        /// </summary>
+        protected virtual void playEffect(string effectName)
+        {
+            if (string.IsNullOrEmpty(effectName))
+                return;
+
+            part.Effect(effectName, 1.0f);
+            effectLevels.Remove(effectName);
         }
         #endregion
     }
