@@ -84,6 +84,15 @@
             A collection of utility functions that Blueshift uses.
             </summary>
         </member>
+        <member name="M:Blueshift.BlueshiftUtilities.IsInfiniteResourceEnabled(System.String)">
+            <summary>
+            Determines whether KSP's infinite-resource cheat should bypass consumption of the supplied resource.
+            ElectricCharge is governed by Infinite Electricity; all other converter and coil inputs are governed by
+            Infinite Propellant.
+            </summary>
+            <param name="resourceName">The internal resource name.</param>
+            <returns>True when consumption of the resource should be bypassed.</returns>
+        </member>
         <member name="M:Blueshift.BlueshiftUtilities.BalanceResources(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double)">
              <summary>
              Balances resource amounts so that all resources run out at the same time.
@@ -486,6 +495,62 @@
         <member name="F:Blueshift.WBIModuleAnimation.waterfallEffectController">
             <summary>
             Name of the Waterfall effects controller that controls the warp effects (if any).
+            </summary>
+        </member>
+        <member name="T:Blueshift.CommNetLinkOptionsPatch">
+            <summary>
+            Installs Blueshift's narrowly scoped CommNet link-policy patch.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBICommNetLinkPolicy">
+            <summary>
+            Effective special handling for one CommNet connection evaluation.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBICommNetLinkManager">
+            <summary>
+            Caches CommNet node ownership and resolves WBICommNetLinkOptions for loaded and unloaded vessels.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBICommNetLinkManager.InvalidateCaches(System.Boolean)">
+            <summary>
+            Marks CommNet ownership and policy caches stale and optionally requests a stock network rebuild.
+            </summary>
+            <param name="queueRebuild">Whether to request a CommNet rebuild.</param>
+        </member>
+        <member name="M:Blueshift.WBICommNetLinkManager.TryGetPolicy(CommNet.CommNode,CommNet.CommNode,Blueshift.WBICommNetLinkPolicy@)">
+            <summary>
+            Resolves the effective specialized-link policy for a pair of CommNet nodes.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBICommNetLinkOptions">
+            <summary>
+            Passive configuration for specialized CommNet links. Link IDs are compared without regard to case.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICommNetLinkOptions.bypassRange">
+            <summary>
+            Bypasses the stock CommNet range check for an eligible link.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICommNetLinkOptions.bypassOcclusion">
+            <summary>
+            Bypasses the stock CommNet occlusion check for an eligible link.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICommNetLinkOptions.requireMatchingPeer">
+            <summary>
+            Requires a compatible WBICommNetLinkOptions module on the other endpoint.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICommNetLinkOptions.linkID">
+            <summary>
+            Identifies compatible specialized relays. Matching is case-insensitive.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBICommNetLinkOptions.useJumpGateNetwork">
+            <summary>
+            Uses Blueshift's jump-gate registry instead of linkID matching.
             </summary>
         </member>
         <member name="T:Blueshift.WBIVesselTypeFixer">
@@ -1509,6 +1574,34 @@
             </summary>
             <param name="vesselID">A string containing the ID of the jumpgate vessel.</param>
             <param name="networkID">A string containing the ID of the jumpgate network.</param>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.NormalizeVesselID(System.String)">
+            <summary>
+            Normalizes vessel IDs in the same form used by the jump-gate registry.
+            </summary>
+            <param name="vesselID">Vessel ID with or without separators.</param>
+            <returns>The normalized vessel ID.</returns>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.IsRegisteredJumpgate(System.Guid)">
+            <summary>
+            Determines whether a vessel is registered in at least one jump-gate network.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetJumpgateNetworks(System.Guid)">
+            <summary>
+            Returns a copy of the network IDs containing the supplied vessel.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.ShareJumpgateNetwork(System.Guid,System.Guid)">
+            <summary>
+            Determines whether two registered jump gates share a network. Blank network IDs retain the existing
+            behavior of being normalized into Blueshift's universal "Any" network.
+            </summary>
+        </member>
+        <member name="M:Blueshift.BlueshiftScenario.RemoveJumpgateFromNetworks(System.Guid)">
+            <summary>
+            Removes a vessel from all jump-gate networks.
+            </summary>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.GetDestinationGates(System.String,Vector3d,System.Double)">
             <summary>

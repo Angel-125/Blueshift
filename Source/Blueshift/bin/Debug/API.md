@@ -27,6 +27,8 @@ EFFECTS group driven by the vertical component of gravitic acceleration.
 Optional EFFECTS group driven by positive Translate Y input.
 ### verticalDownEffectName
 Optional EFFECTS group driven by negative Translate Y input.
+### thrustEffect
+Legacy generic horizontal thrust EFFECTS group.
 ## Methods
 
 
@@ -36,12 +38,23 @@ Drives all continuous stock EFFECTS groups from the generator's current state.
 ### stopContinuousEffects
 Turns off effects that can be looped or continuously emitted.
 
+### playEffect(System.String)
+Plays a transition effect. Transition groups are intentionally not cached so one-shot audio can replay.
+
 # BlueshiftUtilities
             
 A collection of utility functions that Blueshift uses.
         
 ## Methods
 
+
+### IsInfiniteResourceEnabled(System.String)
+Determines whether KSP's infinite-resource cheat should bypass consumption of the supplied resource. ElectricCharge is governed by Infinite Electricity; all other converter and coil inputs are governed by Infinite Propellant.
+> #### Parameters
+> **resourceName:** The internal resource name.
+
+> #### Return value
+> True when consumption of the resource should be bypassed.
 
 ### BalanceResources(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double)
 Balances resource amounts so that all resources run out at the same time. Given an array of consumption rates (units/second) and a total storage capacity (units), this function distributes the available storage across the resources so that each one depletes simultaneously. The idea: - For each resource, TimeToEmpty = Amount / ConsumptionRate - All TimeToEmpty values must be equal. - Solve for the common time (T): T = TotalCapacity / Sum(ConsumptionRates) - Then each resource amount is: Amount_i = ConsumptionRate_i * T Example Visualization: Total Capacity = 10000 units Consumption Rates: [ 0.002, 0.005, 0.000188, 0.02 ] Storage split across 4 resources: [ Resource 1 ] ▓▓▓▓▓▓▓▓░░░░░░░░░░░░ [ Resource 2 ] ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ [ Resource 3 ] ▓▓░░░░░░░░░░░░░░░░░░ [ Resource 4 ] ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Resources with higher consumption rates (Resource 4) get more storage. Resources with slower consumption (Resource 3) get less storage. All resources deplete at the same time.
@@ -243,6 +256,49 @@ Planetary space: vessel's mainBody is a planet or a moon.
 Interplanetary space: vessel's mainBody is a star.
 ### Interstellar
 Interstellar space: the void between the stars...
+
+# CommNetLinkOptionsPatch
+            
+Installs Blueshift's narrowly scoped CommNet link-policy patch.
+        
+
+# WBICommNetLinkPolicy
+            
+Effective special handling for one CommNet connection evaluation.
+        
+
+# WBICommNetLinkManager
+            
+Caches CommNet node ownership and resolves WBICommNetLinkOptions for loaded and unloaded vessels.
+        
+## Methods
+
+
+### InvalidateCaches(System.Boolean)
+Marks CommNet ownership and policy caches stale and optionally requests a stock network rebuild.
+> #### Parameters
+> **queueRebuild:** Whether to request a CommNet rebuild.
+
+
+### TryGetPolicy(CommNet.CommNode,CommNet.CommNode,Blueshift.WBICommNetLinkPolicy@)
+Resolves the effective specialized-link policy for a pair of CommNet nodes.
+
+# WBICommNetLinkOptions
+            
+Passive configuration for specialized CommNet links. Link IDs are compared without regard to case.
+        
+## Fields
+
+### bypassRange
+Bypasses the stock CommNet range check for an eligible link.
+### bypassOcclusion
+Bypasses the stock CommNet occlusion check for an eligible link.
+### requireMatchingPeer
+Requires a compatible WBICommNetLinkOptions module on the other endpoint.
+### linkID
+Identifies compatible specialized relays. Matching is case-insensitive.
+### useJumpGateNetwork
+Uses Blueshift's jump-gate registry instead of linkID matching.
 
 # WBIVesselTypeFixer
             
@@ -762,6 +818,26 @@ Adds the jumpgate to the network.
 > **networkID:** A string containing the ID of the jumpgate network.
 
 
+### NormalizeVesselID(System.String)
+Normalizes vessel IDs in the same form used by the jump-gate registry.
+> #### Parameters
+> **vesselID:** Vessel ID with or without separators.
+
+> #### Return value
+> The normalized vessel ID.
+
+### IsRegisteredJumpgate(System.Guid)
+Determines whether a vessel is registered in at least one jump-gate network.
+
+### GetJumpgateNetworks(System.Guid)
+Returns a copy of the network IDs containing the supplied vessel.
+
+### ShareJumpgateNetwork(System.Guid,System.Guid)
+Determines whether two registered jump gates share a network. Blank network IDs retain the existing behavior of being normalized into Blueshift's universal "Any" network.
+
+### RemoveJumpgateFromNetworks(System.Guid)
+Removes a vessel from all jump-gate networks.
+
 ### GetDestinationGates(System.String,Vector3d,System.Double)
 Returns the list of possible destination gates that are in range of the specified origin point.
 > #### Parameters
@@ -1167,6 +1243,8 @@ EFFECTS group driven by the vertical component of gravitic acceleration.
 Optional EFFECTS group driven by positive Translate Y input.
 ### 
 Optional EFFECTS group driven by negative Translate Y input.
+### 
+Legacy generic horizontal thrust EFFECTS group.
 ### maxGForceCancellation
 In meters per second-squared, the amount of acceleration due to gravity that the device is rated for. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
 ### maxGravityNegatedPercent
@@ -1203,6 +1281,9 @@ Drives all continuous stock EFFECTS groups from the generator's current state.
 
 ### 
 Turns off effects that can be looped or continuously emitted.
+
+### 
+Plays a transition effect. Transition groups are intentionally not cached so one-shot audio can replay.
 
 ### SetForwardAccelerationAction(KSPActionParam)
 Sets acceleration fully forward.

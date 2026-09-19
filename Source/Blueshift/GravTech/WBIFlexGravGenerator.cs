@@ -348,7 +348,8 @@ namespace Blueshift
                 if (recipe.Inputs[index].ResourceName == "ElectricCharge")
                 {
                     resource = recipeInputs[index];
-                    resource.Ratio += (1 + ecMassPercentIncrease) * ratioMultiplier;
+                    if (!CheatOptions.InfiniteElectricity)
+                        resource.Ratio += ecMassPercentIncrease * ratioMultiplier;
                     recipeInputs[index] = resource;
                     continue;
                 }

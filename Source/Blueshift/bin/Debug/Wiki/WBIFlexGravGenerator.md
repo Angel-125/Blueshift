@@ -23,6 +23,8 @@ EFFECTS group driven by the vertical component of gravitic acceleration.
 Optional EFFECTS group driven by positive Translate Y input.
 ### 
 Optional EFFECTS group driven by negative Translate Y input.
+### 
+Legacy generic horizontal thrust EFFECTS group.
 ### maxGForceCancellation
 In meters per second-squared, the amount of acceleration due to gravity that the device is rated for. If this value meets or exceeds the local gravity, then only 95% of local gravity can be negated.
 ### maxGravityNegatedPercent
@@ -60,17 +62,13 @@ Drives all continuous stock EFFECTS groups from the generator's current state.
 ### 
 Turns off effects that can be looped or continuously emitted.
 
+### 
+Plays a transition effect. Transition groups are intentionally not cached so one-shot audio can replay.
+
 ### SetForwardAccelerationAction(KSPActionParam)
 Sets acceleration fully forward.
 > #### Parameters
 > **param:** 
 
 
-### SetReversedAccelerationAction(KSPActionParam)
-Sets acceleration fully reverse.
-> #### Parameters
-> **param:** 
-
-
-### SetVerticalAccelerationAction(KSPActionParam)
-Sets acceleration fully vertical.
+### SetReversedAccelerationAction(KSPActi

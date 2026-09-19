@@ -199,6 +199,9 @@ namespace Blueshift
 
             for (int index = 0; index < count; index++)
             {
+                if (BlueshiftUtilities.IsInfiniteResourceEnabled(resHandler.inputResources[index].name))
+                    continue;
+
                 vessel.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
                 consumptionRate = resHandler.inputResources[index].rate * rateMultiplier * capacityMultiplier * TimeWarp.fixedDeltaTime;
 
@@ -229,7 +232,7 @@ namespace Blueshift
         public bool ConsumeResources(double rateMultiplier, bool isTimewarping)
         {
             // If we're not timewarping then let the resource handler, uh, handle it.
-            if (!isTimewarping)
+            if (!isTimewarping && !CheatOptions.InfinitePropellant && !CheatOptions.InfiniteElectricity)
             {
                 string errorStatus = string.Empty;
                 int count = resHandler.inputResources.Count;
@@ -244,8 +247,8 @@ namespace Blueshift
                 return true;
             }
 
-            // We are timewarping. Manually consume the resources.
-            // We need to manually consume resources to avoid an issue where high timewarp will attempt to pull far more resources than exist.
+            // Manually consume resources while timewarping or while either resource cheat is active.
+            // This lets us omit cheated inputs individually, and avoids high timewarp attempting to pull far more resources than exist.
             else
             {
                 int count = resHandler.inputResources.Count;
@@ -255,11 +258,14 @@ namespace Blueshift
 
                 for (int index = 0; index < count; index++)
                 {
+                    if (BlueshiftUtilities.IsInfiniteResourceEnabled(resHandler.inputResources[index].name))
+                        continue;
+
                     // Get the resource's current and max amounts.
                     part.GetConnectedResourceTotals(resHandler.inputResources[index].id, out amount, out maxAmount);
 
                     // Determine how many units per second we require.
-                    demand = resHandler.inputResources[index].rate * capacityMultiplier;
+                    demand = resHandler.inputResources[index].rate * rateMultiplier * capacityMultiplier;
 
                     // Cap demand to maxAmount if the timewarp-adjusted demand exceeds the maxAmount.
                     if (demand * TimeWarp.fixedDeltaTime > maxAmount)
@@ -325,16 +331,22 @@ namespace Blueshift
 
             originalDisplacementImpulse = displacementImpulse;
 
+            // Get the selected variant before caching resource capacities. Loaded craft
+            // persist the scaled maxAmount values, so normalize them back to their base
+            // values before applying the selected multiplier again.
+            ModulePartVariants partVariants = part.FindModuleImplementing<ModulePartVariants>();
+            PartVariant selectedVariant = partVariants != null ? partVariants.SelectedVariant : null;
+            float selectedMultiplier = getCapacityMultiplier(selectedVariant);
+
             // Get resources for multi-segment coil support
             resourceMaxAmounts = new Dictionary<string, double>();
             int count = part.Resources.Count;
             for (int index = 0; index < count; index++)
-                resourceMaxAmounts.Add(part.Resources[index].resourceName, part.Resources[index].maxAmount);
+                resourceMaxAmounts.Add(part.Resources[index].resourceName, part.Resources[index].maxAmount / selectedMultiplier);
 
-            // Compute initial totalWarpCapacity, assuming no part variants.
-            capacityMultiplier = 1.0f;
-            totalWarpCapacity = warpCapacity * capacityMultiplier;
-            displacementImpulse = originalDisplacementImpulse;
+            // Reapply the selected variant. KSP does not fire onVariantApplied when loading
+            // a craft whose variant was already selected.
+            applyVariant(selectedVariant, false);
 
             // Game events
             if (HighLogic.LoadedSceneIsFlight)
@@ -377,43 +389,46 @@ namespace Blueshift
 
         private void onVariantApplied(Part variantPart, PartVariant variant)
         {
-            if (variantPart != part)
-            {
+            if (variantPart != part || variant == null)
                 return;
-            }
 
-            // Get the capacityMultiplier entry
-            string multiplier = variant.GetExtraInfoValue(kCapacityMultiplier);
-            if (String.IsNullOrEmpty(multiplier))
+            applyVariant(variant, true);
+        }
+
+        private float getCapacityMultiplier(PartVariant variant)
+        {
+            if (variant == null)
+                return 1.0f;
+
+            float multiplier;
+            string multiplierValue = variant.GetExtraInfoValue(kCapacityMultiplier);
+            if (!String.IsNullOrEmpty(multiplierValue) && float.TryParse(multiplierValue, out multiplier) && multiplier > 0)
+                return multiplier;
+
+            return 1.0f;
+        }
+
+        private void applyVariant(PartVariant variant, bool notifyEditor)
+        {
+            capacityMultiplier = getCapacityMultiplier(variant);
+            totalWarpCapacity = warpCapacity * capacityMultiplier;
+            displacementImpulse = originalDisplacementImpulse * capacityMultiplier;
+
+            int count = part.Resources.Count;
+            string resourceName;
+            for (int index = 0; index < count; index++)
             {
-                capacityMultiplier = 1.0f;
-                totalWarpCapacity = warpCapacity * capacityMultiplier;
-                displacementImpulse = originalDisplacementImpulse;
-                return;
-            }
+                resourceName = part.Resources[index].resourceName;
+                if (!resourceMaxAmounts.ContainsKey(resourceName))
+                    resourceMaxAmounts.Add(resourceName, part.Resources[index].maxAmount);
 
-            // process the capacity multiplier
-            if (float.TryParse(multiplier, out capacityMultiplier))
-            {
-                totalWarpCapacity = warpCapacity * capacityMultiplier;
-                displacementImpulse = originalDisplacementImpulse * capacityMultiplier;
-
-                int count = part.Resources.Count;
-                string resourceName = string.Empty;
-                for (int index = 0; index < count; index++)
-                {
-                    resourceName = part.Resources[index].resourceName;
-                    if (!resourceMaxAmounts.ContainsKey(resourceName))
-                        resourceMaxAmounts.Add(resourceName, part.Resources[index].maxAmount);
-
-                    part.Resources[index].maxAmount = resourceMaxAmounts[resourceName] * capacityMultiplier;
-                }
+                part.Resources[index].maxAmount = resourceMaxAmounts[resourceName] * capacityMultiplier;
             }
 
             //Dirty the GUI
             MonoUtilities.RefreshContextWindows(part);
-           
-            if (HighLogic.LoadedSceneIsEditor)
+
+            if (notifyEditor && HighLogic.LoadedSceneIsEditor)
             {
                 ShipConstruct ship = EditorLogic.fetch.ship;
                 if (ship != null)

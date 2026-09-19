@@ -4,6 +4,14 @@ A collection of utility functions that Blueshift uses.
 ## Methods
 
 
+### IsInfiniteResourceEnabled(System.String)
+Determines whether KSP's infinite-resource cheat should bypass consumption of the supplied resource. ElectricCharge is governed by Infinite Electricity; all other converter and coil inputs are governed by Infinite Propellant.
+> #### Parameters
+> **resourceName:** The internal resource name.
+
+> #### Return value
+> True when consumption of the resource should be bypassed.
+
 ### BalanceResources(System.Collections.Generic.Dictionary{System.String,System.Double},System.Double)
 Balances resource amounts so that all resources run out at the same time. Given an array of consumption rates (units/second) and a total storage capacity (units), this function distributes the available storage across the resources so that each one depletes simultaneously. The idea: - For each resource, TimeToEmpty = Amount / ConsumptionRate - All TimeToEmpty values must be equal. - Solve for the common time (T): T = TotalCapacity / Sum(ConsumptionRates) - Then each resource amount is: Amount_i = ConsumptionRate_i * T Example Visualization: Total Capacity = 10000 units Consumption Rates: [ 0.002, 0.005, 0.000188, 0.02 ] Storage split across 4 resources: [ Resource 1 ] ▓▓▓▓▓▓▓▓░░░░░░░░░░░░ [ Resource 2 ] ▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░ [ Resource 3 ] ▓▓░░░░░░░░░░░░░░░░░░ [ Resource 4 ] ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Resources with higher consumption rates (Resource 4) get more storage. Resources with slower consumption (Resource 3) get less storage. All resources deplete at the same time.
 > #### Parameters

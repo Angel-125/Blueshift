@@ -491,7 +491,8 @@ namespace Blueshift
         bool lockedCourseAndSpeed = false;
         bool isTimewarping = false;
         Vector3d warpCruiseVector;
-        Vector3d preCruiseVelocity;
+        bool warpCruiseVelocityApplied = false;
+        bool warpShutdownPending = false;
         bool needsVelocityUpdate = false;
         double resumeUpdateTimestamp = -1f;
         bool wentInterstellar = false;
@@ -512,6 +513,7 @@ namespace Blueshift
         bool editorCallbacksRegistered = false;
         bool flightCallbacksRegistered = false;
         ShipConstruct pendingEditorShip = null;
+        Coroutine editorShipUpdateCoroutine = null;
         Callback<BaseField, object> superchargerFieldChangedCallback = null;
         bool updateBowshockTransform = false;
         bool warpFieldEffectsStateDirty = true;
@@ -530,7 +532,7 @@ namespace Blueshift
         [KSPEvent(guiActive = true, guiName = "#LOC_BLUESHIFT_circularizeOrbit")]
         public void CircularizeOrbit()
         {
-            if ( FlightInputHandler.state.mainThrottle <= 0)
+            if (getVesselThrottle() <= 0)
             {
                 // We don't circularize if the ship is in interstellar space.
                 if (BlueshiftScenario.shared.IsInInterstellarSpace(this.part.vessel))
@@ -551,18 +553,21 @@ namespace Blueshift
                 // It costs resources to circularize. Make sure we can.
                 if (BlueshiftScenario.circularizationResourceDef != null && BlueshiftScenario.circularizationCostPerTonne > 0)
                 {
-                    double amount, maxAmount = 0;
-                    double resourceCost = (this.part.vessel.GetTotalMass() * BlueshiftScenario.circularizationCostPerTonne);
-
-                    this.part.GetConnectedResourceTotals(BlueshiftScenario.circularizationResourceDef.id, out amount, out maxAmount);
-                    if (amount < resourceCost)
+                    if (!BlueshiftUtilities.IsInfiniteResourceEnabled(BlueshiftScenario.circularizationResourceDef.name))
                     {
-                        ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsResources"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
-                        circularizationState = WBICircularizationStates.doNotCircularize;
-                        return;
-                    }
+                        double amount, maxAmount = 0;
+                        double resourceCost = (this.part.vessel.GetTotalMass() * BlueshiftScenario.circularizationCostPerTonne);
 
-                    amount = this.part.RequestResource(BlueshiftScenario.circularizationResourceDef.id, resourceCost);
+                        this.part.GetConnectedResourceTotals(BlueshiftScenario.circularizationResourceDef.id, out amount, out maxAmount);
+                        if (amount < resourceCost)
+                        {
+                            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_needsResources"), kMessageDuration, ScreenMessageStyle.UPPER_LEFT);
+                            circularizationState = WBICircularizationStates.doNotCircularize;
+                            return;
+                        }
+
+                        amount = this.part.RequestResource(BlueshiftScenario.circularizationResourceDef.id, resourceCost);
+                    }
                 }
 
                 // If we are targeting a vessel and we're near it (10km) then rendezvous with it instead.
@@ -647,6 +652,13 @@ namespace Blueshift
                     Fields["thrustPercentage"].uiControlEditor.onSymmetryFieldChanged -= superchargerFieldChangedCallback;
                     superchargerFieldChangedCallback = null;
                 }
+                if (editorShipUpdateCoroutine != null && part != null)
+                {
+                    part.StopCoroutine(editorShipUpdateCoroutine);
+                    editorShipUpdateCoroutine = null;
+                }
+                pendingEditorShip = null;
+                editorShipUpdatePending = false;
                 editorCallbacksRegistered = false;
             }
 
@@ -666,11 +678,18 @@ namespace Blueshift
             base.OnFixedUpdate();
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
+
+            // A failure during on-rails warp must finish returning to rate zero and
+            // unpacking even if the engine has already shut down.
+            isTimewarping = TimeWarping();
+            if (warpShutdownPending)
+            {
+                finishWarpShutdown();
+                return;
+            }
+
             if (!EngineIgnited)
                 return;
-
-            // Get timewarping state.
-            isTimewarping = TimeWarping();
 
             // Update spatial location.
             spatialLocation = BlueshiftScenario.shared.GetSpatialLocation(part.vessel);
@@ -678,7 +697,7 @@ namespace Blueshift
                 prevSpatialLocation = spatialLocation;
 
             // Update throttle level
-            throttleLevel = FlightInputHandler.state.mainThrottle * (thrustPercentage / 100.0f);
+            throttleLevel = getVesselThrottle() * (thrustPercentage / 100.0f);
 
             // If ship's course and speed are locked, then we're timewarping and we need to:
             // Update throttleLevel based solely on thrustPercentage.
@@ -701,20 +720,21 @@ namespace Blueshift
                 FXUpdate();
 
                 // Kill timewarp if user taps on cut throttle.
-                if (UnityEngine.Input.GetKeyDown(GameSettings.THROTTLE_CUTOFF.primary.code) || 
-                    UnityEngine.Input.GetKeyDown(GameSettings.THROTTLE_CUTOFF.secondary.code) || 
-                    UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.primary.code) || 
+                if (part.vessel == FlightGlobals.ActiveVessel && (UnityEngine.Input.GetKeyDown(GameSettings.THROTTLE_CUTOFF.primary.code) ||
+                    UnityEngine.Input.GetKeyDown(GameSettings.THROTTLE_CUTOFF.secondary.code) ||
+                    UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.primary.code) ||
                     UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.secondary.code)
-                    )
+                    ))
                 { 
                     TimeWarp.SetRate(0, false);
                 }
             }
 
             // If we're not timewapring and the user taps on the brakes then cut the throttle.
-            else if (!isTimewarping && (UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.primary.code) || UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.secondary.code)))
+            else if (!isTimewarping && part.vessel == FlightGlobals.ActiveVessel &&
+                (UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.primary.code) || UnityEngine.Input.GetKeyDown(GameSettings.BRAKES.secondary.code)))
             {
-                FlightInputHandler.state.mainThrottle = 0f;
+                setVesselThrottle(0f);
                 throttleLevel = 0f;
             }
 
@@ -739,9 +759,7 @@ namespace Blueshift
 
                 if (lockedCourseAndSpeed)
                 {
-                    cancelWarpCruiseVelocity();
-                    lockedCourseAndSpeed = false;
-                    TimeWarp.SetRate(0, false);
+                    beginWarpShutdown();
                 }
 
                 return;
@@ -761,7 +779,6 @@ namespace Blueshift
 
             if (HighLogic.LoadedSceneIsEditor)
             {
-                processPendingEditorShipUpdate();
                 updateWarpSpedometer();
                 return;
             }
@@ -1057,7 +1074,7 @@ namespace Blueshift
 
             // Setup throttle
             int count = 0;
-            float effectsPowerLevel = FlightInputHandler.state.mainThrottle;
+            float effectsPowerLevel = getVesselThrottle();
             if (lockedCourseAndSpeed)
             {
                 effectsPowerLevel = 1f;
@@ -1411,20 +1428,28 @@ namespace Blueshift
             pendingEditorShip = ship;
             editorShipUpdatePending = true;
             editorShipUpdateTime = Time.realtimeSinceStartup + editorShipUpdateDelay;
+
+            // PartModule.OnUpdate is not reliably invoked in the editor. Run the
+            // coalesced update from the part's coroutine host instead.
+            if (editorShipUpdateCoroutine == null && part != null)
+                editorShipUpdateCoroutine = part.StartCoroutine(processPendingEditorShipUpdates());
         }
 
-        void processPendingEditorShipUpdate()
+        IEnumerator<YieldInstruction> processPendingEditorShipUpdates()
         {
-            if (!editorShipUpdatePending || Time.realtimeSinceStartup < editorShipUpdateTime)
-                return;
+            while (editorShipUpdatePending)
+            {
+                while (Time.realtimeSinceStartup < editorShipUpdateTime)
+                    yield return null;
 
-            ShipConstruct ship = pendingEditorShip;
-            pendingEditorShip = null;
-            editorShipUpdatePending = false;
-            if (ship == null || ship.parts == null)
-                return;
+                ShipConstruct ship = pendingEditorShip;
+                pendingEditorShip = null;
+                editorShipUpdatePending = false;
+                if (ship != null && ship.parts != null)
+                    recalculateEditorShip(ship);
+            }
 
-            recalculateEditorShip(ship);
+            editorShipUpdateCoroutine = null;
         }
 
         void recalculateEditorShip(ShipConstruct ship)
@@ -2113,55 +2138,99 @@ namespace Blueshift
             effectiveWarpCapacityCrewed = 0;
             crewEfficiencyBonus = 0;
             hasExceededLightSpeed = false;
-            FlightInputHandler.state.mainThrottle = 0;
+            setVesselThrottle(0f);
             circularizationState = WBICircularizationStates.doNotCircularize;
+        }
+
+        private float getVesselThrottle()
+        {
+            if (part == null || part.vessel == null)
+                return 0f;
+
+            if (part.vessel == FlightGlobals.ActiveVessel)
+                return FlightInputHandler.state.mainThrottle;
+
+            return part.vessel.ctrlState.mainThrottle;
+        }
+
+        private void setVesselThrottle(float throttle)
+        {
+            if (part == null || part.vessel == null)
+                return;
+
+            part.vessel.ctrlState.mainThrottle = throttle;
+            if (part.vessel == FlightGlobals.ActiveVessel)
+                FlightInputHandler.state.mainThrottle = throttle;
         }
 
         private void cancelWarpCruiseVelocity()
         {
-            // Concept courtesy of KSPIE.
-            // Create a reverse vector to slow down.
-            Vector3 warpVector = new Vector3d(-warpCruiseVector.x, -warpCruiseVector.y, -warpCruiseVector.z);
+            if (!warpCruiseVelocityApplied)
+                return;
 
-            // Account for pre-cruise velocity.
-            warpVector += new Vector3d(-preCruiseVelocity.x, -preCruiseVelocity.y, -preCruiseVelocity.z);
-
-            // Account for current body's velocity
-            if (vessel.mainBody.orbit != null)
-                warpVector += vessel.mainBody.orbit.GetFrameVel();
-
-            // Now update the vessel's velocity.
+            // Remove exactly the synthetic velocity that addWarpCruiseVelocity added.
+            // The previous implementation also subtracted the vessel's original orbital
+            // velocity, which could leave the vessel stationary after leaving timewarp.
             part.vessel.IgnoreGForces(2);
-
-            if (!vessel.packed)
+            bool wasPacked = vessel.packed;
+            if (!wasPacked)
                 vessel.GoOnRails();
 
-            vessel.orbit.UpdateFromStateVectors(vessel.orbit.pos, vessel.orbit.vel + warpVector, vessel.orbit.referenceBody, Planetarium.GetUniversalTime());
+            vessel.orbit.UpdateFromStateVectors(vessel.orbit.pos, vessel.orbit.vel - warpCruiseVector, vessel.orbit.referenceBody, Planetarium.GetUniversalTime());
 
-            if (!vessel.packed)
+            if (!wasPacked)
                 vessel.GoOffRails();
+
+            warpCruiseVelocityApplied = false;
+            warpCruiseVector = Vector3d.zero;
         }
 
         private void addWarpCruiseVelocity()
         {
             Transform refTransform = part.vessel.ReferenceTransform;
 
-            // Concept courtesy of KSPIE.
-            // Get the current velocity, we'll need to restore it when we're done with timewarp.
-            preCruiseVelocity = vessel.orbit.GetFrameVel();
-
             // Calculate the cruise velocity. We're about to go very fast.
             warpCruiseVector = new Vector3d(refTransform.up.x, refTransform.up.z, refTransform.up.y) * warpSpeed * kLightSpeed;
 
             // Now adjust the orbit with the new velocity.
             part.vessel.IgnoreGForces(2);
-            if (!vessel.packed)
+            bool wasPacked = vessel.packed;
+            if (!wasPacked)
                 vessel.GoOnRails();
 
             vessel.orbit.UpdateFromStateVectors(vessel.orbit.pos, vessel.orbit.vel + warpCruiseVector, vessel.orbit.referenceBody, Planetarium.GetUniversalTime());
+            warpCruiseVelocityApplied = true;
 
-            if (!vessel.packed)
+            if (!wasPacked)
                 vessel.GoOffRails();
+        }
+
+        private void beginWarpShutdown()
+        {
+            // Restore the vessel's real orbital velocity once, then keep the course lock
+            // until KSP has actually returned to rate zero and unpacked the vessel.
+            cancelWarpCruiseVelocity();
+            warpShutdownPending = true;
+            TimeWarp.SetRate(0, false);
+        }
+
+        private void finishWarpShutdown()
+        {
+            if (TimeWarp.CurrentRateIndex != 0 || !TimeWarp.CurrentRateIsTargetRate)
+                return;
+
+            if (vessel.packed)
+                vessel.GoOffRails();
+
+            if (vessel.packed)
+                return;
+
+            warpShutdownPending = false;
+            lockedCourseAndSpeed = false;
+            needsVelocityUpdate = false;
+            isTimewarping = false;
+            resumeUpdateTimestamp = Planetarium.GetUniversalTime() + kFrameSkipTime;
+            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_courseUnlocked"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
         }
 
         private void updateVesselPosition()
@@ -2182,7 +2251,7 @@ namespace Blueshift
             if (bodyBounds.Contains(offsetPosition))
             {
                 ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_terrainWarning"), 3.0f, ScreenMessageStyle.UPPER_CENTER);
-                FlightInputHandler.state.mainThrottle = 0;
+                setVesselThrottle(0f);
                 return;
             }
 

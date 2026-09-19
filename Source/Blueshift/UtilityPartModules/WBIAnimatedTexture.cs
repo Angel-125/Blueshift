@@ -275,7 +275,7 @@ namespace Blueshift
 
             // Get the other model transforms, if any
             ConfigNode node = getPartConfigNode(moduleID);
-            if (node.HasNode("TEXTURE_TRANSFORMS"))
+            if (node != null && node.HasNode("TEXTURE_TRANSFORMS"))
             {
                 node = node.GetNode("TEXTURE_TRANSFORMS");
                 if (node.HasValue("textureTransformName"))
@@ -336,21 +336,21 @@ namespace Blueshift
         /// <returns>An array of string containing the numbered textures that comprise the animation.</returns>
         protected string[] getTextures(string textureName)
         {
-            ConfigNode node = getPartConfigNode();
-            if (node == null)
+            ConfigNode node = getPartConfigNode(moduleID);
+            if (node == null || !node.HasValue(textureName))
                 return null;
-            if (!node.HasValue(textureName))
+
+            string animatedTexture = node.GetValue(textureName);
+            if (string.IsNullOrEmpty(animatedTexture))
                 return null;
 
             List<string> textureURLs = new List<string>();
             string textureURL;
             int textureIndex = 1;
 
-            animatedEmissiveTexture = node.GetValue(textureName);
-
             do
             {
-                textureURL = animatedEmissiveTexture + textureIndex.ToString();
+                textureURL = animatedTexture + textureIndex.ToString();
                 if (GameDatabase.Instance.ExistsTexture(textureURL))
                 {
                     textureURLs.Add(textureURL);

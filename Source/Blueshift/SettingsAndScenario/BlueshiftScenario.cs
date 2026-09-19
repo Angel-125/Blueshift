@@ -269,6 +269,7 @@ namespace Blueshift
             debugMode = BlueshiftSettings.DebugModeEnabled;
             GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
             GameEvents.onVesselWasModified.Add(onVesselWasModified);
+            GameEvents.onVesselDestroy.Add(onVesselDestroyed);
 
             if (!spawnSpaceAnomalies)
                 removeSpaceAnomalies();
@@ -282,6 +283,7 @@ namespace Blueshift
         {
             GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
             GameEvents.onVesselWasModified.Remove(onVesselWasModified);
+            GameEvents.onVesselDestroy.Remove(onVesselDestroyed);
         }
 
         public override void OnLoad(ConfigNode node)
@@ -327,9 +329,7 @@ namespace Blueshift
             {
                 ConfigNode[] gateNodes = node.GetNodes(kGateNetworkNode);
                 ConfigNode gateNode;
-                List<string> jumpgates;
                 string networkID;
-                string jumpgateID;
                 string[] jumpgateIDs;
                 for (int index = 0; index < gateNodes.Length; index++)
                 {
@@ -338,19 +338,9 @@ namespace Blueshift
                         continue;
 
                     networkID = gateNode.GetValue(kNetworkID);
-                    if (!jumpgateNetwork.ContainsKey(networkID))
-                        jumpgateNetwork.Add(networkID, new List<string>());
-                    jumpgates = jumpgateNetwork[networkID];
-
                     jumpgateIDs = gateNode.GetValues(kJumpgateID);
                     for (int gateIndex = 0; gateIndex < jumpgateIDs.Length; gateIndex++)
-                    {
-                        jumpgateID = jumpgateIDs[gateIndex];
-
-                        // Make sure the vessel exists, and don't add duplicates
-                        if (!jumpgates.Contains(jumpgateID))
-                            jumpgates.Add(jumpgateID);
-                    }
+                        AddJumpgateToNetwork(jumpgateIDs[gateIndex], networkID);
                 }
             }
 
@@ -602,21 +592,103 @@ namespace Blueshift
         /// <param name="networkID">A string containing the ID of the jumpgate network.</param>
         public void AddJumpgateToNetwork(string vesselID, string networkID)
         {
-            List<string> jumpgates = null;
-            string gateNetwork = networkID;
-            if (string.IsNullOrEmpty(gateNetwork))
-                gateNetwork = kUniversalNetworkID;
+            string vesselPID = NormalizeVesselID(vesselID);
+            if (string.IsNullOrEmpty(vesselPID))
+                return;
+
+            string gateNetwork = normalizeJumpgateNetworkID(networkID);
+            bool networkChanged = removeJumpgateFromNetworks(vesselPID, gateNetwork);
 
             if (!jumpgateNetwork.ContainsKey(gateNetwork))
             {
-                jumpgates = new List<string>();
-                jumpgateNetwork.Add(gateNetwork, jumpgates);
+                jumpgateNetwork.Add(gateNetwork, new List<string>());
+                networkChanged = true;
             }
 
-            jumpgates = jumpgateNetwork[gateNetwork];
-            string vesselPID = vesselID.Replace("-", "");
+            List<string> jumpgates = jumpgateNetwork[gateNetwork];
             if (!jumpgates.Contains(vesselPID))
+            {
                 jumpgates.Add(vesselPID);
+                networkChanged = true;
+            }
+
+            if (networkChanged)
+                WBICommNetLinkManager.InvalidateCaches();
+        }
+
+        /// <summary>
+        /// Normalizes vessel IDs in the same form used by the jump-gate registry.
+        /// </summary>
+        /// <param name="vesselID">Vessel ID with or without separators.</param>
+        /// <returns>The normalized vessel ID.</returns>
+        public static string NormalizeVesselID(string vesselID)
+        {
+            return string.IsNullOrEmpty(vesselID) ? string.Empty : vesselID.Replace("-", string.Empty).Trim();
+        }
+
+        /// <summary>
+        /// Determines whether a vessel is registered in at least one jump-gate network.
+        /// </summary>
+        public bool IsRegisteredJumpgate(Guid vesselID)
+        {
+            return GetJumpgateNetworks(vesselID).Length > 0;
+        }
+
+        /// <summary>
+        /// Returns a copy of the network IDs containing the supplied vessel.
+        /// </summary>
+        public string[] GetJumpgateNetworks(Guid vesselID)
+        {
+            List<string> networks = new List<string>();
+            if (jumpgateNetwork == null)
+                return networks.ToArray();
+
+            string vesselPID = NormalizeVesselID(vesselID.ToString());
+            string[] networkIDs = jumpgateNetwork.Keys.ToArray();
+            for (int index = 0; index < networkIDs.Length; index++)
+            {
+                List<string> jumpgates = jumpgateNetwork[networkIDs[index]];
+                if (jumpgates.Contains(vesselPID))
+                    networks.Add(networkIDs[index]);
+            }
+
+            networks.Sort(StringComparer.Ordinal);
+            return networks.ToArray();
+        }
+
+        /// <summary>
+        /// Determines whether two registered jump gates share a network. Blank network IDs retain the existing
+        /// behavior of being normalized into Blueshift's universal "Any" network.
+        /// </summary>
+        public bool ShareJumpgateNetwork(Guid firstVesselID, Guid secondVesselID)
+        {
+            string[] firstNetworks = GetJumpgateNetworks(firstVesselID);
+            if (firstNetworks.Length == 0)
+                return false;
+
+            string[] secondNetworks = GetJumpgateNetworks(secondVesselID);
+            if (secondNetworks.Length == 0)
+                return false;
+
+            for (int firstIndex = 0; firstIndex < firstNetworks.Length; firstIndex++)
+            {
+                for (int secondIndex = 0; secondIndex < secondNetworks.Length; secondIndex++)
+                {
+                    if (firstNetworks[firstIndex] == secondNetworks[secondIndex])
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Removes a vessel from all jump-gate networks.
+        /// </summary>
+        public void RemoveJumpgateFromNetworks(Guid vesselID)
+        {
+            if (removeJumpgateFromNetworks(NormalizeVesselID(vesselID.ToString()), null))
+                WBICommNetLinkManager.InvalidateCaches();
         }
 
         /// <summary>
@@ -1235,21 +1307,40 @@ namespace Blueshift
             if (spaceAnomalies.Contains(doomed))
                 spaceAnomalies.Remove(doomed);
 
+            if (removeJumpgateFromNetworks(NormalizeVesselID(doomed.vesselId), null))
+                WBICommNetLinkManager.InvalidateCaches();
+        }
+
+        private string normalizeJumpgateNetworkID(string networkID)
+        {
+            return string.IsNullOrEmpty(networkID) ? kUniversalNetworkID : networkID;
+        }
+
+        private bool removeJumpgateFromNetworks(string vesselPID, string networkToKeep)
+        {
+            if (jumpgateNetwork == null || string.IsNullOrEmpty(vesselPID))
+                return false;
+
+            bool removed = false;
             string[] networkIDs = jumpgateNetwork.Keys.ToArray();
-            List<string> jumpgates;
-            List<string> doomedNetworks = new List<string>();
+            List<string> emptyNetworks = new List<string>();
             for (int index = 0; index < networkIDs.Length; index++)
             {
-                jumpgates = jumpgateNetwork[networkIDs[index]];
-                if (jumpgates.Contains(doomed.vesselId))
-                    jumpgates.Remove(doomed.vesselId);
+                string networkID = networkIDs[index];
+                if (networkID == networkToKeep)
+                    continue;
+
+                List<string> jumpgates = jumpgateNetwork[networkID];
+                if (jumpgates.Remove(vesselPID))
+                    removed = true;
                 if (jumpgates.Count == 0)
-                    doomedNetworks.Add(networkIDs[index]);
+                    emptyNetworks.Add(networkID);
             }
 
-            int count = doomedNetworks.Count;
-            for (int index = 0; index < count; index++)
-                jumpgateNetwork.Remove(doomedNetworks[index]);
+            for (int index = 0; index < emptyNetworks.Count; index++)
+                jumpgateNetwork.Remove(emptyNetworks[index]);
+
+            return removed;
         }
 
         private bool isOnBlackList(CelestialBody body)
@@ -1298,9 +1389,18 @@ namespace Blueshift
         {
             WBIJumpGate jumpGate = vessel.FindPartModuleImplementing<WBIJumpGate>();
             if (jumpGate == null)
+            {
+                RemoveJumpgateFromNetworks(vessel.id);
                 return;
+            }
 
             AddJumpgateToNetwork(vessel.id.ToString(), jumpGate.networkID);
+        }
+
+        private void onVesselDestroyed(Vessel vessel)
+        {
+            if (vessel != null)
+                RemoveJumpgateFromNetworks(vessel.id);
         }
 
         private void loadSettings()

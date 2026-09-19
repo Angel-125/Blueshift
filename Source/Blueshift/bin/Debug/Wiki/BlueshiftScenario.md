@@ -96,6 +96,26 @@ Adds the jumpgate to the network.
 > **networkID:** A string containing the ID of the jumpgate network.
 
 
+### NormalizeVesselID(System.String)
+Normalizes vessel IDs in the same form used by the jump-gate registry.
+> #### Parameters
+> **vesselID:** Vessel ID with or without separators.
+
+> #### Return value
+> The normalized vessel ID.
+
+### IsRegisteredJumpgate(System.Guid)
+Determines whether a vessel is registered in at least one jump-gate network.
+
+### GetJumpgateNetworks(System.Guid)
+Returns a copy of the network IDs containing the supplied vessel.
+
+### ShareJumpgateNetwork(System.Guid,System.Guid)
+Determines whether two registered jump gates share a network. Blank network IDs retain the existing behavior of being normalized into Blueshift's universal "Any" network.
+
+### RemoveJumpgateFromNetworks(System.Guid)
+Removes a vessel from all jump-gate networks.
+
 ### GetDestinationGates(System.String,Vector3d,System.Double)
 Returns the list of possible destination gates that are in range of the specified origin point.
 > #### Parameters

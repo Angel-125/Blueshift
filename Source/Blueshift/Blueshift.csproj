@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\..\..\KSPDev\GameData\000_Harmony\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -106,6 +110,9 @@
     <Compile Include="GUI\Dialog\DialogUils.cs" />
     <Compile Include="SpaceAnomaly\Enumerators.cs" />
     <Compile Include="UtilityPartModules\WBIModuleAnimation.cs" />
+    <Compile Include="UtilityPartModules\CommNetLinkOptionsPatch.cs" />
+    <Compile Include="UtilityPartModules\WBICommNetLinkManager.cs" />
+    <Compile Include="UtilityPartModules\WBICommNetLinkOptions.cs" />
     <Compile Include="Resources\WBIPotatoScanner.cs" />
     <Compile Include="Resources\WBIResourceVent.cs" />
     <Compile Include="UtilityPartModules\WBIStaticAttach.cs" />

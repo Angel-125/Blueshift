@@ -23,6 +23,8 @@ EFFECTS group driven by the vertical component of gravitic acceleration.
 Optional EFFECTS group driven by positive Translate Y input.
 ### verticalDownEffectName
 Optional EFFECTS group driven by negative Translate Y input.
+### thrustEffect
+Legacy generic horizontal thrust EFFECTS group.
 ## Methods
 
 
@@ -31,4 +33,7 @@ Drives all continuous stock EFFECTS groups from the generator's current state.
 
 ### stopContinuousEffects
 Turns off effects that can be looped or continuously emitted.
+
+### playEffect(System.String)
+Plays a transition effect. Transition groups are intentionally not cached so one-shot audio can replay.
 

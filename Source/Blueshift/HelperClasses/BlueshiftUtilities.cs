@@ -13,6 +13,21 @@ namespace Blueshift
     public static class BlueshiftUtilities
     {
         /// <summary>
+        /// Determines whether KSP's infinite-resource cheat should bypass consumption of the supplied resource.
+        /// ElectricCharge is governed by Infinite Electricity; all other converter and coil inputs are governed by
+        /// Infinite Propellant.
+        /// </summary>
+        /// <param name="resourceName">The internal resource name.</param>
+        /// <returns>True when consumption of the resource should be bypassed.</returns>
+        public static bool IsInfiniteResourceEnabled(string resourceName)
+        {
+            if (string.Equals(resourceName, "ElectricCharge", StringComparison.OrdinalIgnoreCase))
+                return CheatOptions.InfiniteElectricity;
+
+            return CheatOptions.InfinitePropellant;
+        }
+
+        /// <summary>
         /// Balances resource amounts so that all resources run out at the same time.
         /// 
         /// Given an array of consumption rates (units/second) and a total storage capacity (units),

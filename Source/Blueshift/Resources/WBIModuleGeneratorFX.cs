@@ -392,6 +392,9 @@ namespace Blueshift
             PartResourceDefinitionList definitions = PartResourceLibrary.Instance.resourceDefinitions;
             for (int index = 0; index < count; index++)
             {
+                if (BlueshiftUtilities.IsInfiniteResourceEnabled(inputList[index].ResourceName))
+                    continue;
+
                 if (definitions.Contains(inputList[index].ResourceName))
                     resourceDefinition = definitions[inputList[index].ResourceName];
                 else
@@ -423,7 +426,9 @@ namespace Blueshift
                 // Since recipes are reused, we need to compute the ratio based on the original input ratios before factoring in the resourceConsumptionModifier.
                 if (baseInputRatios.ContainsKey(recipeInput.ResourceName))
                 {
-                    recipeInput.Ratio = baseInputRatios[recipeInput.ResourceName] * resourceConsumptionModifier;
+                    recipeInput.Ratio = BlueshiftUtilities.IsInfiniteResourceEnabled(recipeInput.ResourceName)
+                        ? 0
+                        : baseInputRatios[recipeInput.ResourceName] * resourceConsumptionModifier;
                     recipe.Inputs[index] = recipeInput;
                 }
             }
