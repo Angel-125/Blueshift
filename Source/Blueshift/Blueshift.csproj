@@ -76,6 +76,9 @@
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>..\..\..\..\..\..\KSPDev\KSP_x64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
@@ -88,6 +91,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
+    <Compile Include="GravTech\WBIGravioliumBeam.cs" />
+    <Compile Include="GravTech\WBIGravioliumStarburst.cs" />
+    <Compile Include="GravTech\WBIEVAGravitics.cs" />
     <Compile Include="GravTech\WBIFlexGravGeneratorAnimated.cs" />
     <Compile Include="GUI\WarpTravelPlanner.cs" />
     <Compile Include="HelperClasses\BlueshiftUtilities.cs" />
