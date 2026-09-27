@@ -1,0 +1,93 @@
+SCFIELDQET_DUMMY
+{
+	name = SandcastleFieldQET
+}
+@SCFIELDQET_DUMMY:FOR[SandcastleFieldQET]
+{
+	%description = I exist
+	%sandcastleFieldQETVersion = 1
+}
+
+RESOURCE_DEFINITION:NEEDS[Sandcastle,WBIResources|WBIOmniResources]
+{
+	name = wbiEntangledGraviolium
+	displayName = Entangled Graviolium
+	density = 0.00000000001
+	unitCost = 2500
+	hsp = 10
+	flowMode = STAGE_PRIORITY_FLOW
+	transfer = PUMP
+	isVisible = true
+	isTweakable = false
+	volume = 5
+
+	RESOURCE_DRAIN_DEFINITION
+	{
+		isDrainable = true
+		showDrainFX = true
+		drainFXPriority = 9
+		drainForceISP = 5
+		drainFXDefinition = particlesDraining
+	}
+}
+
+// Graviolium: bends spacetime.
+// Entangled Graviolium: connects two locations through a shared quantum state.
+// Decohered Graviolium: exhausted material that can potentially be recycled and re-entangled.
+// 1 Graviolium -> 0.5 Entangled Graviolium. Consume Entangled Graviolium to transmit. Yup, you only get half the mass in output. The other half stays behind to form the quantum entangled link.
+
+OMNICONVERTER:NEEDS[Sandcastle,WBIResources|WBIOmniResources]
+{
+	templateTags = lab
+	TechRequired = experimentalScience
+	ConverterName = Particle Entangler
+	description = An Entanglement Chamber takes Graviolium particles, separates them into matched pairs, and places each pair into a shared quantum state. The two halves are then loaded into separate cartridges, forming Entangled Graviolium. The result? Unlike normal matter, entangled graviolium permits instant FTL communications.
+	StartActionName = Start Particle Entangling
+	StopActionName = Stop Particle Entangling
+	AutoShutdown = false
+	UseSpecialistBonus = false
+	EfficiencyBonus = 1
+	catchupPriority = 0
+
+	INPUT_RESOURCE
+	{
+		ResourceName = ElectricCharge
+		Ratio = 100
+		FlowMode = STAGE_PRIORITY_FLOW
+	}
+
+	INPUT_RESOURCE
+	{
+		ResourceName = Graviolium
+		Ratio = 0.001
+		FlowMode = STAGE_PRIORITY_FLOW
+	}
+
+	OUTPUT_RESOURCE
+	{
+		ResourceName = wbiEntangledGraviolium
+		Ratio = 0.0005
+		FlowMode = STAGE_PRIORITY_FLOW
+		DumpExcess = false
+	}
+}
+
+// Makes the Quantum Entangled Transceiver require 10 units of Entangled Graviolium.
+@PART[wbiQuantumEntanglementTransceiver]:NEEDS[Sandcastle,WBIResources|WBIOmniResources]
+{
+	PRINT_RESOURCE
+	{
+		name = wbiEntangledGraviolium
+		rate = 0.0000000004
+	}
+}
+
+// Makes the Astria Porta require 50 units of Entangled Graviolium.
+@PART[wbiAstriaPorta]:NEEDS[Sandcastle,WBIResources|WBIOmniResources]
+{
+	PRINT_RESOURCE
+	{
+		name = wbiEntangledGraviolium
+		rate = 0.0000000000138888888889
+	}
+}

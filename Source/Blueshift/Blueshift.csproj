@@ -91,9 +91,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EVARepairs\EVARepairsWrapper.cs" />
-    <Compile Include="GravTech\WBIGravioliumBeam.cs" />
-    <Compile Include="GravTech\WBIGravioliumStarburst.cs" />
-    <Compile Include="GravTech\WBIEVAGravitics.cs" />
+    <Compile Include="KerbalGear\FXClasses\WBIGravioliumBeam.cs" />
+    <Compile Include="KerbalGear\FXClasses\WBIGravioliumStarburst.cs" />
+    <Compile Include="KerbalGear\WBIEVAGravitics.cs" />
     <Compile Include="GravTech\WBIFlexGravGeneratorAnimated.cs" />
     <Compile Include="GUI\WarpTravelPlanner.cs" />
     <Compile Include="HelperClasses\BlueshiftUtilities.cs" />

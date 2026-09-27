@@ -1,0 +1,2 @@
+// Removes the Gravitic Resonator, which may as well be magic.
+!PART[wbiGraviticResonator] {}

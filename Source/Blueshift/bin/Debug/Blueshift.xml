@@ -4,6 +4,579 @@
         <name>Blueshift</name>
     </assembly>
     <members>
+        <member name="T:Blueshift.GravioliumBeamSettings">
+            <summary>
+            Visual settings for a reusable Graviolium connection beam.
+            </summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.plasmaColor">
+            <summary>Color of the wide plasma layer.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.currentColor">
+            <summary>Color of the narrow electric-current layer.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.plasmaWidth">
+            <summary>Width, in meters, of the plasma layer.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.currentWidth">
+            <summary>Width, in meters, of the electric-current layer.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.pointCount">
+            <summary>Number of points used by each line renderer.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.waveAmplitude">
+            <summary>Amplitude, in meters, of the primary traveling wave.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.waveCycles">
+            <summary>Number of primary wave cycles along the beam.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.waveSpeed">
+            <summary>Animation speed of the primary wave.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.secondaryWaveAmplitude">
+            <summary>Amplitude, in meters, of the secondary traveling wave.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.secondaryWaveCycles">
+            <summary>Number of secondary wave cycles along the beam.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.secondaryWaveSpeed">
+            <summary>Animation speed of the secondary wave.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.motesEnabled">
+            <summary>Whether plasma motes travel along the beam.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteColor">
+            <summary>Base color of the plasma motes.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteTexturePath">
+            <summary>
+            Extensionless GameDatabase path of the texture applied to each mote.
+            </summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteDensity">
+            <summary>Approximate number of motes per meter of beam length.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteTravelSpeed">
+            <summary>Base mote travel speed along the beam, in meters per second.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.maxMotes">
+            <summary>Maximum number of pooled motes.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteMinSize">
+            <summary>Minimum mote width, in meters.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteMaxSize">
+            <summary>Maximum mote width, in meters.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteOrbitRadius">
+            <summary>Maximum distance motes orbit from the animated beam centerline.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteOrbitCycles">
+            <summary>Number of mote orbit cycles along the beam.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteOrbitSpeed">
+            <summary>Animation speed of the mote orbit.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteSpeedVariation">
+            <summary>Fractional variation applied to individual mote speed.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumBeamSettings.moteBrightnessVariation">
+            <summary>Fractional variation applied to individual mote brightness.</summary>
+        </member>
+        <member name="M:Blueshift.GravioliumBeamSettings.Load(ConfigNode)">
+            <summary>
+            Loads any values present in a GRAVIOLIUM_BEAM_FX config node.
+            Values omitted from the node retain the defaults declared by this class.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIGravioliumBeam">
+            <summary>
+            Renders a visual-only, animated Graviolium connection between two transforms.
+            Power modules own activation and gameplay; this component only follows endpoints.
+            </summary>
+        </member>
+        <member name="P:Blueshift.WBIGravioliumBeam.IsPlaying">
+            <summary>
+            Indicates whether the beam is currently visible and following its endpoints.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIGravioliumBeam.Play(UnityEngine.Transform,UnityEngine.Vector3,UnityEngine.Transform,UnityEngine.Vector3,Blueshift.GravioliumBeamSettings)">
+            <summary>
+            Starts the beam or replaces its endpoints and visual settings.
+            Local offsets allow callers to attach near a hand and at a visible target center.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIGravioliumBeam.SetEndpoints(UnityEngine.Transform,UnityEngine.Vector3,UnityEngine.Transform,UnityEngine.Vector3)">
+            <summary>
+            Updates the transforms and local attachment offsets without restarting animation.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIGravioliumBeam.StopEffect">
+            <summary>
+            Hides the beam while retaining its allocated renderers, materials, and point arrays.
+            </summary>
+        </member>
+        <member name="T:Blueshift.GravioliumStarburstSettings">
+            <summary>
+            Visual settings for a reusable Graviolium radial impact spray.
+            </summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.enabled">
+            <summary>Whether callers should display the starburst.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.particleTexturePath">
+            <summary>Extensionless GameDatabase path of the particle texture.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.particleColor">
+            <summary>Base electric-blue particle tint.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.emissionRate">
+            <summary>Particles emitted per second.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.maxParticles">
+            <summary>Maximum simultaneously living particles.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.minLifetime">
+            <summary>Minimum particle lifetime, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.maxLifetime">
+            <summary>Maximum particle lifetime, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.minSize">
+            <summary>Minimum particle size, in meters.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.maxSize">
+            <summary>Maximum particle size, in meters.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.minRadialSpeed">
+            <summary>Minimum radial spray speed, in meters per second.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.maxRadialSpeed">
+            <summary>Maximum radial spray speed, in meters per second.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.backscatterSpeed">
+            <summary>Maximum speed back toward the source after impact.</summary>
+        </member>
+        <member name="F:Blueshift.GravioliumStarburstSettings.brightnessVariation">
+            <summary>Fractional variation applied to particle brightness.</summary>
+        </member>
+        <member name="M:Blueshift.GravioliumStarburstSettings.Load(ConfigNode)">
+            <summary>
+            Loads any values present in a GRAVIOLIUM_STARBURST_FX config node.
+            Values omitted from the node retain the defaults declared by this class.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIGravioliumStarburst">
+            <summary>
+            Renders a visual-only Graviolium impact spray at a caller-supplied pose.
+            </summary>
+        </member>
+        <member name="P:Blueshift.WBIGravioliumStarburst.IsPlaying">
+            <summary>Indicates whether the starburst is emitting.</summary>
+        </member>
+        <member name="M:Blueshift.WBIGravioliumStarburst.Play(UnityEngine.Vector3,UnityEngine.Vector3,Blueshift.GravioliumStarburstSettings)">
+            <summary>
+            Starts emitting at a world-space position. The normal is perpendicular to the
+            radial spray plane and should point from the source toward the impact.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIGravioliumStarburst.SetPose(UnityEngine.Vector3,UnityEngine.Vector3)">
+            <summary>Updates the world-space impact position and spray-plane normal.</summary>
+        </member>
+        <member name="M:Blueshift.WBIGravioliumStarburst.StopEffect">
+            <summary>Stops emission and immediately removes all living particles.</summary>
+        </member>
+        <member name="T:Blueshift.WBIEVAHeftConstructionWeightPatch">
+            <summary>
+            Multiplies KSP's fully calculated EVA Construction limit only for the active
+            EVA kerbal whose resonator currently has Heft applied.
+            </summary>
+        </member>
+        <member name="T:Blueshift.WBIEVAGravitics">
+            <summary>
+            Provides the EVA abilities supplied by a KerbalGear Graviolium Field Resonator.
+            The module is created dynamically while a carried wearable requests it.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.targetingRange">
+            <summary>
+            Maximum distance, in meters, at which the resonator can acquire a target.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.graviticsEnabled">
+            <summary>
+            Indicates whether the player has enabled the resonator.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.graviticsStatus">
+            <summary>
+            Current gravitic power state shown in the EVA action window.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.forcePercent">
+            <summary>
+            Scales the target speed of Lift, Suspension Field, and Levitate.
+            At zero, those powers cancel vertical velocity and local gravity.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerSoundPath">
+            <summary>Looping sound played while a mouse-activated power is active.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerSoundVolume">
+            <summary>Power sound volume before KSP's Ship volume is applied.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerSoundPitch">
+            <summary>Playback pitch for the power sound.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.debugMode">
+            <summary>
+            Writes state-change and interaction diagnostics to KSP.log.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pupilGlowIntensity">
+            <summary>
+            Brightness multiplier for the electric-blue pupil glow.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pupilGlowFalloff">
+            <summary>
+            Rim falloff used to spread the glow across the pupil surface.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerHeft">
+            <summary>Increases this kerbal's stock EVA Construction lift limit.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.heftMultiplier">
+            <summary>Multiplier applied to the calculated EVA Construction limit.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.heftCooldown">
+            <summary>Recovery time after Heft is disabled, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.heftCooldownEndUT">
+            <summary>Universal time at which Heft may be enabled again.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerPush">
+            <summary>
+            Enables or disables the Push power.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pushForce">
+            <summary>
+            Continuous Push force in kilonewtons (KSP force units).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pushBaseCooldown">
+            <summary>
+            Base recovery time after Push, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pushCooldownPerSecond">
+            <summary>
+            Additional recovery time per second of continuous Push use.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pushCooldownEndUT">
+            <summary>
+            Universal time at which Push becomes available again.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerPull">
+            <summary>
+            Enables or disables the Pull power.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pullForce">
+            <summary>
+            Continuous Pull force in kilonewtons (KSP force units).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pullBaseCooldown">
+            <summary>
+            Base recovery time after Pull, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pullCooldownPerSecond">
+            <summary>
+            Additional recovery time per second of continuous Pull use.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.pullCooldownEndUT">
+            <summary>
+            Universal time at which Pull becomes available again.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerLevitate">
+            <summary>Gently levitates the active EVA kerbal while enabled.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.levitateTargetSpeed">
+            <summary>Target upward velocity, in meters per second.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.levitateCooldownEndUT">
+            <summary>Universal time at which Levitate becomes available again.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerLift">
+            <summary>
+            Enables or disables the Lift power.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftMaxMass">
+            <summary>Maximum vessel mass eligible for Lift, in tonnes.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftDuration">
+            <summary>Maximum active Lift duration, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftTargetSpeed">
+            <summary>Target upward velocity, in meters per second.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftVelocityResponseTime">
+            <summary>Time used to gently correct toward the target speed.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftMaxCorrectionAcceleration">
+            <summary>Maximum speed-correction acceleration, in meters per second squared.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftBaseCooldown">
+            <summary>Minimum recovery time after Lift, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftCooldownPerSecond">
+            <summary>Cooldown multiplier per active Lift second.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftCooldownMassExponent">
+            <summary>Exponent applied to target mass in the Lift cooldown curve.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftCooldownReferenceGravity">
+            <summary>Reference gravity used to normalize Lift cooldown calculations.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.liftCooldownEndUT">
+            <summary>Universal time at which Lift becomes available again.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerShove">
+            <summary>
+            Enables or disables the Shove power.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.shoveImpulse">
+            <summary>
+            Shove impulse in kilonewton-seconds (KSP impulse units).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.shoveForceDuration">
+            <summary>
+            Short interval over which the Shove impulse is delivered, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.shoveFXDuration">
+            <summary>
+            Length of time that Shove's beam and starburst remain visible, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.shoveBaseCooldown">
+            <summary>
+            Base recovery time after Shove, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.shoveCooldownPerSecond">
+            <summary>
+            Additional recovery time per second of Shove use.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.shoveCooldownEndUT">
+            <summary>
+            Universal time at which Shove becomes available again.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerLaunch">
+            <summary>
+            Enables or disables the Launch power.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.launchImpulse">
+            <summary>
+            Launch impulse in kilonewton-seconds (KSP impulse units).
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.launchForceDuration">
+            <summary>
+            Short interval over which the Launch impulse is delivered, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.launchFXDuration">
+            <summary>
+            Length of time that Launch's beam and starburst remain visible, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.launchBaseCooldown">
+            <summary>
+            Base recovery time after Launch, in seconds.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.launchCooldownPerSecond">
+            <summary>
+            Additional recovery time per second of Launch use.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.launchCooldownEndUT">
+            <summary>
+            Universal time at which Launch becomes available again.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.powerSuspensionField">
+            <summary>
+            Enables a timed field that gently lifts all eligible nearby vessels.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldRadius">
+            <summary>Maximum acquisition radius, in meters.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldMaxMass">
+            <summary>Maximum mass of each eligible vessel, in tonnes.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldDuration">
+            <summary>Maximum active field duration, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldTargetSpeed">
+            <summary>Target upward velocity, in meters per second.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldVelocityResponseTime">
+            <summary>Time used to gently correct each vessel toward the target speed.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldMaxCorrectionAcceleration">
+            <summary>Maximum speed-correction acceleration, in meters per second squared.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldBaseCooldown">
+            <summary>Minimum recovery time after using the field, in seconds.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldCooldownPerSecond">
+            <summary>Cooldown multiplier for accumulated mass/gravity work.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldCooldownMassExponent">
+            <summary>Exponent applied independently to every affected vessel's mass.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldCooldownReferenceGravity">
+            <summary>Reference gravity used to normalize cooldown calculations.</summary>
+        </member>
+        <member name="F:Blueshift.WBIEVAGravitics.suspensionFieldCooldownEndUT">
+            <summary>Universal time at which Suspension Field becomes available again.</summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.OnLoad(ConfigNode)">
+            <summary>
+            Loads the reusable Graviolium visual settings nested in this module's config.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.OnStart(PartModule.StartState)">
+            <summary>
+            Initializes the dynamically created EVA module.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.OnActive">
+            <summary>
+            Makes the resonator available when KerbalGear activates this module.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.OnInactive">
+            <summary>
+            Stops all interaction when the resonator wearable is removed.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.Update">
+            <summary>
+            Updates target acquisition, highlights, and PAW status at frame cadence.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.FixedUpdate">
+            <summary>
+            Applies the selected gravitic power at physics cadence.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.OnDisable">
+            <summary>
+            Prevents a separately hosted beam from remaining visible if Unity disables this module.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.enforcePowerProgression(System.Boolean)">
+            <summary>
+            Removes power selections that the current EVA kerbal has not earned yet.
+            This also protects against locked selections restored from a save or set by
+            another module without relying solely on PAW visibility.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.calculateGravityCompensatedAcceleration(System.Single,System.Single)">
+            <summary>
+            Calculates the upward acceleration needed to counter local gravity plus a
+            bounded velocity correction. Future timed levitation powers can reuse this.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.applyVesselAcceleration(Vessel,UnityEngine.Vector3,System.Single)">
+            <summary>
+            Applies a uniform acceleration to every physical part of a vessel.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.LateUpdate">
+            <summary>
+            Keeps the custom colors authoritative over stock mouse-over highlighting.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.OnDestroy">
+            <summary>
+            Restores transient visuals and unsubscribes if KSP destroys the dynamic module.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.GetModuleDisplayName">
+            <summary>
+            Returns the localized module title displayed in the EVA action window.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.GetInfo">
+            <summary>
+            Returns the localized resonator description for part information panels.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.ToggleResonator">
+            <summary>
+            Enables or disables the resonator's targeting mode.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.isValidPushTarget(Part)">
+            <summary>
+            Confirms that a target is still a loaded, unpacked, single-part vessel.
+            This is called at the point of use so docking and construction changes are honored.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.calculatePushCooldown(System.Double,System.Single,System.Double)">
+            <summary>
+            Calculates Push recovery time. Target mass and local gravity are accepted here so a
+            tuned nonlinear curve can be added without changing input or physics code.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.calculatePullCooldown(System.Double,System.Single,System.Double)">
+            <summary>
+            Calculates Pull recovery time. Target mass and local gravity are accepted here so a
+            tuned nonlinear curve can be added without changing input or physics code.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.calculateShoveCooldown(System.Double,System.Single,System.Double)">
+            <summary>
+            Calculates Shove recovery time. Target mass and local gravity are accepted here so a
+            tuned nonlinear curve can be added without changing input or physics code.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.calculateLaunchCooldown(System.Double,System.Single,System.Double)">
+            <summary>
+            Calculates Launch recovery time. Target mass and local gravity are accepted here so a
+            tuned nonlinear curve can be added without changing input or physics code.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.calculateLiftCooldown(System.Double,System.Single,System.Double)">
+            <summary>
+            Calculates Lift recovery time from actual use, nonlinear target mass, and gravity.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIEVAGravitics.disableAuxiliaryPowersForPrimaryActivation">
+            <summary>
+            Disables powers that may remain armed alongside Push, Pull, Shove, or Launch
+            but must yield when a primary power actually activates on a valid target.
+            Future auxiliary powers can share this activation boundary by joining here.
+            </summary>
+        </member>
         <member name="T:Blueshift.WBIFlexGravGeneratorAnimated">
             <summary>
             Counters the pull of gravity up to a maximum amount of gravitic acceleration.
