@@ -48,11 +48,17 @@ namespace Blueshift.Utility
         [KSPField]
         public bool canSyncWithWarpEngine = false;
 
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_resourceVentStatus")]
+        [KSPField]
         public string status;
 
-        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_resourceVentDischargeRate", guiFormat = "f3", guiUnits = "u/sec")]
+        [KSPField]
         public double dischargeRate;
+
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_resourceVentStatus")]
+        public string displayStatus;
+
+        [KSPField(guiActive = true, guiName = "#LOC_BLUESHIFT_resourceVentDischargeRate", guiFormat = "f3", guiUnits = "u/sec")]
+        public double displayDischargeRate;
 
         [KSPField(isPersistant = true)]
         public double lastUpdateTime = 0f;
@@ -66,9 +72,23 @@ namespace Blueshift.Utility
         public ResourceRatio[] atmoResourceInputs;
         public ResourceRatio[] vaccResourceInputs;
         ModuleAnimateGeneric animation;
+        const float displayUpdateInterval = 0.25f;
+        float nextDisplayUpdateTime;
         #endregion
 
         #region Overrides
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+            if (!HighLogic.LoadedSceneIsFlight || Time.unscaledTime < nextDisplayUpdateTime)
+                return;
+
+            // Sample both UI fields together without slowing resource discharge.
+            displayStatus = status;
+            displayDischargeRate = dischargeRate;
+            nextDisplayUpdateTime = Time.unscaledTime + displayUpdateInterval;
+        }
+
         public void FixedUpdate()
         {
             if (!HighLogic.LoadedSceneIsFlight)
@@ -225,6 +245,9 @@ namespace Blueshift.Utility
             statusDischarging = Localizer.Format("#LOC_BLUESHIFT_resourceVentStatusDischarging");
             statusMissing = Localizer.Format("#LOC_BLUESHIFT_resourceVentStatusMissing");
             statusReady = Localizer.Format("#LOC_BLUESHIFT_resourceVentStatusReady");
+            displayStatus = string.IsNullOrEmpty(status) ? statusReady : status;
+            displayDischargeRate = dischargeRate;
+            nextDisplayUpdateTime = Time.unscaledTime + displayUpdateInterval;
 
             //Animation
             animation = this.part.FindModuleImplementing<ModuleAnimateGeneric>();

@@ -19,45 +19,17 @@ And on CKAN.
 
 New Parts
 
-- Graviolum Field Resonator: A wearable gravitic field generator that uses polarized graviolium to temporarily reduce, redirect, or counteract the apparent weight of nearby objects. Field strength and recovery time vary considerably with target mass. 
-*Powers*
-When the Resonator is enabled, the wearer gains the following powers. Use of each power requires a cooldown before the same or a different power can be used. The length of the cooldown depends upon the power used, the target(s) of the power, and environmental factors. Some power effects can be combined...
-Heft: Multiplies the maximum mass that the kerbal can lift during EVA Construction.
-Levitate: Levitates the kerbal at 0.2 m/s. Can't be used in microgravity.
-Push: Pushes an object away from the kerbal with a 0.5 kN force. Click and hold the mouse button to push the object.
-Pull: Pulls an object towards the kerbal with a 0.5 kN force. Click and hold the mouse button to pull the object.
-Lift: Lifts the target object upwards at a rate of 0.1 m/s. Click once to lift the desired object. Lasts 10 seconds, or until the power is disabled. Can't be used in microgravity.
-Shove: Shoves the target object away from the kerbal with a force of 50 kN. Click the target object once to shove it away.
-Launch: Launches the target object upward with a force of 50 kN. Click the target object once to launch it into the sky. Can't be used in microgravity.
-Suspension Field: All objects within a 7 meter radius slowly rise upward at a rate of 0.1 m/s. The effect lasts 10 seconds, or until the power is disabled. Can't be used in microgravity.
-
-*Powers By Experience Level*
-As the kerbal gains experience stars, they gain more powers:
-0-Stars: Heft, Push
-1-Star: Pull
-2-Stars: Levitate, Lift
-3-Stars: Shove
-4-Stars: Launch
-5-Stars: Suspension Field
-
-Given that this device is pure fantasy, you can disable it by renaming the NoFieldResonator.txt file in the Extras folder.
+- Mk2 Fusion Thruster: A compact, gravity-catalyzed fusion reactor superheats its reaction mass to generate thrust with high specific impulse while also powering a built-in, miniaturized FlexGrav system.
 
 Changes
 
-- Rebalanced Graviolium belts and collectors around a 30-Kerbin-day peak collection target for a GR-375 tank and the S2 Bussard Collector, with matching collection rates whether or not SpaceDust is installed. Smaller collectors now scale consistently by intake area, while Stardust uses a single rescale-aware harvesting path when SpaceDust is installed.
-- Added WBICommNetLinkOptions so specifically configured relays can bypass CommNet range, occlusion, or both.
-- Same-network jump gates now provide interstellar CommNet links while vessel-to-gate connections retain normal short-range behavior.
-- Reworked the QE-1 Quantum Entanglement Transceiver. It has a combinable local relay range equal to a stock RA-2 Relay Antenna, but can link up with other Quantum Entanglement Transceivers to provide unlimited communications range. It's also blacklisted from printing by Sandcastle's printers, but you'll find a way to make it work in the Extras folder.
-- Warp engines, warp coils, resource generators, and gravity generators now honor the Infinite Propellant and Infinite Electricity debug options.
-- Localized all shipped Blueshift part titles and descriptions.
-- Fixed FlexGrav generators applying 105% of vessel mass instead of the configured EC mass percentage.
-- Fixed nearby warp-capable vessels sharing or resetting the active vessel's throttle.
-- Fixed multi-coil warp capacity and displacement impulse resetting after launch, reload, or editor state changes.
-- Fixed warp cores not registering multi-coils while constructing vessels in the VAB or SPH.
-- Fixed exiting timewarp removing orbital velocity and EVA Repairs failures leaving vessels stuck on rails.
-- Fixed duplicate Far Future Technologies Graviolium harvesters when Flying Saucers is installed.
-- Fixed Blueshift fuel tanks and endcaps failing to occlude attached parts from aerodynamic drag.
-- Fixed parts with multiple WBIAnimatedTexture modules loading all animated texture sequences from the first module instead of their individual moduleID configurations.
+- Fixed the Warp Travel Planner throwing an exception when a required generator fuel has no tank aboard the craft. Missing or empty fuel now reports the resource name and zero burn time in the editor and in flight.
+- Updated Far Future Technologies compatibility for the S1 warp core to use liquid deuterium, and for the S0 endcap to remove Fusion Pellets and offer the existing deuterium/Graviolium tank options when B9 Part Switch is available without Flying Saucers.
+- Jump gates now honor semicolon-separated network addresses, combine destinations without duplicates, and preserve all network memberships when loading a save. Changing addresses replaces the gate's previous memberships and refreshes its CommNet links.
+- Added Change Network Address to player-built jump gates' part menus in the editor and in flight. Apply saves the new address and refreshes destinations; Cancel keeps the current address. Address changes reset the current gate connection. Anomaly gates retain their fixed network addresses.
+- The network address dialog locks controls while open and releases its lock on Apply, Cancel, dismissal, vessel switching, or part/module cleanup.
+- Added an 8-second warning when changing an address in flight leaves the gate as the only member of its new network. For multiple addresses, the check counts distinct gates across all listed networks.
+- Changing a gate's address to a network with exactly two gates automatically selects the other gate and runs the normal startup sequence, including startup effects and destination toll calculation. Two-gate connections ignore the jump range limit.
 
 ---END CHANGES---
 

@@ -95,11 +95,21 @@ namespace Blueshift
             }
             GUILayout.EndScrollView();
 
-            if (GUILayout.Button(selectButtonTitle) && gateSelectedDelegate != null)
+            if (GUILayout.Button(selectButtonTitle) && gateSelectedDelegate != null && selectedVessel != null && jumpgates.Contains(selectedVessel))
             {
                 gateSelectedDelegate(selectedVessel);
                 SetVisible(false);
             }
+        }
+
+        /// <summary>
+        /// Clears the previous destination selection when reopening the dialog.
+        /// </summary>
+        public override void SetVisible(bool newValue)
+        {
+            if (newValue)
+                selectedVessel = null;
+            base.SetVisible(newValue);
         }
     }
 }

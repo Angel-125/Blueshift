@@ -57,6 +57,12 @@ namespace Blueshift
         public bool guiVisible = true;
 
         /// <summary>
+        /// Converter status sampled for display without slowing resource conversion.
+        /// </summary>
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "")]
+        public string displayStatus = string.Empty;
+
+        /// <summary>
         /// Generators can control WBIAnimatedTexture modules. This field tells the generator which WBIAnimatedTexture to control.
         /// </summary>
         [KSPField]
@@ -125,6 +131,8 @@ namespace Blueshift
         bool drainedResourceProduced = false;
         string resourcesDrainedHash = string.Empty;
         Dictionary<string, double> baseInputRatios = null;
+        const float statusUpdateInterval = 0.25f;
+        float nextStatusUpdateTime;
         #endregion
 
         /// <summary>
@@ -274,9 +282,19 @@ namespace Blueshift
                 Events["StartResourceConverter"].group.displayName = groupName;
                 Events["StopResourceConverter"].group.name = groupName;
                 Events["StopResourceConverter"].group.displayName = groupName;
-                Fields["status"].group.name = groupName;
-                Fields["status"].group.displayName = groupName;
+                Fields["displayStatus"].group.name = groupName;
+                Fields["displayStatus"].group.displayName = groupName;
             }
+
+            // Stock conversion writes status every physics tick. Display a sampled copy instead.
+            Fields["displayStatus"].guiName = Fields["status"].guiName;
+            Fields["displayStatus"].guiActive = Fields["status"].guiActive;
+            Fields["displayStatus"].guiActiveEditor = Fields["status"].guiActiveEditor;
+            Fields["status"].guiActive = false;
+            Fields["status"].guiActiveEditor = false;
+            displayStatus = status;
+            nextStatusUpdateTime = Time.unscaledTime + statusUpdateInterval;
+            hideAlwaysActiveControls();
 
             // Get animated textures
             animatedTextures = getAnimatedTextureModules();
@@ -337,6 +355,12 @@ namespace Blueshift
         public override void OnUpdate()
         {
             base.OnUpdate();
+            hideAlwaysActiveControls();
+            if (Time.unscaledTime >= nextStatusUpdateTime)
+            {
+                displayStatus = status;
+                nextStatusUpdateTime = Time.unscaledTime + statusUpdateInterval;
+            }
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
             if (!moduleIsEnabled)
@@ -468,6 +492,17 @@ namespace Blueshift
 
         #region Helpers
 
+        private void hideAlwaysActiveControls()
+        {
+            if (!AlwaysActive)
+                return;
+
+            Events["StartResourceConverter"].guiActive = false;
+            Events["StartResourceConverter"].guiActiveEditor = false;
+            Events["StopResourceConverter"].guiActive = false;
+            Events["StopResourceConverter"].guiActiveEditor = false;
+        }
+
         private void onResourceConverterOutput(PartModule converter, string resourceName, double amount)
         {
             int count = drainedResources.Count;
@@ -494,7 +529,8 @@ namespace Blueshift
                 if (part.Resources.Contains(resource.ResourceName) && part.Resources[resource.ResourceName].amount <= 0)
                     return;
 
-                this.part.RequestResource(resource.ResourceName, resource.Ratio, resource.FlowMode);
+                // DRAINED_RESOURCE ratios are units per second; this runs from OnUpdate.
+                this.part.RequestResource(resource.ResourceName, resource.Ratio * Time.deltaTime, resource.FlowMode);
             }
         }
 

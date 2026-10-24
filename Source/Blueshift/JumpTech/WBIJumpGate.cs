@@ -231,7 +231,7 @@ namespace Blueshift
         /// If there are only two gates in the network then there is no need to select the other gate from the list.
         /// You can add additional networks by adding a semicolon character in between network IDs.
         /// </summary>
-        [KSPField(isPersistant = true)]
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "#LOC_BLUESHIFT_jumpGateNetworkAddress")]
         public string networkID = string.Empty;
 
         /// <summary>
@@ -322,6 +322,9 @@ namespace Blueshift
         bool errorMessageShown = false;
         List<Vessel> jumpgates;
         JumpgateSelector jumpgateSelector;
+        PopupDialog networkAddressDialog;
+        string networkAddressLockID;
+        bool gateEnabled = true;
         bool playEffects = false;
         Transform portalTrigger = null;
         List<ResourceToll> resourceTolls = null;
@@ -590,6 +593,81 @@ namespace Blueshift
         #endregion
 
         #region Events
+        /// <summary>
+        /// Opens the network address editor without changing the gate until Apply is selected.
+        /// </summary>
+        [KSPEvent(active = true, guiActive = true, guiActiveEditor = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "#LOC_BLUESHIFT_jumpGateChangeNetworkAddress")]
+        public void ChangeNetworkAddress()
+        {
+            if (isAnomalyGate())
+                return;
+            closeNetworkAddressDialog();
+
+            string pendingAddress = networkID ?? string.Empty;
+            networkAddressDialog = PopupDialog.SpawnPopupDialog(
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new MultiOptionDialog("BlueshiftNetworkAddress", Localizer.Format("#LOC_BLUESHIFT_jumpGateNetworkAddressHelp"),
+                    Localizer.Format("#LOC_BLUESHIFT_jumpGateChangeNetworkAddress"), HighLogic.UISkin, 420f,
+                    new DialogGUITextInput(pendingAddress, false, Math.Max(1024, pendingAddress.Length), value =>
+                    {
+                        pendingAddress = value;
+                        return value;
+                    }, 30f),
+                    new DialogGUIButton(Localizer.Format("#LOC_BLUESHIFT_jumpGateApplyAddress"), () =>
+                    {
+                        try
+                        {
+                            SetNetworkID(pendingAddress);
+                        }
+                        finally
+                        {
+                            closeNetworkAddressDialog();
+                        }
+                    }, true),
+                    new DialogGUIButton(Localizer.Format("#LOC_BLUESHIFT_jumpGateCancelAddress"), closeNetworkAddressDialog, true)),
+                false, HighLogic.UISkin);
+
+            PopupDialog dialog = networkAddressDialog;
+            if (dialog == null)
+                return;
+            string lockID = "BlueshiftNetworkAddress-" + Guid.NewGuid().ToString("N");
+            networkAddressLockID = lockID;
+            dialog.OnDismiss += () => releaseNetworkAddressLock(dialog, lockID);
+            dialog.onDestroy.AddListener(() => releaseNetworkAddressLock(dialog, lockID));
+            InputLockManager.SetControlLock(ControlTypes.ALLBUTCAMERAS, lockID);
+        }
+
+        /// <summary>
+        /// Changes the saved network address and refreshes registry membership and destinations in flight.
+        /// </summary>
+        /// <param name="newNetworkID">Semicolon-separated network IDs, or blank for the Any network.</param>
+        public void SetNetworkID(string newNetworkID)
+        {
+            if (isAnomalyGate())
+                return;
+            string address = (newNetworkID ?? string.Empty).Trim();
+            if (networkID == address)
+                return;
+
+            networkID = address;
+            if (HighLogic.LoadedSceneIsFlight && BlueshiftScenario.shared != null && vessel != null)
+            {
+                if (jumpgateSelector != null)
+                    jumpgateSelector.SetVisible(false);
+                playEffects = false;
+                isActivated = false;
+                destinationVessel = null;
+                if (portalTrigger != null)
+                    portalTrigger.localScale = Vector3.one;
+                setupJumpNetwork(true);
+                if (!gateEnabled)
+                    SetGateEnabled(false);
+                if (BlueshiftScenario.shared.GetJumpgateNetworkGateCount(networkID) == 1)
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_BLUESHIFT_jumpGateOnlyGateWarning"), 8f, ScreenMessageStyle.UPPER_CENTER);
+            }
+            MonoUtilities.RefreshContextWindows(part);
+        }
+
         [KSPEvent(active = true, guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, externalToEVAOnly = false, unfocusedRange = 500, guiName = "#LOC_BLUESHIFT_jumpGateSelectGate")]
         public void SelectGate()
         {
@@ -618,6 +696,7 @@ namespace Blueshift
         /// <param name="isEnabled">A flag that sets the gate enabled/disabled.</param>
         public void SetGateEnabled(bool isEnabled)
         {
+            gateEnabled = isEnabled;
             if (BlueshiftScenario.debugMode)
                 Debug.Log("[Blueshift] - SetGateEnabled: " + isEnabled);
 
@@ -644,12 +723,21 @@ namespace Blueshift
         #region Overrides
         public void OnDestroy()
         {
+            closeNetworkAddressDialog();
+            GameEvents.onVesselChange.Remove(onAddressDialogVesselChange);
+            if (jumpgateSelector != null)
+                jumpgateSelector.SetVisible(false);
             if (HighLogic.LoadedSceneIsFlight)
             {
                 GameEvents.onPartRepaired.Remove(onPartRepaired);
                 GameEvents.onPartFailure.Remove(onPartFailure);
                 GameEvents.OnGameSettingsApplied.Remove(onGameSettingsApplied);
             }
+        }
+
+        public void OnDisable()
+        {
+            closeNetworkAddressDialog();
         }
 
         public void FixedUpdate()
@@ -720,6 +808,7 @@ namespace Blueshift
             debugMode = BlueshiftScenario.debugMode;
             Fields["effectsThrottle"].guiActive = debugMode;
             Fields["effectsThrottle"].guiActiveEditor = debugMode;
+            Events["ChangeNetworkAddress"].unfocusedRange = interactionRange;
 
             if (string.IsNullOrEmpty(jumpMaxDimensions) == false)
             {
@@ -779,6 +868,7 @@ namespace Blueshift
 
             // Setup anomaly-specific parameters if needed.
             setupAnomalyFields();
+            Events["ChangeNetworkAddress"].active = !isAnomalyGate();
 
             // Setup network
             setupJumpNetwork();
@@ -789,6 +879,7 @@ namespace Blueshift
                 GameEvents.onPartRepaired.Add(onPartRepaired);
                 GameEvents.onPartFailure.Add(onPartFailure);
                 GameEvents.OnGameSettingsApplied.Add(onGameSettingsApplied);
+                GameEvents.onVesselChange.Add(onAddressDialogVesselChange);
             }
 
             // Rendezvous distance
@@ -801,6 +892,37 @@ namespace Blueshift
         #endregion
 
         #region Helpers
+        private void releaseNetworkAddressLock(PopupDialog dialog, string lockID)
+        {
+            if (!string.IsNullOrEmpty(lockID))
+                InputLockManager.RemoveControlLock(lockID);
+            // A dismissed dialog can be destroyed after its replacement has opened.
+            if (ReferenceEquals(networkAddressDialog, dialog))
+            {
+                networkAddressDialog = null;
+                networkAddressLockID = null;
+            }
+        }
+
+        private void closeNetworkAddressDialog()
+        {
+            PopupDialog dialog = networkAddressDialog;
+            releaseNetworkAddressLock(dialog, networkAddressLockID);
+            if (dialog != null)
+                dialog.Dismiss();
+        }
+
+        private void onAddressDialogVesselChange(Vessel activeVessel)
+        {
+            closeNetworkAddressDialog();
+        }
+
+        private bool isAnomalyGate()
+        {
+            return HighLogic.LoadedSceneIsFlight && BlueshiftScenario.shared != null && vessel != null
+                && BlueshiftScenario.shared.GetAnomaly(vessel.id.ToString()) != null;
+        }
+
         bool payJumpToll(Vessel vesselToTeleport, out string statusMessage)
         {
             // If we have a resource toll then use that instead of the standard toll.
@@ -1105,16 +1227,25 @@ namespace Blueshift
             }
         }
 
-        private void setupJumpNetwork()
+        private void setupJumpNetwork(bool connectSingleDestination = false)
         {
             BlueshiftScenario.shared.AddJumpgateToNetwork(vessel.id.ToString(), networkID);
 
+            bool hasSinglePeer = connectSingleDestination
+                && BlueshiftScenario.shared.GetJumpgateNetworkGateCount(networkID) == 2;
+
             // Get list of possible destinations within our network.
-            jumpgates = BlueshiftScenario.shared.GetDestinationGates(networkID, vessel.GetWorldPos3D(), maxJumpRange);
+            // Two-gate networks ignore the range limit when reconnecting after an address change.
+            jumpgates = BlueshiftScenario.shared.GetDestinationGates(networkID, vessel.GetWorldPos3D(), hasSinglePeer ? -1 : maxJumpRange);
             if (jumpgates == null)
                 jumpgates = new List<Vessel>();
 
             updateJumpgatePAW();
+            if (hasSinglePeer && gateEnabled && jumpgates.Count == 1)
+            {
+                Events["SelectGate"].active = false;
+                jumpgateSelected(jumpgates[0]);
+            }
         }
 
         private void updateJumpgatePAW()

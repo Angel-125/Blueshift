@@ -944,6 +944,11 @@
             Gate selected delegate.
             </summary>
         </member>
+        <member name="M:Blueshift.JumpgateSelector.SetVisible(System.Boolean)">
+            <summary>
+            Clears the previous destination selection when reopening the dialog.
+            </summary>
+        </member>
         <member name="M:Blueshift.SDModuleSpaceDustHarvester.#ctor(PartModule)">
             <summary>
             Instantiates a new SDModuleSpaceDustHarvester
@@ -1159,6 +1164,11 @@
         <member name="F:Blueshift.WBIModuleGeneratorFX.guiVisible">
             <summary>
             Toggles visibility of the GUI.
+            </summary>
+        </member>
+        <member name="F:Blueshift.WBIModuleGeneratorFX.displayStatus">
+            <summary>
+            Converter status sampled for display without slowing resource conversion.
             </summary>
         </member>
         <member name="F:Blueshift.WBIModuleGeneratorFX.textureModuleID">
@@ -2146,7 +2156,7 @@
             Adds the jumpgate to the network.
             </summary>
             <param name="vesselID">A string containing the ID of the jumpgate vessel.</param>
-            <param name="networkID">A string containing the ID of the jumpgate network.</param>
+            <param name="networkID">Semicolon-separated network IDs. This replaces the gate's previous memberships; blank uses the Any network.</param>
         </member>
         <member name="M:Blueshift.BlueshiftScenario.NormalizeVesselID(System.String)">
             <summary>
@@ -2165,6 +2175,12 @@
             Returns a copy of the network IDs containing the supplied vessel.
             </summary>
         </member>
+        <member name="M:Blueshift.BlueshiftScenario.GetJumpgateNetworkGateCount(System.String)">
+            <summary>
+            Returns the number of distinct registered gates across the supplied networks, including the source gate.
+            </summary>
+            <param name="networkID">Semicolon-separated network IDs, or blank for the Any network.</param>
+        </member>
         <member name="M:Blueshift.BlueshiftScenario.ShareJumpgateNetwork(System.Guid,System.Guid)">
             <summary>
             Determines whether two registered jump gates share a network. Blank network IDs retain the existing
@@ -2180,7 +2196,7 @@
             <summary>
             Returns the list of possible destination gates that are in range of the specified origin point.
             </summary>
-            <param name="networkID">A string containing the network ID.</param>
+            <param name="networkID">Semicolon-separated network IDs whose destination gates are combined without duplicates.</param>
             <param name="originPoint">A Vector3d containing the origin point to check for gates in range.</param>
             <param name="maxJumpRange">A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.</param>
             <returns>A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.</returns>
@@ -2836,6 +2852,17 @@
             </summary>
         </member>
         <!-- Badly formed XML comment ignored for member "M:Blueshift.WBIJumpGate.ActionSelectGate(KSPActionParam)" -->
+        <member name="M:Blueshift.WBIJumpGate.ChangeNetworkAddress">
+            <summary>
+            Opens the network address editor without changing the gate until Apply is selected.
+            </summary>
+        </member>
+        <member name="M:Blueshift.WBIJumpGate.SetNetworkID(System.String)">
+            <summary>
+            Changes the saved network address and refreshes registry membership and destinations in flight.
+            </summary>
+            <param name="newNetworkID">Semicolon-separated network IDs, or blank for the Any network.</param>
+        </member>
         <member name="M:Blueshift.WBIJumpGate.SetGateEnabled(System.Boolean)">
             <summary>
             Enables/disables the jumpgate.

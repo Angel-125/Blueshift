@@ -310,7 +310,11 @@ namespace Blueshift
             double amount;
             for (int index = 0; index < keys.Length; index++)
             {
-                amount = resourceAmounts[keys[index]];
+                if (!resourceAmounts.TryGetValue(keys[index], out amount) || amount <= 0)
+                {
+                    status = Localizer.Format("#LOC_BLUESHIFT_missingGeneratorResource") + keys[index];
+                    return 0;
+                }
                 inputRate = consumptionRates[keys[index]];
 
                 if (inputRate <= 0)
@@ -393,7 +397,11 @@ namespace Blueshift
             double amount;
             for (int index = 0; index < keys.Length; index++)
             {
-                amount = resourceAmounts[keys[index]];
+                if (!resourceAmounts.TryGetValue(keys[index], out amount) || amount <= 0)
+                {
+                    status = Localizer.Format("#LOC_BLUESHIFT_missingGeneratorResource") + keys[index];
+                    return 0;
+                }
                 inputRate = consumptionRates[keys[index]];
 
                 if (inputRate <= 0)

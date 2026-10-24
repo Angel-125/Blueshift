@@ -331,6 +331,7 @@ namespace Blueshift
                 ConfigNode gateNode;
                 string networkID;
                 string[] jumpgateIDs;
+                Dictionary<string, List<string>> networksByGate = new Dictionary<string, List<string>>();
                 for (int index = 0; index < gateNodes.Length; index++)
                 {
                     gateNode = gateNodes[index];
@@ -340,8 +341,18 @@ namespace Blueshift
                     networkID = gateNode.GetValue(kNetworkID);
                     jumpgateIDs = gateNode.GetValues(kJumpgateID);
                     for (int gateIndex = 0; gateIndex < jumpgateIDs.Length; gateIndex++)
-                        AddJumpgateToNetwork(jumpgateIDs[gateIndex], networkID);
+                    {
+                        string vesselPID = NormalizeVesselID(jumpgateIDs[gateIndex]);
+                        if (string.IsNullOrEmpty(vesselPID))
+                            continue;
+                        if (!networksByGate.ContainsKey(vesselPID))
+                            networksByGate.Add(vesselPID, new List<string>());
+                        networksByGate[vesselPID].AddRange(parseJumpgateNetworkIDs(networkID));
+                    }
                 }
+
+                foreach (KeyValuePair<string, List<string>> gateNetworks in networksByGate)
+                    AddJumpgateToNetwork(gateNetworks.Key, string.Join(";", gateNetworks.Value.ToArray()));
             }
 
             if (node.HasValue(kJumpGateSourceId))
@@ -589,27 +600,31 @@ namespace Blueshift
         /// Adds the jumpgate to the network.
         /// </summary>
         /// <param name="vesselID">A string containing the ID of the jumpgate vessel.</param>
-        /// <param name="networkID">A string containing the ID of the jumpgate network.</param>
+        /// <param name="networkID">Semicolon-separated network IDs. This replaces the gate's previous memberships; blank uses the Any network.</param>
         public void AddJumpgateToNetwork(string vesselID, string networkID)
         {
             string vesselPID = NormalizeVesselID(vesselID);
             if (string.IsNullOrEmpty(vesselPID))
                 return;
 
-            string gateNetwork = normalizeJumpgateNetworkID(networkID);
-            bool networkChanged = removeJumpgateFromNetworks(vesselPID, gateNetwork);
+            string[] gateNetworks = parseJumpgateNetworkIDs(networkID);
+            bool networkChanged = removeJumpgateFromNetworks(vesselPID, gateNetworks);
 
-            if (!jumpgateNetwork.ContainsKey(gateNetwork))
+            for (int index = 0; index < gateNetworks.Length; index++)
             {
-                jumpgateNetwork.Add(gateNetwork, new List<string>());
-                networkChanged = true;
-            }
+                string gateNetwork = gateNetworks[index];
+                if (!jumpgateNetwork.ContainsKey(gateNetwork))
+                {
+                    jumpgateNetwork.Add(gateNetwork, new List<string>());
+                    networkChanged = true;
+                }
 
-            List<string> jumpgates = jumpgateNetwork[gateNetwork];
-            if (!jumpgates.Contains(vesselPID))
-            {
-                jumpgates.Add(vesselPID);
-                networkChanged = true;
+                List<string> jumpgates = jumpgateNetwork[gateNetwork];
+                if (!jumpgates.Contains(vesselPID))
+                {
+                    jumpgates.Add(vesselPID);
+                    networkChanged = true;
+                }
             }
 
             if (networkChanged)
@@ -657,6 +672,26 @@ namespace Blueshift
         }
 
         /// <summary>
+        /// Returns the number of distinct registered gates across the supplied networks, including the source gate.
+        /// </summary>
+        /// <param name="networkID">Semicolon-separated network IDs, or blank for the Any network.</param>
+        public int GetJumpgateNetworkGateCount(string networkID)
+        {
+            HashSet<string> gates = new HashSet<string>();
+            if (jumpgateNetwork == null)
+                return 0;
+
+            string[] networks = parseJumpgateNetworkIDs(networkID);
+            for (int index = 0; index < networks.Length; index++)
+            {
+                List<string> networkGates;
+                if (jumpgateNetwork.TryGetValue(networks[index], out networkGates))
+                    gates.UnionWith(networkGates);
+            }
+            return gates.Count;
+        }
+
+        /// <summary>
         /// Determines whether two registered jump gates share a network. Blank network IDs retain the existing
         /// behavior of being normalized into Blueshift's universal "Any" network.
         /// </summary>
@@ -694,23 +729,28 @@ namespace Blueshift
         /// <summary>
         /// Returns the list of possible destination gates that are in range of the specified origin point.
         /// </summary>
-        /// <param name="networkID">A string containing the network ID.</param>
+        /// <param name="networkID">Semicolon-separated network IDs whose destination gates are combined without duplicates.</param>
         /// <param name="originPoint">A Vector3d containing the origin point to check for gates in range.</param>
         /// <param name="maxJumpRange">A double containing the maximum jump range, measured in light-years. Set to -1 to ignore max jump range.</param>
         /// <returns>A List of Vessel containing the vessels in the network that are in range, or null if no network or vessels in range could be found.</returns>
         public List<Vessel> GetDestinationGates(string networkID, Vector3d originPoint, double maxJumpRange = -1)
         {
-            string gateNetwork = networkID;
-            if (string.IsNullOrEmpty(gateNetwork))
-                gateNetwork = kUniversalNetworkID;
-
-            if (!jumpgateNetwork.ContainsKey(gateNetwork))
-                return null;
-            List<string> jumpgateIDs = jumpgateNetwork[gateNetwork];
+            string[] gateNetworks = parseJumpgateNetworkIDs(networkID);
+            List<string> jumpgateIDs = new List<string>();
+            for (int networkIndex = 0; networkIndex < gateNetworks.Length; networkIndex++)
+            {
+                List<string> networkGates;
+                if (!jumpgateNetwork.TryGetValue(gateNetworks[networkIndex], out networkGates))
+                    continue;
+                for (int gateIndex = 0; gateIndex < networkGates.Count; gateIndex++)
+                {
+                    if (!jumpgateIDs.Contains(networkGates[gateIndex]))
+                        jumpgateIDs.Add(networkGates[gateIndex]);
+                }
+            }
             List<Vessel> jumpgates = new List<Vessel>();
             List<string> doomed = new List<string>();
             int count = jumpgateIDs.Count;
-            string vesselID = string.Empty;
             Vessel vessel;
             double jumpRange = 0;
 
@@ -738,8 +778,10 @@ namespace Blueshift
             count = doomed.Count;
             for (int index = 0; index < count; index++)
             {
-                jumpgateIDs.Remove(doomed[index]);
+                removeJumpgateFromNetworks(doomed[index], null);
             }
+            if (doomed.Count > 0)
+                WBICommNetLinkManager.InvalidateCaches();
 
             return jumpgates.Count > 0 ? jumpgates : null;
         }
@@ -1311,12 +1353,25 @@ namespace Blueshift
                 WBICommNetLinkManager.InvalidateCaches();
         }
 
-        private string normalizeJumpgateNetworkID(string networkID)
+        private string[] parseJumpgateNetworkIDs(string networkID)
         {
-            return string.IsNullOrEmpty(networkID) ? kUniversalNetworkID : networkID;
+            List<string> networks = new List<string>();
+            if (!string.IsNullOrEmpty(networkID))
+            {
+                string[] entries = networkID.Split(';');
+                for (int index = 0; index < entries.Length; index++)
+                {
+                    string entry = entries[index].Trim();
+                    if (entry.Length > 0 && !networks.Contains(entry))
+                        networks.Add(entry);
+                }
+            }
+            if (networks.Count == 0)
+                networks.Add(kUniversalNetworkID);
+            return networks.ToArray();
         }
 
-        private bool removeJumpgateFromNetworks(string vesselPID, string networkToKeep)
+        private bool removeJumpgateFromNetworks(string vesselPID, string[] networksToKeep)
         {
             if (jumpgateNetwork == null || string.IsNullOrEmpty(vesselPID))
                 return false;
@@ -1327,7 +1382,7 @@ namespace Blueshift
             for (int index = 0; index < networkIDs.Length; index++)
             {
                 string networkID = networkIDs[index];
-                if (networkID == networkToKeep)
+                if (networksToKeep != null && Array.IndexOf(networksToKeep, networkID) >= 0)
                     continue;
 
                 List<string> jumpgates = jumpgateNetwork[networkID];
